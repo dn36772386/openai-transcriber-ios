@@ -399,4 +399,46 @@ struct MainContentView: View {
 
 struct ApiKeyModalView: View {
     @Binding var showApiKeyModal: Bool
-    @State private var apiKey: String =
+    @State private var apiKey: String = ""
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 10) {
+                Text("OpenAI APIキー")
+                    .font(.system(size: 18, weight: .semibold))
+                    .padding(.bottom, 6)
+                SecureField("sk-...", text: $apiKey)
+                    .padding(EdgeInsets(top: 8, leading: 6, bottom: 8, trailing: 6))
+                    .background(Color.white)
+                    .cornerRadius(4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.border, lineWidth: 1)
+                    )
+                Button("保存") {
+                    // TODO: Save API Key logic
+                    showApiKeyModal = false
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(Color.accent)
+                .foregroundColor(.white)
+                .cornerRadius(4)
+                .padding(.top, 10)
+                Spacer()
+            }
+            .padding(16)
+            .frame(width: 260)
+            .background(Color.white)
+            .cornerRadius(6)
+            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 4)
+            .navigationBarItems(trailing: Button("閉じる") {
+                showApiKeyModal = false
+            })
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("APIキー設定")
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black.opacity(0.3).edgesIgnoringSafeArea(.all))
+    }
+}
