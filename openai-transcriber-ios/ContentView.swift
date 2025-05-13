@@ -182,7 +182,7 @@ struct SidebarView: View {
                 List {
                     ForEach(historyItems) { item in
                         HStack {
-                            Text(item.date, style: .toLocaleString) // より詳細なフォーマットが必要
+                            Text(item.date.toLocaleString()) // より詳細なフォーマットが必要
                                 .font(.system(size: 13))
                                 .foregroundColor(Color.icon)
                             Spacer()
