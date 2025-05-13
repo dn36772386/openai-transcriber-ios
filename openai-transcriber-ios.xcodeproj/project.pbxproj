@@ -1,0 +1,587 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1806C17B2DD373640066C50F /* openai_transcriber_iosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C17A2DD373640066C50F /* openai_transcriber_iosApp.swift */; };
+		1806C17D2DD373640066C50F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C17C2DD373640066C50F /* ContentView.swift */; };
+		1806C17F2DD373670066C50F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1806C17E2DD373670066C50F /* Assets.xcassets */; };
+		1806C1822DD373670066C50F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1806C1812DD373670066C50F /* Preview Assets.xcassets */; };
+		1806C18C2DD373670066C50F /* openai_transcriber_iosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C18B2DD373670066C50F /* openai_transcriber_iosTests.swift */; };
+		1806C1962DD373670066C50F /* openai_transcriber_iosUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */; };
+		1806C1982DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1806C1882DD373670066C50F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1806C16F2DD373640066C50F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1806C1762DD373640066C50F;
+			remoteInfo = "openai-transcriber-ios";
+		};
+		1806C1922DD373670066C50F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1806C16F2DD373640066C50F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1806C1762DD373640066C50F;
+			remoteInfo = "openai-transcriber-ios";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		1806C1772DD373640066C50F /* openai-transcriber-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "openai-transcriber-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1806C17A2DD373640066C50F /* openai_transcriber_iosApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosApp.swift; sourceTree = "<group>"; };
+		1806C17C2DD373640066C50F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1806C17E2DD373670066C50F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1806C1812DD373670066C50F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		1806C1872DD373670066C50F /* openai-transcriber-iosTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "openai-transcriber-iosTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1806C18B2DD373670066C50F /* openai_transcriber_iosTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosTests.swift; sourceTree = "<group>"; };
+		1806C1912DD373670066C50F /* openai-transcriber-iosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "openai-transcriber-iosUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosUITests.swift; sourceTree = "<group>"; };
+		1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosUITestsLaunchTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1806C1742DD373640066C50F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1806C1842DD373670066C50F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1806C18E2DD373670066C50F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1806C16E2DD373640066C50F = {
+			isa = PBXGroup;
+			children = (
+				1806C1792DD373640066C50F /* openai-transcriber-ios */,
+				1806C18A2DD373670066C50F /* openai-transcriber-iosTests */,
+				1806C1942DD373670066C50F /* openai-transcriber-iosUITests */,
+				1806C1782DD373640066C50F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		1806C1782DD373640066C50F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1806C1772DD373640066C50F /* openai-transcriber-ios.app */,
+				1806C1872DD373670066C50F /* openai-transcriber-iosTests.xctest */,
+				1806C1912DD373670066C50F /* openai-transcriber-iosUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1806C1792DD373640066C50F /* openai-transcriber-ios */ = {
+			isa = PBXGroup;
+			children = (
+				1806C17A2DD373640066C50F /* openai_transcriber_iosApp.swift */,
+				1806C17C2DD373640066C50F /* ContentView.swift */,
+				1806C17E2DD373670066C50F /* Assets.xcassets */,
+				1806C1802DD373670066C50F /* Preview Content */,
+			);
+			path = "openai-transcriber-ios";
+			sourceTree = "<group>";
+		};
+		1806C1802DD373670066C50F /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				1806C1812DD373670066C50F /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		1806C18A2DD373670066C50F /* openai-transcriber-iosTests */ = {
+			isa = PBXGroup;
+			children = (
+				1806C18B2DD373670066C50F /* openai_transcriber_iosTests.swift */,
+			);
+			path = "openai-transcriber-iosTests";
+			sourceTree = "<group>";
+		};
+		1806C1942DD373670066C50F /* openai-transcriber-iosUITests */ = {
+			isa = PBXGroup;
+			children = (
+				1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */,
+				1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */,
+			);
+			path = "openai-transcriber-iosUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1806C1762DD373640066C50F /* openai-transcriber-ios */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1806C19B2DD373670066C50F /* Build configuration list for PBXNativeTarget "openai-transcriber-ios" */;
+			buildPhases = (
+				1806C1732DD373640066C50F /* Sources */,
+				1806C1742DD373640066C50F /* Frameworks */,
+				1806C1752DD373640066C50F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "openai-transcriber-ios";
+			productName = "openai-transcriber-ios";
+			productReference = 1806C1772DD373640066C50F /* openai-transcriber-ios.app */;
+			productType = "com.apple.product-type.application";
+		};
+		1806C1862DD373670066C50F /* openai-transcriber-iosTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1806C19E2DD373670066C50F /* Build configuration list for PBXNativeTarget "openai-transcriber-iosTests" */;
+			buildPhases = (
+				1806C1832DD373670066C50F /* Sources */,
+				1806C1842DD373670066C50F /* Frameworks */,
+				1806C1852DD373670066C50F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1806C1892DD373670066C50F /* PBXTargetDependency */,
+			);
+			name = "openai-transcriber-iosTests";
+			productName = "openai-transcriber-iosTests";
+			productReference = 1806C1872DD373670066C50F /* openai-transcriber-iosTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		1806C1902DD373670066C50F /* openai-transcriber-iosUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1806C1A12DD373670066C50F /* Build configuration list for PBXNativeTarget "openai-transcriber-iosUITests" */;
+			buildPhases = (
+				1806C18D2DD373670066C50F /* Sources */,
+				1806C18E2DD373670066C50F /* Frameworks */,
+				1806C18F2DD373670066C50F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1806C1932DD373670066C50F /* PBXTargetDependency */,
+			);
+			name = "openai-transcriber-iosUITests";
+			productName = "openai-transcriber-iosUITests";
+			productReference = 1806C1912DD373670066C50F /* openai-transcriber-iosUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1806C16F2DD373640066C50F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					1806C1762DD373640066C50F = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					1806C1862DD373670066C50F = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = 1806C1762DD373640066C50F;
+					};
+					1806C1902DD373670066C50F = {
+						CreatedOnToolsVersion = 15.2;
+						TestTargetID = 1806C1762DD373640066C50F;
+					};
+				};
+			};
+			buildConfigurationList = 1806C1722DD373640066C50F /* Build configuration list for PBXProject "openai-transcriber-ios" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 1806C16E2DD373640066C50F;
+			productRefGroup = 1806C1782DD373640066C50F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				1806C1762DD373640066C50F /* openai-transcriber-ios */,
+				1806C1862DD373670066C50F /* openai-transcriber-iosTests */,
+				1806C1902DD373670066C50F /* openai-transcriber-iosUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1806C1752DD373640066C50F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1806C1822DD373670066C50F /* Preview Assets.xcassets in Resources */,
+				1806C17F2DD373670066C50F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1806C1852DD373670066C50F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1806C18F2DD373670066C50F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1806C1732DD373640066C50F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1806C17D2DD373640066C50F /* ContentView.swift in Sources */,
+				1806C17B2DD373640066C50F /* openai_transcriber_iosApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1806C1832DD373670066C50F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1806C18C2DD373670066C50F /* openai_transcriber_iosTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1806C18D2DD373670066C50F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1806C1982DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift in Sources */,
+				1806C1962DD373670066C50F /* openai_transcriber_iosUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1806C1892DD373670066C50F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1806C1762DD373640066C50F /* openai-transcriber-ios */;
+			targetProxy = 1806C1882DD373670066C50F /* PBXContainerItemProxy */;
+		};
+		1806C1932DD373670066C50F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1806C1762DD373640066C50F /* openai-transcriber-ios */;
+			targetProxy = 1806C1922DD373670066C50F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1806C1992DD373670066C50F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		1806C19A2DD373670066C50F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		1806C19C2DD373670066C50F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"openai-transcriber-ios/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "nakajima.openai-transcriber-ios";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1806C19D2DD373670066C50F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"openai-transcriber-ios/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "nakajima.openai-transcriber-ios";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		1806C19F2DD373670066C50F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "nakajima.openai-transcriber-iosTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/openai-transcriber-ios.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/openai-transcriber-ios";
+			};
+			name = Debug;
+		};
+		1806C1A02DD373670066C50F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "nakajima.openai-transcriber-iosTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/openai-transcriber-ios.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/openai-transcriber-ios";
+			};
+			name = Release;
+		};
+		1806C1A22DD373670066C50F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "nakajima.openai-transcriber-iosUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "openai-transcriber-ios";
+			};
+			name = Debug;
+		};
+		1806C1A32DD373670066C50F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "nakajima.openai-transcriber-iosUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "openai-transcriber-ios";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1806C1722DD373640066C50F /* Build configuration list for PBXProject "openai-transcriber-ios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1806C1992DD373670066C50F /* Debug */,
+				1806C19A2DD373670066C50F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1806C19B2DD373670066C50F /* Build configuration list for PBXNativeTarget "openai-transcriber-ios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1806C19C2DD373670066C50F /* Debug */,
+				1806C19D2DD373670066C50F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1806C19E2DD373670066C50F /* Build configuration list for PBXNativeTarget "openai-transcriber-iosTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1806C19F2DD373670066C50F /* Debug */,
+				1806C1A02DD373670066C50F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1806C1A12DD373670066C50F /* Build configuration list for PBXNativeTarget "openai-transcriber-iosUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1806C1A22DD373670066C50F /* Debug */,
+				1806C1A32DD373670066C50F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1806C16F2DD373640066C50F /* Project object */;
+}
