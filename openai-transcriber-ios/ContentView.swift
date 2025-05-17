@@ -60,6 +60,7 @@ struct ContentView: View {
     @State private var showApiKeyModal = false
     @State private var modeIsManual = false
     @State private var activeMenuItem: SidebarMenuItemType? = .transcribe // 初期選択
+    @State private var permissionChecked = false    // デバッグ用
 
     var body: some View {
         ZStack {
@@ -122,7 +123,6 @@ struct ContentView: View {
 
     private func toggleRecording() {
         if isRecording {
-            // Step1 では録音ロジックは未実装
             isRecording = false
             return
         }
@@ -130,17 +130,28 @@ struct ContentView: View {
     }
 
     private func requestMicrophonePermission() {
-        AVAudioSession.sharedInstance()
-            .requestRecordPermission { granted in
-                DispatchQueue.main.async {
-                    if granted {
-                        // Step1：許可確認のみ。録音処理は Step2 で実装
-                        isRecording = true
-                    } else {
-                        showPermissionAlert = true
-                    }
+        // iOS17 以降は新 API、以前は従来 API
+        if #available(iOS 17, *) {
+            AVAudioApplication.requestRecordPermission(completionHandler: { granted in
+                handlePermissionResult(granted)
+            })
+        } else {
+            AVAudioSession.sharedInstance()
+                .requestRecordPermission { granted in
+                    handlePermissionResult(granted)
                 }
+        }
+    }
+
+    private func handlePermissionResult(_ granted: Bool) {
+        DispatchQueue.main.async {
+            permissionChecked = true           // デバッグ用
+            if granted {
+                isRecording = true
+            } else {
+                showPermissionAlert = true
             }
+        }
     }
 }
 
