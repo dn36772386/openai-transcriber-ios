@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 // CSSカラーパレットの定義
 extension Color {
@@ -38,6 +39,7 @@ extension Color {
         default:
             (a, r, g, b) = (255, 0, 0, 0)
         }
+        
         self.init(
             .sRGB,
             red: Double(r) / 255,
@@ -50,6 +52,10 @@ extension Color {
 
 
 struct ContentView: View {
+    // 録音状態（現段階では UI だけで使用）
+    @State private var isRecording = false
+    // マイク権限が拒否されたときのアラート表示制御
+    @State private var showPermissionAlert = false
     @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone // iPadなら最初から表示
     @State private var showApiKeyModal = false
     @State private var modeIsManual = false
@@ -99,6 +105,42 @@ struct ContentView: View {
         .sheet(isPresented: $showApiKeyModal) {
             ApiKeyModalView(showApiKeyModal: $showApiKeyModal)
         }
+        .alert("マイクへのアクセスが許可されていません",
+               isPresented: $showPermissionAlert) {
+            Button("設定を開く") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("音声録音を行うには、設定アプリの「プライバシー > マイク」で本アプリを許可してください。")
+        }
+    }
+
+    // MARK: - Private
+
+    private func toggleRecording() {
+        if isRecording {
+            // Step1 では録音ロジックは未実装
+            isRecording = false
+            return
+        }
+        requestMicrophonePermission()
+    }
+
+    private func requestMicrophonePermission() {
+        AVAudioSession.sharedInstance()
+            .requestRecordPermission { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        // Step1：許可確認のみ。録音処理は Step2 で実装
+                        isRecording = true
+                    } else {
+                        showPermissionAlert = true
+                    }
+                }
+            }
     }
 }
 
@@ -185,6 +227,7 @@ struct SidebarView: View {
                             Text(item.date.toLocaleString()) // より詳細なフォーマットが必要
                                 .font(.system(size: 13))
                                 .foregroundColor(Color.icon)
+                            
                             Spacer()
                             Button(action: {
                                 // TODO: Delete specific history item
