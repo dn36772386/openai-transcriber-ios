@@ -1,21 +1,18 @@
 import AVFoundation
-import Foundation
 
 final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     @Published var isRecording = false
     private var recorder: AVAudioRecorder?
-    // ContentView から URL 参照したいので `internal` に
+    /// 録音ファイル URL（停止後に ContentView 側から参照）
     var url: URL? { recorder?.url }
 
     /// 録音開始
     func start() throws {
-        // セッション設定
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
         try session.setActive(true, options: .notifyOthersOnDeactivation)
 
-        // 16 kHz / mono / AAC
         let settings: [String: Any] = [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
             AVSampleRateKey: 16_000,
@@ -23,30 +20,26 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
 
-        // 保存先パス生成
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        let filename = "Recording_\(formatter.string(from: Date())).m4a"
-        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename)
+        let df = DateFormatter()
+        df.dateFormat = "yyyyMMdd_HHmmss"
+        let file = "Recording_\(df.string(from: .init())).m4a"
+        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(file)
 
         recorder = try AVAudioRecorder(url: url, settings: settings)
         recorder?.delegate = self
         recorder?.record()
         isRecording = true
 
-        print("[Recorder] start → \(url.path)")
+        Debug.log("[Recorder] start →", url.lastPathComponent)
     }
 
     /// 録音停止
     func stop() {
         recorder?.stop()
         isRecording = false
-        if let url = recorder?.url {
-            if let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? UInt64 {
-                print("[Recorder] saved (\(size) bytes) → \(url.path)")
-            } else {
-                print("[Recorder] saved → \(url.path)")
-            }
+        if let url = recorder?.url,
+           let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? UInt64 {
+            Debug.log("[Recorder] saved (\(size) bytes) →", url.lastPathComponent)
         }
     }
 }

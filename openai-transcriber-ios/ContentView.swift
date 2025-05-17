@@ -61,6 +61,7 @@ struct ContentView: View {
     @State private var modeIsManual = false
     @State private var activeMenuItem: SidebarMenuItemType? = .transcribe // 初期選択
     @State private var permissionChecked = false    // デバッグ用
+    @State private var showSettings = false        // ← モーダル制御
 
     var body: some View {
         ZStack {
@@ -110,6 +111,7 @@ struct ContentView: View {
         .sheet(isPresented: $showApiKeyModal) {
             ApiKeyModalView(showApiKeyModal: $showApiKeyModal)
         }
+        .sheet(isPresented: $showSettings) { SettingsView() }
         .alert("マイクへのアクセスが許可されていません",
                isPresented: $showPermissionAlert) {
             Button("設定を開く") {
@@ -120,6 +122,12 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("音声録音を行うには、設定アプリの「プライバシー > マイク」で本アプリを許可してください。")
+        }
+        .onAppear {
+            // 起動時にAPIキー未登録なら設定画面を表示
+            if KeychainHelper.shared.apiKey() == nil {
+                showSettings = true
+            }
         }
     }
 
