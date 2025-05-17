@@ -112,6 +112,11 @@ struct ContentView: View {
             ApiKeyModalView(showApiKeyModal: $showApiKeyModal)
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .onAppear {
+            if KeychainHelper.shared.apiKey() == nil {          // 未設定なら即表示
+                DispatchQueue.main.async { showSettings = true }
+            }
+        }
         .alert("マイクへのアクセスが許可されていません",
                isPresented: $showPermissionAlert) {
             Button("設定を開く") {
@@ -122,12 +127,6 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("音声録音を行うには、設定アプリの「プライバシー > マイク」で本アプリを許可してください。")
-        }
-        .onAppear {
-            // 起動時にAPIキー未登録なら設定画面を表示
-            if KeychainHelper.shared.apiKey() == nil {
-                showSettings = true
-            }
         }
     }
 

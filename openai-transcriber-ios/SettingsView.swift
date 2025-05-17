@@ -7,9 +7,16 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("OpenAI APIキー", text: $keyInput)
-                    .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
+                Section {
+                    SecureField("OpenAI APIキー", text: $keyInput)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .onAppear {   // ← 画面を開くたび最新を反映
+                            keyInput = KeychainHelper.shared.apiKey() ?? ""
+                        }
+                } footer: {
+                    Text("鍵は iOS の Keychain に安全に保存されます。")
+                }
             }
             .navigationTitle("設定")
             .toolbar {
