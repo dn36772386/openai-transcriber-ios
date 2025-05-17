@@ -7,7 +7,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                SecureField("OpenAI APIキー", text: $keyInput)
+                TextField("OpenAI APIキー", text: $keyInput)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
             }

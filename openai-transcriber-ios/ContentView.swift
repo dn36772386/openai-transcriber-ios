@@ -491,7 +491,7 @@ struct ApiKeyModalView: View {
                 Text("OpenAI APIキー")
                     .font(.system(size: 18, weight: .semibold))
                     .padding(.bottom, 6)
-                SecureField("sk-...", text: $apiKey)
+                TextField("sk-...", text: $apiKey)
                     .padding(EdgeInsets(top: 8, leading: 6, bottom: 8, trailing: 6))
                     .background(Color.white)
                     .cornerRadius(4)
