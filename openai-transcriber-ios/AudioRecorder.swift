@@ -5,6 +5,8 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     @Published var isRecording = false
     private var recorder: AVAudioRecorder?
+    // ContentView から URL 参照したいので `internal` に
+    var url: URL? { recorder?.url }
 
     /// 録音開始
     func start() throws {

@@ -54,6 +54,7 @@ extension Color {
 
 struct ContentView: View {
     @StateObject private var audio = AudioRecorder()
+    @State private var transcription = "ここに文字起こし結果が表示されます…"
     @State private var showPermissionAlert = false
     @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone // iPadなら最初から表示
     @State private var showApiKeyModal = false
@@ -126,7 +127,18 @@ struct ContentView: View {
 
     private func toggleRecording() {
         if audio.isRecording {
-            audio.stop()                    // 停止
+            audio.stop()
+            if let url = audio.url {
+                transcription = "Whisper に送信中…"
+                Task {
+                    do {
+                        let result = try await OpenAIClient.transcribe(url: url)
+                        transcription = result
+                    } catch {
+                        transcription = "エラー: \(error.localizedDescription)"
+                    }
+                }
+            }
         } else {
             requestMicrophonePermission()   // 開始前に権限確認
         }
