@@ -37,7 +37,7 @@ struct OpenAIClient {
 
         req.httpBody = body
 
-        Debug.log("[OpenAI] POST /v1/audio/transcriptions")
+        Debug.log("[OpenAI] POST /audio/transcriptions  (payload:", body.count, "bytes)")
         let (data, response) = try await URLSession.shared.data(for: req)
 
         if let res = response as? HTTPURLResponse {

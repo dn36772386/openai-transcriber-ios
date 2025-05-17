@@ -37,11 +37,15 @@ final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 
     /// 録音停止
     func stop() {
-        recorder?.stop()
+        if let r = recorder, r.isRecording {
+            r.stop()
+        }
         isRecording = false
         if let url = recorder?.url,
            let size = try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? UInt64 {
             Debug.log("[Recorder] saved (\(size) bytes) →", url.lastPathComponent)
+        } else {
+            Debug.log("[Recorder] stop called but file URL unavailable")
         }
     }
 }

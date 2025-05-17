@@ -134,17 +134,23 @@ struct ContentView: View {
 
     private func toggleRecording() {
         if audio.isRecording {
+            Debug.log("🔴 stop tapped")
             audio.stop()
             if let url = audio.url {
                 transcription = "Whisper に送信中…"
+                Debug.log("[UI] Whisper upload begin, file =", url.lastPathComponent)
                 Task {
                     do {
                         let result = try await OpenAIClient.transcribe(url: url)
                         transcription = result
+                        Debug.log("[UI] Whisper result arrived")
                     } catch {
                         transcription = "エラー: \(error.localizedDescription)"
+                        Debug.log("[UI] error =", error.localizedDescription)
                     }
                 }
+            } else {
+                Debug.log("[UI] audio.url == nil")
             }
         } else {
             requestMicrophonePermission()   // 開始前に権限確認

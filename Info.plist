@@ -40,5 +40,20 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>音声を録音して文字起こしを行うためにマイクを使用します。</string>
 
+	<!-- OpenAI エンドポイントは TLS1.3 を返すことがあるため ATS 例外を宣言 -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>api.openai.com</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+			</dict>
+		</dict>
+	</dict>
+
 </dict>
 </plist>
