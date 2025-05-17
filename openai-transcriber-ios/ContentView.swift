@@ -87,17 +87,18 @@ struct ContentView: View {
                             Task {
                                 do {
                                     transcriptionResult = try await OpenAIClient.transcribe(url: url)
-                            } catch {
-                                transcriptionResult = "エラー: \(error.localizedDescription)"
+                                } catch {
+                                    transcriptionResult = "エラー: \(error.localizedDescription)"
+                                }
                             }
+                        },
+                        cancelAction: {
+                            let tmp = audio.url
+                            audio.stop()
+                            if let u = tmp { try? FileManager.default.removeItem(at: u) }
                         }
-                    },
-                    cancelAction: {
-                        let tmp = audio.url
-                        audio.stop()
-                        if let u = tmp { try? FileManager.default.removeItem(at: u) }
-                    }
-                )
+                    )                       // HeaderRecordingControls(...) を閉じる
+                )                           // ← 追加: navigationBarItems(...) を閉じる
                 .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
                 .background(Color.appBackground.edgesIgnoringSafeArea(.all))
