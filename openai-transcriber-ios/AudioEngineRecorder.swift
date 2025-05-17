@@ -38,8 +38,16 @@ final class AudioEngineRecorder: ObservableObject {
 
     // MARK: ––––– Private –––––
     private let engine           = AVAudioEngine()
-    private let silenceThreshold = Float(0.003)   // ≒ –45 dBFS
-    private let silenceWindow    = 0.5            // 500 ms
+    /// 無音判定しきい値（環境ノイズがある程度あっても切れないよう緩和）
+    private let silenceThreshold = Float(0.005)   // ≒ –40 dBFS
+    /// 無音継続時間（発話終了判定）
+    private let silenceWindow    = 0.8            // 800 ms
+    /// Whisper へ送らない極短ファイル（ノイズのみなど）サイズ下限
+    private let minSegmentBytes  = 2048           // < 2 kB は破棄
+
+    /// true なら現在「発話区間」にいる
+    private var inSpeech = false
+
     private var audioFile: AVAudioFile?
     private var fileURL:  URL?
     private var silenceStart: Date?
@@ -68,13 +76,33 @@ final class AudioEngineRecorder: ObservableObject {
             silenceStart = nil
         }
 
-        // segment open
+        // ---- open / write / close ------------------------------------
+        if rms >= silenceThreshold {
+            // ─ 発話を検知 ─
+            if !inSpeech {
+                inSpeech = true
+                openNewSegment(format: format)   // 声が出た瞬間にだけ開く
+            }
+            silenceStart = nil                  // 無音タイマをリセット
+        } else if inSpeech {
+            // ─ 無音区間（発話後） ─
+            if silenceStart == nil { silenceStart = now }
+            if let s0 = silenceStart,
+               now.timeIntervalSince(s0) > silenceWindow {
+                finalizeSegment()               // トレーリング無音で確定
+                inSpeech = false
+            }
+        }
+
+        // 音がしている間だけ書き込む
+        // ───── 録音ファイルの開始 ─────
         if audioFile == nil { openNewSegment(format: format) }
-        try? audioFile?.write(from: buffer)
+        try? audioFile?.write(from: buffer)        // in-speech 時のみ呼ばれる
 
         // segment close
-        if let s0 = silenceStart, now.timeIntervalSince(s0) > silenceWindow {
-            finalizeSegment()
+        if let s0 = silenceStart,
+           now.timeIntervalSince(s0) > silenceWindow {
+            finalizeSegment()                      // トレーリング無音で確定
         }
     }
 
@@ -102,10 +130,29 @@ final class AudioEngineRecorder: ObservableObject {
 
     private func finalizeSegment() {
         guard let url = fileURL else { return }
-        audioFile = nil
-        fileURL   = nil
+
+        // ===== ファイルサイズチェック =============================
+        let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]
+                     as? NSNumber)?.intValue ?? 0
+        if bytes < minSegmentBytes {
+            try? FileManager.default.removeItem(at: url)   // 極小ファイルは破棄
+            resetState()
+            return
+        }
+
+        // ===== デリゲート通知 =====================================
+        audioFile    = nil
+        fileURL      = nil
         silenceStart = nil
         delegate?.recorder(self, didFinishSegment: url, start: startDate)
-        startDate = Date()
+        startDate    = Date()
+    }
+
+    /// 変数を初期化して次の録音に備える
+    private func resetState() {
+        audioFile    = nil
+        fileURL      = nil
+        silenceStart = nil
+        startDate    = Date()
     }
 }

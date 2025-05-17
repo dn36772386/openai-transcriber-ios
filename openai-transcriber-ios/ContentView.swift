@@ -192,7 +192,8 @@ struct ContentView: View {
         Task {
             let result: String
             do {
-                result = try await OpenAIClient.transcribe(url: url)
+                // 生成しておいたインスタンス `client` を使う
+                result = try await client.transcribe(url: url)
             } catch {
                 result = "⚠️ \(error.localizedDescription)"
             }

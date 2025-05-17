@@ -21,11 +21,13 @@ struct Debug {
 }
 
 actor WhisperQueue {
-    private let semaphore = DispatchSemaphore(value: 1) // 逐次送信
+    /// Whisper への送信は 1 本ずつで OK なので
+    /// `actor` の直列実行特性だけで十分。`DispatchSemaphore` は不要。
+    private let client = OpenAIClient()
+
     func enqueue(url: URL, started: Date) async throws -> String {
-        semaphore.wait()
-        defer { semaphore.signal() }
-        return try await OpenAIClient.transcribe(url: url)
+        Debug.log("WhisperQueue ▶︎ segment started:", started)
+        return try await client.transcribe(url: url) // ← インスタンスメソッドを呼ぶ
     }
 }
 
