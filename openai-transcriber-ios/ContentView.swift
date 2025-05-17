@@ -68,11 +68,15 @@ struct ContentView: View {
                 MainContentView(
                     modeIsManual: $modeIsManual,
                     showApiKeyModal: $showApiKeyModal,
-                    isRecording: .constant(false) // 実際の録音状態を渡す
+                    isRecording: $isRecording           // ← 双方向バインディングに変更
                 )
                 .navigationBarItems(
                     leading: HamburgerButton(showSidebar: $showSidebar),
-                    trailing: HeaderRecordingControls(isRecording: .constant(false), modeIsManual: $modeIsManual) // メインコンテンツから移動
+                    trailing: HeaderRecordingControls(
+                        isRecording: $isRecording,       // ← 双方向バインディング
+                        modeIsManual: $modeIsManual,
+                        recordAction: toggleRecording    // ← 権限チェックを呼ぶクロージャを渡す
+                    ) // メインコンテンツから移動
                 )
                 .navigationTitle("") // タイトルはヘッダー内で表示
                 .navigationBarTitleDisplayMode(.inline)
@@ -337,6 +341,7 @@ struct SidebarMenuItem: View {
 struct HeaderRecordingControls: View {
     @Binding var isRecording: Bool
     @Binding var modeIsManual: Bool
+    let recordAction: () -> Void               // ← 追加
 
     var body: some View {
         HStack(spacing: 12) {
@@ -351,14 +356,18 @@ struct HeaderRecordingControls: View {
             }
 
             if !isRecording {
-                Button(action: { isRecording = true }) {
+                Button(action: {                     // 録音開始
+                    recordAction()                   // ← 権限チェック & isRecording 更新
+                }) {
                     Image(systemName: "mic.fill")
                         .font(.system(size: 18))
                         .foregroundColor(Color.icon) // 通常時の色
                 }
             } else {
                 HStack(spacing: 8) {
-                    Button(action: { isRecording = false /* TODO: Finish recording */ }) {
+                    Button(action: {
+                        isRecording = false /* Step2 で録音停止処理を実装予定 */
+                    }) {
                         Image(systemName: "checkmark")
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(Color.accent) // 確定ボタンの色
