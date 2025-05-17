@@ -1,4 +1,6 @@
 import Foundation
+import Security
+import SwiftUI
 
 enum OpenAIError: Error { case noKey, invalidResponse }
 

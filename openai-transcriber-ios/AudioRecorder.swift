@@ -1,4 +1,6 @@
+import Foundation
 import AVFoundation
+import SwiftUI
 
 final class AudioRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
 

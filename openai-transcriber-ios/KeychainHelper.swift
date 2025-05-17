@@ -1,3 +1,4 @@
+import Foundation
 import Security
 
 final class KeychainHelper {
