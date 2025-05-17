@@ -74,9 +74,20 @@ struct ContentView: View {
                 .navigationBarItems(
                     leading: HamburgerButton(showSidebar: $showSidebar),
                     trailing: HeaderRecordingControls(
-                        isRecording: $audio.isRecording,       // ← AudioRecorderのisRecordingをバインド
+                        isRecording: $audio.isRecording,
                         modeIsManual: $modeIsManual,
-                        recordAction: toggleRecording    // ← 権限チェックを呼ぶクロージャを渡す
+                        startAction: {
+                            do { try audio.start() } catch { Debug.log("start fail:", error) }
+                        },
+                        stopAction: {
+                            audio.stop()
+                            Task {
+                                guard let url = audio.url else { return }
+                                transcription = "Whisper に送信中…"
+                                transcription = (try? await OpenAIClient.transcribe(url: url))
+                                     ?? "送信失敗"
+                            }
+                        }
                     )
                 )
                 .navigationTitle("")
@@ -367,7 +378,9 @@ struct SidebarMenuItem: View {
 struct HeaderRecordingControls: View {
     @Binding var isRecording: Bool
     @Binding var modeIsManual: Bool
-    let recordAction: () -> Void               // ← 追加
+    let startAction: () -> Void        // ← 追加
+    let stopAction: () -> Void         // ← 追加
+    let cancelAction: () -> Void       // ← 追加
 
     var body: some View {
         HStack(spacing: 12) {
@@ -382,27 +395,20 @@ struct HeaderRecordingControls: View {
             }
 
             if !isRecording {
-                Button(action: {                     // 録音開始
-                    recordAction()                   // ← 権限チェック & isRecording 更新
+                // ▶︎ 録音開始
+                Button(action: {
+                    startAction()          // ← audio.start() が実行される
+                    isRecording = true
                 }) {
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(Color.icon) // 通常時の色
+                    Image(systemName: "checkmark")  // 緑チェック
                 }
             } else {
-                HStack(spacing: 8) {
-                    Button(action: {
-                        isRecording = false /* Step2 で録音停止処理を実装予定 */
-                    }) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(Color.accent) // 確定ボタンの色
-                    }
-                    Button(action: { isRecording = false /* TODO: Cancel recording */ }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(Color.danger) // キャンセルボタンの色
-                    }
+                // ■ 録音停止
+                Button(action: {
+                    stopAction()           // ← audio.stop() が実行
+                    isRecording = false
+                }) {
+                    Image(systemName: "xmark")      // 赤バツ
                 }
             }
         }
