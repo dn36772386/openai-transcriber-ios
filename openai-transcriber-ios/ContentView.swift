@@ -75,18 +75,26 @@ struct ContentView: View {
                     leading: HamburgerButton(showSidebar: $showSidebar),
                     trailing: HeaderRecordingControls(
                         isRecording: $audio.isRecording,
-                        modeIsManual: $modeIsManual,
                         startAction: {
-                            do { try audio.start() } catch { Debug.log("start fail:", error) }
+                            do { try audio.start() } catch { Debug.log("start error:", error) }
                         },
-                        stopAction: {
+                        stopAndSendAction: {
                             audio.stop()
+                            guard let url = audio.url else { return }
+                            transcription = "Whisper に送信中…"
                             Task {
-                                guard let url = audio.url else { return }
-                                transcription = "Whisper に送信中…"
-                                transcription = (try? await OpenAIClient.transcribe(url: url))
-                                     ?? "送信失敗"
+                                do {
+                                    transcription = try await OpenAIClient.transcribe(url: url)
+                                } catch {
+                                    transcription = "エラー: \(error.localizedDescription)"
+                                }
                             }
+                        },
+                        cancelAction: {
+                            let tmp = audio.url
+                            audio.stop()
+                            if let u = tmp { try? FileManager.default.removeItem(at: u) }
+                            transcription = "キャンセルしました"
                         }
                     )
                 )
@@ -379,7 +387,7 @@ struct HeaderRecordingControls: View {
     @Binding var isRecording: Bool
     @Binding var modeIsManual: Bool
     let startAction: () -> Void        // ← 追加
-    let stopAction: () -> Void         // ← 追加
+    let stopAndSendAction: () -> Void         // ← 追加
     let cancelAction: () -> Void       // ← 追加
 
     var body: some View {
@@ -405,10 +413,11 @@ struct HeaderRecordingControls: View {
             } else {
                 // ■ 録音停止
                 Button(action: {
-                    stopAction()           // ← audio.stop() が実行
+                    stopAndSendAction()           // ← audio.stop() が実行
                     isRecording = false
                 }) {
                     Image(systemName: "xmark")      // 赤バツ
+                        .foregroundColor(audio.isRecording ? .red : .blue)
                 }
             }
         }
