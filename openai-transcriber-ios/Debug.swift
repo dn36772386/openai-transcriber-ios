@@ -19,3 +19,14 @@ struct Debug {
         print("🛠", msg)
     }
 }
+
+actor WhisperQueue {
+    private let semaphore = DispatchSemaphore(value: 1) // 逐次送信
+    func enqueue(url: URL, started: Date) async throws -> String {
+        semaphore.wait()
+        defer { semaphore.signal() }
+        return try await OpenAIClient.transcribe(url: url)
+    }
+}
+
+let whisperQueue = WhisperQueue() // グローバルで 1 本

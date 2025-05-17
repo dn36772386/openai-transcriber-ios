@@ -7,50 +7,50 @@ enum OpenAIError: Error { case noKey, invalidResponse }
 struct OpenAIClient {
 
     static func transcribe(url: URL) async throws -> String {
-        // API キー取得
-        guard let apiKey = KeychainHelper.shared.apiKey(), !apiKey.isEmpty
-        else { throw OpenAIError.noKey }
+        let endpoint = URL(string: "https://api.openai.com/v1")!
+        let session = URLSession.shared
+        let decoder = JSONDecoder()
 
-        // multipart/form-data
-        let boundary = UUID().uuidString
-        var req = URLRequest(url: URL(string: "https://api.openai.com/v1/audio/transcriptions")!)
-        req.httpMethod = "POST"
-        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        var request = URLRequest(url: endpoint.appendingPathComponent("audio/transcriptions"))
+        request.httpMethod = "POST"
+
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(KeychainHelper.shared.apiKey() ?? "")", forHTTPHeaderField: "Authorization")
 
         var body = Data()
-        func add(_ s: String) { body.append(Data(s.utf8)) }
 
-        add("--\(boundary)\r\n")
-        add("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
-        add("whisper-1\r\n")
+        // model
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
+        body.append("whisper-1\r\n".data(using: .utf8)!)
 
-        add("--\(boundary)\r\n")
-        add("Content-Disposition: form-data; name=\"language\"\r\n\r\n")
-        add("ja\r\n")
+        // file
+        let filename = url.lastPathComponent
+        let audioData = try Data(contentsOf: url)
 
-        add("--\(boundary)\r\n")
-        add("Content-Disposition: form-data; name=\"file\"; filename=\"audio.m4a\"\r\n")
-        add("Content-Type: audio/m4a\r\n\r\n")
-        body.append(try Data(contentsOf: url))
-        add("\r\n--\(boundary)--\r\n")
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: audio/wav\r\n\r\n".data(using: .utf8)!)
+        body.append(audioData)
+        body.append("\r\n".data(using: .utf8)!)
 
-        req.httpBody = body
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
 
-        Debug.log("[OpenAI] POST /audio/transcriptions  (payload:", body.count, "bytes)")
-        let (data, response) = try await URLSession.shared.data(for: req)
+        request.httpBody = body
 
-        if let res = response as? HTTPURLResponse {
-            Debug.log("[OpenAI] status =", res.statusCode)
+        // 送信 & デコード
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw OpenAIError.invalidResponse }
+        guard http.statusCode == 200 else {
+            let msg = String(data: data, encoding: .utf8) ?? "unknown"
+            throw OpenAIError.invalidResponse // OpenAIError.server("(http.statusCode): \(msg)")
         }
-
-        guard
-            (response as? HTTPURLResponse)?.statusCode == 200,
-            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let text = json["text"] as? String
-        else { throw OpenAIError.invalidResponse }
-
-        Debug.log("[OpenAI] transcription length =", text.count)
+        // Whisper APIのレスポンス例: { "text": "..." }
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let text = json["text"] as? String else {
+            throw OpenAIError.invalidResponse
+        }
         return text
     }
 }

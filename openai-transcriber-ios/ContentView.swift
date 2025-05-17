@@ -53,8 +53,8 @@ extension Color {
 
 
 struct ContentView: View {
-    @StateObject private var audio = AudioRecorder()   // 実録音オブジェクト
-    @State private var transcriptionResult = ""        // Whisper 結果
+    @State private var proxy = RecorderProxy()           // ← 追加
+    @StateObject private var recorder = AudioEngineRecorder()
     @State private var showPermissionAlert = false
     @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone // iPadなら最初から表示
     @State private var showApiKeyModal = false
@@ -62,6 +62,10 @@ struct ContentView: View {
     @State private var activeMenuItem: SidebarMenuItemType? = .transcribe // 初期選択
     @State private var permissionChecked = false    // デバッグ用
     @State private var showSettings = false        // ← モーダル制御
+    @State private var transcriptLines: [TranscriptLine] = []
+
+    /// OpenAI 文字起こしクライアント（ビューが生きている間に 1 度だけ生成）
+    private let client = OpenAIClient()
 
     var body: some View {
         ZStack {
@@ -69,34 +73,23 @@ struct ContentView: View {
                 MainContentView(
                     modeIsManual: $modeIsManual,
                     showApiKeyModal: $showApiKeyModal,
-                    isRecording: $audio.isRecording,         // バインド
-                    transcriptionResult: $transcriptionResult
+                    isRecording: $recorder.isRecording,         // バインド
+                    transcriptLines: $transcriptLines
                 )
                 .navigationBarItems(
                     leading: HamburgerButton(showSidebar: $showSidebar),
                     trailing: HeaderRecordingControls(
-                        isRecording: $audio.isRecording,
+                        isRecording: $recorder.isRecording,
                         modeIsManual: $modeIsManual,
                         startAction: {
-                            do { try audio.start() }
-                            catch { Debug.log("record start error:", error) }
+                            proxy.onSegment = handleSegment(url:start:)   // クロージャ設定
+                            recorder.delegate = proxy                     // delegate 差替え
+                            try? recorder.start()
                         },
                         stopAndSendAction: {
-                            audio.stop()
-                            guard let url = audio.url else { return }
-                            Task {
-                                do {
-                                    transcriptionResult = try await OpenAIClient.transcribe(url: url)
-                                } catch {
-                                    transcriptionResult = "エラー: \(error.localizedDescription)"
-                                }
-                            }
+                            recorder.stop()
                         },
-                        cancelAction: {
-                            let tmp = audio.url
-                            audio.stop()
-                            if let u = tmp { try? FileManager.default.removeItem(at: u) }
-                        }
+                        cancelAction: { recorder.stop() }   // 一時ファイルも破棄済みなのでこれで OK
                     )                       // HeaderRecordingControls(...) を閉じる
                 )                           // ← 追加: navigationBarItems(...) を閉じる
                 .navigationTitle("")
@@ -153,25 +146,9 @@ struct ContentView: View {
     // MARK: - Private
 
     private func toggleRecording() {
-        if audio.isRecording {
+        if recorder.isRecording {
             Debug.log("🔴 stop tapped")
-            audio.stop()
-            if let url = audio.url {
-                transcriptionResult = "Whisper に送信中…"
-                Debug.log("[UI] Whisper upload begin, file =", url.lastPathComponent)
-                Task {
-                    do {
-                        let result = try await OpenAIClient.transcribe(url: url)
-                        transcriptionResult = result
-                        Debug.log("[UI] Whisper result arrived")
-                    } catch {
-                        transcriptionResult = "エラー: \(error.localizedDescription)"
-                        Debug.log("[UI] error =", error.localizedDescription)
-                    }
-                }
-            } else {
-                Debug.log("[UI] audio.url == nil")
-            }
+            recorder.stop()
         } else {
             requestMicrophonePermission()   // 開始前に権限確認
         }
@@ -194,12 +171,39 @@ struct ContentView: View {
         DispatchQueue.main.async {
             if granted {
                 do {
-                    try audio.start()          // 録音開始
+                    try recorder.start()          // 録音開始
                 } catch {
                     print("[Recorder] start failed:", error.localizedDescription)
                 }
             } else {
                 showPermissionAlert = true
+            }
+        }
+    }
+
+    // MARK: - segment 受信ハンドラ
+    @MainActor
+    private func handleSegment(url: URL, start: Date) {
+        transcriptLines.append(.init(time: start, text: "…文字起こし中…"))
+        let idx = transcriptLines.count - 1
+
+        // 非同期処理はバックグラウンドで走らせつつ、
+        // UI 更新は必ず MainActor 上で行う
+        Task {
+            let result: String
+            do {
+                result = try await OpenAIClient.transcribe(url: url)
+            } catch {
+                result = "⚠️ \(error.localizedDescription)"
+            }
+
+            await MainActor.run {
+                // in-place ではなく、コピーして置き換える
+                var lines = transcriptLines
+                if lines.indices.contains(idx) {
+                    lines[idx].text = result
+                    transcriptLines = lines
+                }
             }
         }
     }
@@ -439,7 +443,7 @@ struct MainContentView: View {
     @Binding var modeIsManual: Bool
     @Binding var showApiKeyModal: Bool
     @Binding var isRecording: Bool
-    @Binding var transcriptionResult: String
+    @Binding var transcriptLines: [TranscriptLine]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -454,24 +458,7 @@ struct MainContentView: View {
                     .padding(.top, 14) // CSSの .section margin-bottom:14px の代わり
 
                 ZStack(alignment: .topLeading) {
-                     TextEditor(text: $transcriptionResult)
-                        .font(.system(size: 15))
-                        .lineSpacing(5) // line-height: 1.6 の近似
-                        .padding(8)
-                        .background(Color.cardBackground)
-                        .cornerRadius(6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.border, lineWidth: 1)
-                        )
-                    if transcriptionResult.isEmpty {
-                         Text("ここに文字起こし結果が表示されます...")
-                            .font(.system(size: 15))
-                            .foregroundColor(Color.gray.opacity(0.6))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 16)
-                            .allowsHitTesting(false)
-                    }
+                    TranscriptView(lines: $transcriptLines)
                 }
                 .frame(maxHeight: .infinity)
 

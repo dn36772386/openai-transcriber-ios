@@ -19,6 +19,9 @@
 		186071772DD8BF2700D3461D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071752DD8BF2700D3461D /* SettingsView.swift */; };
 		186071782DD8BF2700D3461D /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071762DD8BF2700D3461D /* KeychainHelper.swift */; };
 		1860717A2DD8C07100D3461D /* Debug.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071792DD8C07100D3461D /* Debug.swift */; };
+		1860717D2DD8D55F00D3461D /* TranscriptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717B2DD8D55F00D3461D /* TranscriptView.swift */; };
+		1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */; };
+		186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717F2DD8D83F00D3461D /* RecorderProxy.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +58,9 @@
 		186071752DD8BF2700D3461D /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		186071762DD8BF2700D3461D /* KeychainHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		186071792DD8C07100D3461D /* Debug.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Debug.swift; sourceTree = "<group>"; };
+		1860717B2DD8D55F00D3461D /* TranscriptView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TranscriptView.swift; sourceTree = "<group>"; };
+		1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioEngineRecorder.swift; sourceTree = "<group>"; };
+		1860717F2DD8D83F00D3461D /* RecorderProxy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecorderProxy.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +112,9 @@
 		1806C1792DD373640066C50F /* openai-transcriber-ios */ = {
 			isa = PBXGroup;
 			children = (
+				1860717F2DD8D83F00D3461D /* RecorderProxy.swift */,
+				1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */,
+				1860717B2DD8D55F00D3461D /* TranscriptView.swift */,
 				186071792DD8C07100D3461D /* Debug.swift */,
 				186071762DD8BF2700D3461D /* KeychainHelper.swift */,
 				186071752DD8BF2700D3461D /* SettingsView.swift */,
@@ -276,8 +285,11 @@
 			files = (
 				186071772DD8BF2700D3461D /* SettingsView.swift in Sources */,
 				186071782DD8BF2700D3461D /* KeychainHelper.swift in Sources */,
+				186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */,
+				1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */,
 				186071702DD8B2BD00D3461D /* OpenAIClient.swift in Sources */,
 				1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */,
+				1860717D2DD8D55F00D3461D /* TranscriptView.swift in Sources */,
 				1806C17D2DD373640066C50F /* ContentView.swift in Sources */,
 				1860717A2DD8C07100D3461D /* Debug.swift in Sources */,
 				1806C17B2DD373640066C50F /* openai_transcriber_iosApp.swift in Sources */,
