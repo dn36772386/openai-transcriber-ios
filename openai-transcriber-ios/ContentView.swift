@@ -53,8 +53,8 @@ extension Color {
 
 
 struct ContentView: View {
-    @StateObject private var audio = AudioRecorder()
-    @State private var transcription = "ここに文字起こし結果が表示されます…"
+    @StateObject private var audio = AudioRecorder()   // 実録音オブジェクト
+    @State private var transcriptionResult = ""        // Whisper 結果
     @State private var showPermissionAlert = false
     @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone // iPadなら最初から表示
     @State private var showApiKeyModal = false
@@ -69,34 +69,34 @@ struct ContentView: View {
                 MainContentView(
                     modeIsManual: $modeIsManual,
                     showApiKeyModal: $showApiKeyModal,
-                    isRecording: $audio.isRecording           // ← AudioRecorderのisRecordingをバインド
+                    isRecording: $audio.isRecording,         // バインド
+                    transcriptionResult: $transcriptionResult
                 )
                 .navigationBarItems(
                     leading: HamburgerButton(showSidebar: $showSidebar),
                     trailing: HeaderRecordingControls(
                         isRecording: $audio.isRecording,
+                        modeIsManual: $modeIsManual,
                         startAction: {
-                            do { try audio.start() } catch { Debug.log("start error:", error) }
+                            do { try audio.start() }
+                            catch { Debug.log("record start error:", error) }
                         },
                         stopAndSendAction: {
                             audio.stop()
                             guard let url = audio.url else { return }
-                            transcription = "Whisper に送信中…"
                             Task {
                                 do {
-                                    transcription = try await OpenAIClient.transcribe(url: url)
-                                } catch {
-                                    transcription = "エラー: \(error.localizedDescription)"
-                                }
+                                    transcriptionResult = try await OpenAIClient.transcribe(url: url)
+                            } catch {
+                                transcriptionResult = "エラー: \(error.localizedDescription)"
                             }
-                        },
-                        cancelAction: {
-                            let tmp = audio.url
-                            audio.stop()
-                            if let u = tmp { try? FileManager.default.removeItem(at: u) }
-                            transcription = "キャンセルしました"
                         }
-                    )
+                    },
+                    cancelAction: {
+                        let tmp = audio.url
+                        audio.stop()
+                        if let u = tmp { try? FileManager.default.removeItem(at: u) }
+                    }
                 )
                 .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
@@ -156,15 +156,15 @@ struct ContentView: View {
             Debug.log("🔴 stop tapped")
             audio.stop()
             if let url = audio.url {
-                transcription = "Whisper に送信中…"
+                transcriptionResult = "Whisper に送信中…"
                 Debug.log("[UI] Whisper upload begin, file =", url.lastPathComponent)
                 Task {
                     do {
                         let result = try await OpenAIClient.transcribe(url: url)
-                        transcription = result
+                        transcriptionResult = result
                         Debug.log("[UI] Whisper result arrived")
                     } catch {
-                        transcription = "エラー: \(error.localizedDescription)"
+                        transcriptionResult = "エラー: \(error.localizedDescription)"
                         Debug.log("[UI] error =", error.localizedDescription)
                     }
                 }
@@ -386,9 +386,9 @@ struct SidebarMenuItem: View {
 struct HeaderRecordingControls: View {
     @Binding var isRecording: Bool
     @Binding var modeIsManual: Bool
-    let startAction: () -> Void        // ← 追加
-    let stopAndSendAction: () -> Void         // ← 追加
-    let cancelAction: () -> Void       // ← 追加
+    var startAction: () -> Void
+    var stopAndSendAction: () -> Void
+    var cancelAction: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -404,23 +404,32 @@ struct HeaderRecordingControls: View {
 
             if !isRecording {
                 // ▶︎ 録音開始
-                Button(action: {
-                    startAction()          // ← audio.start() が実行される
-                    isRecording = true
-                }) {
-                    Image(systemName: "checkmark")  // 緑チェック
+                Button(action: { startAction() }) {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color.accent)
                 }
             } else {
                 // ■ 録音停止
-                Button(action: {
-                    stopAndSendAction()           // ← audio.stop() が実行
-                    isRecording = false
-                }) {
-                    Image(systemName: "xmark")      // 赤バツ
-                        .foregroundColor(audio.isRecording ? .red : .blue)
+                Button(action: { stopAndSendAction() }) {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color.red)
                 }
             }
+
+            // キャンセルボタン (常に表示)
+            Button(action: { cancelAction() }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(Color.icon)
+            }
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.cardBackground)
+        .cornerRadius(8)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -429,8 +438,7 @@ struct MainContentView: View {
     @Binding var modeIsManual: Bool
     @Binding var showApiKeyModal: Bool
     @Binding var isRecording: Bool
-
-    @State private var transcriptionResult: String = "" // "ここに文字起こし結果が表示されます..."
+    @Binding var transcriptionResult: String
 
     var body: some View {
         VStack(spacing: 0) {
