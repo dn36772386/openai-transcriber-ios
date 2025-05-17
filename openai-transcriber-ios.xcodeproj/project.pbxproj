@@ -14,6 +14,7 @@
 		1806C18C2DD373670066C50F /* openai_transcriber_iosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C18B2DD373670066C50F /* openai_transcriber_iosTests.swift */; };
 		1806C1962DD373670066C50F /* openai_transcriber_iosUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */; };
 		1806C1982DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */; };
+		1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716D2DD8B02500D3461D /* AudioRecorder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +46,7 @@
 		1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosUITests.swift; sourceTree = "<group>"; };
 		1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		181594B92DD8959F00720E1C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1860716D2DD8B02500D3461D /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +99,7 @@
 			isa = PBXGroup;
 			children = (
 				1806C17A2DD373640066C50F /* openai_transcriber_iosApp.swift */,
+				1860716D2DD8B02500D3461D /* AudioRecorder.swift */,
 				1806C17C2DD373640066C50F /* ContentView.swift */,
 				1806C17E2DD373670066C50F /* Assets.xcassets */,
 				1806C1802DD373670066C50F /* Preview Content */,
@@ -259,6 +262,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */,
 				1806C17D2DD373640066C50F /* ContentView.swift in Sources */,
 				1806C17B2DD373640066C50F /* openai_transcriber_iosApp.swift in Sources */,
 			);

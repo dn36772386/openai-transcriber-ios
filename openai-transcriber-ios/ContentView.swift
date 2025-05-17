@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVFoundation
+import Foundation
 
 // CSSカラーパレットの定義
 extension Color {
@@ -52,9 +53,7 @@ extension Color {
 
 
 struct ContentView: View {
-    // 録音状態（現段階では UI だけで使用）
-    @State private var isRecording = false
-    // マイク権限が拒否されたときのアラート表示制御
+    @StateObject private var audio = AudioRecorder()
     @State private var showPermissionAlert = false
     @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone // iPadなら最初から表示
     @State private var showApiKeyModal = false
@@ -68,17 +67,17 @@ struct ContentView: View {
                 MainContentView(
                     modeIsManual: $modeIsManual,
                     showApiKeyModal: $showApiKeyModal,
-                    isRecording: $isRecording           // ← 双方向バインディングに変更
+                    isRecording: $audio.isRecording           // ← AudioRecorderのisRecordingをバインド
                 )
                 .navigationBarItems(
                     leading: HamburgerButton(showSidebar: $showSidebar),
                     trailing: HeaderRecordingControls(
-                        isRecording: $isRecording,       // ← 双方向バインディング
+                        isRecording: $audio.isRecording,       // ← AudioRecorderのisRecordingをバインド
                         modeIsManual: $modeIsManual,
                         recordAction: toggleRecording    // ← 権限チェックを呼ぶクロージャを渡す
-                    ) // メインコンテンツから移動
+                    )
                 )
-                .navigationTitle("") // タイトルはヘッダー内で表示
+                .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
                 .background(Color.appBackground.edgesIgnoringSafeArea(.all))
             }
@@ -126,15 +125,14 @@ struct ContentView: View {
     // MARK: - Private
 
     private func toggleRecording() {
-        if isRecording {
-            isRecording = false
-            return
+        if audio.isRecording {
+            audio.stop()                    // 停止
+        } else {
+            requestMicrophonePermission()   // 開始前に権限確認
         }
-        requestMicrophonePermission()
     }
 
     private func requestMicrophonePermission() {
-        // iOS17 以降は新 API、以前は従来 API
         if #available(iOS 17, *) {
             AVAudioApplication.requestRecordPermission(completionHandler: { granted in
                 handlePermissionResult(granted)
@@ -149,9 +147,12 @@ struct ContentView: View {
 
     private func handlePermissionResult(_ granted: Bool) {
         DispatchQueue.main.async {
-            permissionChecked = true           // デバッグ用
             if granted {
-                isRecording = true
+                do {
+                    try audio.start()          // 録音開始
+                } catch {
+                    print("[Recorder] start failed:", error.localizedDescription)
+                }
             } else {
                 showPermissionAlert = true
             }
