@@ -35,31 +35,17 @@ final class AudioEngineRecorder: ObservableObject {
     private var fileURL:    URL?
     private var startDate   = Date()
 
-    /// 入力処理エンジン
+    /// 入力用オーディオ・エンジン
     private let engine = AVAudioEngine
 
 // MARK: - 初期化 ------------------------------------------------
     init() {
-        // vad.aggressiveness = 1 // This is now set in the constructor
-        // aggr はコンストラクタで設定済み
-        // engine はプロパティ宣言時に初期化済み
-
         // ── AudioSession 構成を明示 ─────────────────────────
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playAndRecord,
                                  mode: .measurement,
                                  options: [.defaultToSpeaker, .allowBluetooth])
         try? session.setActive(true)
-
-        // ── Tap を設定（まだ付いていなければ）────────────────
-        let input  = engine.inputNode
-        let format = input.outputFormat(forBus: 0) // Format for init tap
-
-        // Tap in init (bufferSize 256)
-        input.installTap(onBus: 0, bufferSize: 256, format: format) {
-            [weak self] buffer, _ in
-            self?.processVAD(buffer)
-        }
         // Tap は start() で付けるように変更（重複回避）
     }
 
@@ -79,10 +65,9 @@ final class AudioEngineRecorder: ObservableObject {
 
         // Tap in start (bufferSize 1024), replacing RMS logic
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            self?.processVAD(buffer)                    // VAD でスピーチ判定
-            let rms = buffer.rmsMagnitude()             // 参考ログ
+            self?.processVAD(buffer)                 // VAD でスピーチ判定
+            let rms = buffer.rmsMagnitude()          // 参考ログ
             Debug.log(String(format: "🎙️ RMS = %.5f", rms))
-            /* 必要なら追加処理をここへ */
         }
 
         // ── Engine 起動 ───────────────────────────────────────
@@ -109,7 +94,6 @@ final class AudioEngineRecorder: ObservableObject {
         let n = Int(buffer.frameLength)
 
         // Float → Int16 （vDSP でスケール＆丸め）
-        // Float → Int16 スケール用一時配列を生成
         let floatPCM = (0..<n).map { i -> Float in
             ch[i] * Float(Int16.max)
         }
@@ -142,7 +126,7 @@ final class AudioEngineRecorder: ObservableObject {
             if audioFile == nil {
                 openNewSegment(format: buffer.format)   // 新規セグメント開始
             }
-            try? audioFile?.write(from: buffer)         // 音声を書き込み
+            try? audioFile?.write(from: buffer) // 音声を書き込み
             silenceStart = nil
             isSpeaking   = true
         } else if isSpeaking {
@@ -208,13 +192,6 @@ final class AudioEngineRecorder: ObservableObject {
         startDate    = Date()
     }
 
-    // ------------------------------------------------------------------
-    // 旧コードとの互換のために呼び出し箇所が残っている場合のダミー
-    // ------------------------------------------------------------------
-    private func process(buffer: AVAudioPCMBuffer, format: AVAudioFormat) {
-        /* 追加の解析やエフェクト処理を入れる場合はここに実装 */
-    }
-
-     // MARK: - 後片付け -----------------------------------------
-     deinit { /* Fvad はクラスなので明示解放不要 */ }
- }
+    // MARK: - 後片付け -----------------------------------------
+    deinit { /* Fvad はクラスなので明示解放不要 */ }
+}
