@@ -1,0 +1,23 @@
+{
+  "pins" : [
+    {
+      "identity" : "libfvad",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gfreezy/libfvad.git",
+      "state" : {
+        "revision" : "b685985209f19e9f94c04514e849089869b1d5d5",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "libfvad-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/TeHikuMedia/libfvad-ios.git",
+      "state" : {
+        "revision" : "fe8982538561e9cdad97174d91f73f93f6b426a3",
+        "version" : "1.0.1"
+      }
+    }
+  ],
+  "version" : 2
+}

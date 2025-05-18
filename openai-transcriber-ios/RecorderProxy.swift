@@ -11,12 +11,16 @@ final class RecorderProxy: NSObject, AudioEngineRecorderDelegate {
     /// セグメント完了時に呼ばれるクロージャ
     var onSegment: ((URL, Date) -> Void)?
     
-    nonisolated func recorder(_ rec: AudioEngineRecorder,
-                              didFinishSegment url: URL,
-                              start: Date) {
-        // isolated → MainActor へジャンプして UI/State を触る
-        Task { @MainActor in
-            onSegment?(url, start)
+    func recorder(_ rec: AudioEngineRecorder, didFinishSegment url: URL, start: Date) {
+        Task {
+            do {
+                let text = try await OpenAIService.transcribe(url: url)
+                DispatchQueue.main.async {
+                    self.transcribed += text + "\n"
+                }
+            } catch {
+                print("Error transcribing audio: \(error)")
+            }
         }
     }
 }

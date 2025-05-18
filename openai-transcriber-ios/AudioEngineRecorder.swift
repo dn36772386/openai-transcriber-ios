@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import Accelerate
+import VoiceActivityDetector   // Swift ラッパ名
 
 protocol AudioEngineRecorderDelegate: AnyObject {
     func recorder(_ rec: AudioEngineRecorder,
@@ -15,16 +16,72 @@ final class AudioEngineRecorder: ObservableObject {
     @Published var isRecording = false
     weak var delegate: AudioEngineRecorderDelegate?
 
+    // MARK: ––––– Private –––––
+    /// 無音判定しきい値（RMS を使う処理を削除したので不要）
+    private let silenceThreshold = Float(0.0)     // ダミー値（未使用）
+    /// 無音継続時間（発話終了判定）
+    private let silenceWindow    = 1.2            // 1200 ms
+    /// Whisper へ送らない極短ファイル（ノイズのみなど）サイズ下限
+    private let minSegmentBytes  = 12_288         // < 12 kB は破棄
+
+    // ── VoiceActivityDetector ラッパ ──────────────────────────
+    private let vad = VoiceActivityDetector()
+
+    // MARK: - 状態 --------------------------------------------------
+    private var isSpeaking  = false
+    private var silenceStart: Date?
+    private var audioFile: AVAudioFile?
+    private var fileURL:   URL?
+
+    private let engine: AVAudioEngine
+
+// MARK: - 初期化 ------------------------------------------------
+    init() {
+        try? vad.setSampleRate(sampleRate: 16_000) // Configure sample rate
+        try? vad.setMode(mode: .quality)        // .quality〜.veryAggressive
+        engine = AVAudioEngine()
+
+        // ── AudioSession 構成を明示 ─────────────────────────
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playAndRecord,
+                                 mode: .measurement,
+                                 options: [.defaultToSpeaker, .allowBluetooth])
+        try? session.setActive(true)
+
+        let input  = engine.inputNode
+        let format = input.outputFormat(forBus: 0) // Format for init tap
+
+        // Tap in init (bufferSize 256)
+        input.installTap(onBus: 0, bufferSize: 256, format: format) {
+            [weak self] buffer, _ in
+            self?.processVAD(buffer)
+        }
+    }
+
     func start() throws {
         guard !isRecording else { return }
+
         try AVAudioSession.sharedInstance().setCategory(.playAndRecord,
-                                                        mode: .default,
+                                                        mode: .default, // Or .measurement, ensure consistency
                                                         options: .defaultToSpeaker)
         try AVAudioSession.sharedInstance().setActive(true)
-        startDate = Date()
-        installTap()
+
+        // ── Tap を設定（まだ付いていなければ）────────────────
+        let input  = engine.inputNode
+        let format = input.inputFormat(forBus: 0) // Format for start tap, as per older structure
+        input.removeTap(onBus: 0)                      // 念のためクリア
+
+        // Tap in start (bufferSize 1024), replacing RMS logic
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) {
+            [weak self] buffer, _ in
+            self?.processVAD(buffer)          // RMS 判定ロジックを削除
+        }
+
+        // ── Engine 起動 ───────────────────────────────────────
         engine.prepare()
         try engine.start()
+
+        startDate = Date()
         isRecording = true
     }
 
@@ -36,73 +93,55 @@ final class AudioEngineRecorder: ObservableObject {
         isRecording = false
     }
 
-    // MARK: ––––– Private –––––
-    private let engine           = AVAudioEngine()
-    /// 無音判定しきい値（環境ノイズがある程度あっても切れないよう緩和）
-    private let silenceThreshold = Float(0.005)   // ≒ –40 dBFS
-    /// 無音継続時間（発話終了判定）
-    private let silenceWindow    = 0.8            // 800 ms
-    /// Whisper へ送らない極短ファイル（ノイズのみなど）サイズ下限
-    private let minSegmentBytes  = 2048           // < 2 kB は破棄
+    /// WebRTC VAD で音声区間を判定しセグメントを切り出す
+    private func processVAD(_ buffer: AVAudioPCMBuffer)
+    {
+        guard let ch  = buffer.floatChannelData?[0] else { return }
 
-    /// true なら現在「発話区間」にいる
-    private var inSpeech = false
+        let n = Int(buffer.frameLength)
 
-    private var audioFile: AVAudioFile?
-    private var fileURL:  URL?
-    private var silenceStart: Date?
-    private var startDate  = Date()
+        // Float → Int16 （vDSP でスケール＆丸め）
+        // Create a mutable copy for floatPCM if buffer.floatChannelData provides non-mutable
+        var mutableCh = Array(UnsafeBufferPointer(start: ch, count: n))
+        var floatPCM = [Float](repeating: 0, count: n) // This intermediate might not be needed if scaling directly to Int16
+                                                       // but current diff implies this structure.
+        var scale: Float = Float(Int16.max)
+        vDSP_vsmul(&mutableCh, 1, &scale, &floatPCM, 1, vDSP_Length(n))
+        
+        var pcm = [Int16](repeating: 0, count: n)
+        vDSP_vfixr32_16(floatPCM, 1, &pcm, 1, vDSP_Length(n))
 
-    private func installTap() {
-        let fmt = engine.inputNode.outputFormat(forBus: 0)
-        engine.inputNode.installTap(onBus: 0,
-                                    bufferSize: 1024,
-                                    format: fmt) { [weak self] buf, _ in
-            self?.process(buffer: buf, format: fmt)
+        var voiceFlag = false
+        var idx = 0
+        let frameSize = 160
+        while idx + frameSize <= n {
+            // Fvad は Int32 を返す: 1=voice, 0=silence, -1=error
+            // if vad.process(&pcm + idx, length: frameSize) == 1 { // Previous version
+            if try vad.process(frame: &pcm + idx, length: frameSize) == .voice {
+                voiceFlag = true
+                break
+            }
+            idx += frameSize
         }
-    }
 
-    private func process(buffer: AVAudioPCMBuffer, format: AVAudioFormat) {
-        // RMS 計算（Accelerate C API を使用）
-        guard let ch = buffer.floatChannelData?[0] else { return }
-        var rms: Float = 0
-        vDSP_rmsqv(ch, 1, &rms, vDSP_Length(buffer.frameLength))
         let now = Date()
 
-        // 無音判定
-        if rms < silenceThreshold {
-            if silenceStart == nil { silenceStart = now }
-        } else {
-            silenceStart = nil
-        }
-
-        // ---- open / write / close ------------------------------------
-        if rms >= silenceThreshold {
-            // ─ 発話を検知 ─
-            if !inSpeech {
-                inSpeech = true
-                openNewSegment(format: format)   // 声が出た瞬間にだけ開く
+        if voiceFlag {
+            if audioFile == nil { // Start of a new speech segment
+                openNewSegment(format: buffer.format) // Use the original buffer's format for file writing,
+                                                      // assuming it's what we want to save.
+                                                      // Or use a fixed format for WAV.
             }
-            silenceStart = nil                  // 無音タイマをリセット
-        } else if inSpeech {
-            // ─ 無音区間（発話後） ─
+            try? audioFile?.write(from: buffer) // Write the original buffer
+            silenceStart = nil
+            isSpeaking   = true
+        } else if isSpeaking {
             if silenceStart == nil { silenceStart = now }
             if let s0 = silenceStart,
                now.timeIntervalSince(s0) > silenceWindow {
-                finalizeSegment()               // トレーリング無音で確定
-                inSpeech = false
+                finalizeSegment()
+                isSpeaking = false
             }
-        }
-
-        // 音がしている間だけ書き込む
-        // ───── 録音ファイルの開始 ─────
-        if audioFile == nil { openNewSegment(format: format) }
-        try? audioFile?.write(from: buffer)        // in-speech 時のみ呼ばれる
-
-        // segment close
-        if let s0 = silenceStart,
-           now.timeIntervalSince(s0) > silenceWindow {
-            finalizeSegment()                      // トレーリング無音で確定
         }
     }
 
@@ -131,16 +170,19 @@ final class AudioEngineRecorder: ObservableObject {
     private func finalizeSegment() {
         guard let url = fileURL else { return }
 
-        // ===== ファイルサイズチェック =============================
+        // ===== ファイル健全性チェック =============================
         let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]
                      as? NSNumber)?.intValue ?? 0
-        if bytes < minSegmentBytes {
-            try? FileManager.default.removeItem(at: url)   // 極小ファイルは破棄
+
+        if bytes < minSegmentBytes {   // avgRMS 判定は不要になったので簡略
+            try? FileManager.default.removeItem(at: url)
             resetState()
             return
         }
 
-        // ===== デリゲート通知 =====================================
+        // ===== ヘッダーを確定させてからデリゲート通知 ================
+        //audioFile?.close()                         // 追加：強制フラッシュ
+
         audioFile    = nil
         fileURL      = nil
         silenceStart = nil
@@ -155,4 +197,7 @@ final class AudioEngineRecorder: ObservableObject {
         silenceStart = nil
         startDate    = Date()
     }
+
+    // MARK: - 後片付け -----------------------------------------
+    deinit { /* Fvad はクラスなので明示解放不要 */ }
 }
