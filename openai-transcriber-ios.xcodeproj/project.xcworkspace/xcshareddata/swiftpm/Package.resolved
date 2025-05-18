@@ -1,12 +1,21 @@
 {
   "pins" : [
     {
+      "identity" : "libfvad",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gfreezy/libfvad",
+      "state" : {
+        "revision" : "b685985209f19e9f94c04514e849089869b1d5d5",
+        "version" : "1.0.0"
+      }
+    },
+    {
       "identity" : "voiceactivitydetector",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/dn36772386/VoiceActivityDetector.git",
       "state" : {
         "branch" : "master",
-        "revision" : "c6687ff072ecef66f86f4a21ace679bd84cf0f2c"
+        "revision" : "c351170cebf237a12bda4f2b8f37efe5925dac27"
       }
     }
   ],
