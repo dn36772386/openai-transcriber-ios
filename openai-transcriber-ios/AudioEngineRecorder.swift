@@ -140,7 +140,9 @@ final class AudioEngineRecorder: ObservableObject {
             return
         }
 
-        // ===== デリゲート通知 =====================================
+        // ===== ヘッダーを確定させてからデリゲート通知 ================
+        audioFile?.close()                         // 追加：強制フラッシュ
+
         audioFile    = nil
         fileURL      = nil
         silenceStart = nil
