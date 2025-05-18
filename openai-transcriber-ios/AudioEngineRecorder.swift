@@ -1,7 +1,13 @@
 import Foundation
 import AVFoundation
-import Accelerate
-import VoiceActivityDetector   // Swift ラッパ名
+import Speech
+import VoiceActivityDetector   // Swift ラッパ
+import Accelerate              // vDSP を使うので追加
+
+/// ── reedom 版ラッパ ────────────────────────────────
+private let vad = VoiceActivityDetector(
+        sampleRate: 16_000,
+        aggressiveness: .quality)   // .quality / .aggressive / .veryAggressive
 
 protocol AudioEngineRecorderDelegate: AnyObject {
     func recorder(_ rec: AudioEngineRecorder,
@@ -18,27 +24,24 @@ final class AudioEngineRecorder: ObservableObject {
 
     // MARK: ––––– Private –––––
     /// 無音判定しきい値（RMS を使う処理を削除したので不要）
-    private let silenceThreshold = Float(0.0)     // ダミー値（未使用）
+    // private let silenceThreshold = Float(0.0)     // ダミー値（未使用）
     /// 無音継続時間（発話終了判定）
     private let silenceWindow    = 1.2            // 1200 ms
     /// Whisper へ送らない極短ファイル（ノイズのみなど）サイズ下限
     private let minSegmentBytes  = 12_288         // < 12 kB は破棄
-
-    // ── VoiceActivityDetector ラッパ ──────────────────────────
-    private let vad = VoiceActivityDetector()
 
     // MARK: - 状態 --------------------------------------------------
     private var isSpeaking  = false
     private var silenceStart: Date?
     private var audioFile: AVAudioFile?
     private var fileURL:   URL?
+    private var startDate = Date()             //  ← 追加
 
     private let engine: AVAudioEngine
 
 // MARK: - 初期化 ------------------------------------------------
     init() {
-        try? vad.setSampleRate(sampleRate: 16_000) // Configure sample rate
-        try? vad.setMode(mode: .quality)        // .quality〜.veryAggressive
+        // vad.aggressiveness = 1 // This is now set in the constructor
         engine = AVAudioEngine()
 
         // ── AudioSession 構成を明示 ─────────────────────────
@@ -103,21 +106,23 @@ final class AudioEngineRecorder: ObservableObject {
         // Float → Int16 （vDSP でスケール＆丸め）
         // Create a mutable copy for floatPCM if buffer.floatChannelData provides non-mutable
         var mutableCh = Array(UnsafeBufferPointer(start: ch, count: n))
-        var floatPCM = [Float](repeating: 0, count: n) // This intermediate might not be needed if scaling directly to Int16
-                                                       // but current diff implies this structure.
-        var scale: Float = Float(Int16.max)
-        vDSP_vsmul(&mutableCh, 1, &scale, &floatPCM, 1, vDSP_Length(n))
-        
+        let floatPCM = channelData.map { $0 * Float(Int16.max) }
         var pcm = [Int16](repeating: 0, count: n)
-        vDSP_vfixr32_16(floatPCM, 1, &pcm, 1, vDSP_Length(n))
+        vDSP.convert(                     // Xcode-15 以降の代替 API
+            elementsOf: floatPCM,
+            to: &pcm,
+            rounding: .towardNearestInteger)
 
+        // VAD でチェック
         var voiceFlag = false
         var idx = 0
-        let frameSize = 160
+        let frameSize = 160 // 10 ms at 16 kHz
         while idx + frameSize <= n {
-            // Fvad は Int32 を返す: 1=voice, 0=silence, -1=error
-            // if vad.process(&pcm + idx, length: frameSize) == 1 { // Previous version
-            if try vad.process(frame: &pcm + idx, length: frameSize) == .voice {
+            let voiced = pcm.withUnsafeBufferPointer {
+                vad.detect(frames: $0.baseAddress!.advanced(by: idx),
+                           lengthInMilliSec: 10)          // DetectionResult
+            }
+            if voiced == .voice {          // .voice / .silence
                 voiceFlag = true
                 break
             }
