@@ -24,31 +24,17 @@ final class OpenAIClient {
     /// 録音した WAV / WEBM などの一時ファイルを送って文字列を取得
     @MainActor
     func transcribe(url: URL) async throws -> String {
-        // ── 0 byte／極小ファイルは送信しない ─────────────────────
-        let attr  = try FileManager.default.attributesOfItem(atPath: url.path)
-        let bytes = (attr[.size] as? NSNumber)?.intValue ?? 0
-        guard bytes >= 4_096 else {                            // 4 kB 未満は破棄
-            throw NSError(domain: "Whisper", code: -3,
-                          userInfo: [NSLocalizedDescriptionKey:
-                                     "Audio too short (\(bytes) bytes) – skipped"])
-        }
 
         // ── multipart/form-data を構築 ──────────────────────────────
-        let boundary = "Boundary-\(UUID().uuidString)"      // 送信ごとに一意
-        var form = MultipartFormData(boundary: boundary)
+        var form = MultipartFormData()
+        form.append(url, name: "file", filename: url.lastPathComponent)
+        form.append("whisper-1", name: "model")
+        form.append("ja",        name: "language")            // ★日本語固定
 
-        // 必須フィールド
-        form.appendField(name: "model",    value: "whisper-1")
-        form.appendField(name: "language", value: "ja")
-
-        // 直前の文字列を 120 文字以内で prompt にセット（任意）
-        if !recentContext.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let prompt = String(recentContext.suffix(maxPromptLen))
-            form.appendField(name: "prompt", value: prompt)
+        if !recentContext.isEmpty {                           // ★前文をヒントに
+            form.append(String(recentContext.suffix(maxPromptLen)),
+                        name: "prompt")
         }
-
-        // 録音ファイル
-        try form.appendFile(url: url, fieldName: "file", filename: "audio.wav")
 
         // ── 送信 ────────────────────────────────────────────────
         let (data, resp) = try await send(form)
@@ -71,11 +57,8 @@ final class OpenAIClient {
         // ── JSON Decode ─────────────────────────────────────────
         let result = try JSONDecoder().decode(WhisperResp.self, from: data).text
 
-        // 次回 prompt 用に文字列を蓄積（長さ上限 1 000 字で切り捨て）
+        // 次回 prompt 用に文字列を蓄積 (無限増を避けるリングバッファ方式でも OK)
         recentContext.append(result)
-        if recentContext.count > 1_000 {
-            recentContext.removeFirst(recentContext.count - 1_000)
-        }
 
         return result
     }
@@ -115,26 +98,39 @@ final class OpenAIClient {
 
 /// 極小サイズの multipart/form-data ヘルパ
 private struct MultipartFormData {
-    struct Part { let header: String; let body: Data }
+
     private var parts: [Part] = []
-    private let boundary: String
+    private let boundary = "----OpenAI-Transcriber-\(UUID().uuidString)"
 
-    init(boundary: String) { self.boundary = boundary }
+    mutating func append(
+        _ string: String, name: String
+    ) {
+        parts.append(.init(
+            header:
+                """
+                Content-Disposition: form-data; name="\(name)"
 
-    /// 文字列フィールドを追加
-    mutating func appendField(name: String, value: String) {
-        let header =
-            "Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n"
-        parts.append(.init(header: header, body: value.data(using: .utf8)!))
+                """,
+            body: Data(string.utf8)
+        ))
     }
 
-    /// 録音ファイルをパートに追加
-    mutating func appendFile(url: URL, fieldName: String, filename: String) throws {
-        let header =
-            "Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(filename)\"\r\n" +
-            "Content-Type: audio/wav\r\n\r\n"
-        let data = try Data(contentsOf: url)
-        parts.append(.init(header: header, body: data))
+    mutating func append(
+        _ fileURL: URL, name: String, filename: String
+    ) {
+        // ファイル読み込み失敗は上位に投げる
+        let data = try! Data(contentsOf: fileURL)
+        let mime = mimeType(for: fileURL.pathExtension)
+
+        parts.append(.init(
+            header:
+                """
+                Content-Disposition: form-data; name="\(name)"; filename="\(filename)"
+                Content-Type: \(mime)
+
+                """,
+            body: data
+        ))
     }
 
     /// 最終的な HTTP Body
@@ -146,12 +142,25 @@ private struct MultipartFormData {
             out.append(p.body)
             out.append("\r\n".data(using: .utf8)!)
         }
-        // ── multipart 終端 ──
         out.append("--\(boundary)--\r\n".data(using: .utf8)!)
         return out
     }
 
     var contentTypeHeader: String {
         "multipart/form-data; boundary=\(boundary)"
+    }
+
+    private struct Part {
+        let header: String
+        let body: Data
+    }
+
+    private func mimeType(for ext: String) -> String {
+        switch ext.lowercased() {
+        case "wav":  return "audio/wav"
+        case "webm": return "audio/webm"
+        case "m4a":  return "audio/m4a"
+        default:     return "application/octet-stream"
+        }
     }
 }

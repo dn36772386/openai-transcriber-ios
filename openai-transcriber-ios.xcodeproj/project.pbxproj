@@ -22,7 +22,6 @@
 		1860717D2DD8D55F00D3461D /* TranscriptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717B2DD8D55F00D3461D /* TranscriptView.swift */; };
 		1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */; };
 		186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717F2DD8D83F00D3461D /* RecorderProxy.swift */; };
-		186071822DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071812DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,7 +61,6 @@
 		1860717B2DD8D55F00D3461D /* TranscriptView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TranscriptView.swift; sourceTree = "<group>"; };
 		1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioEngineRecorder.swift; sourceTree = "<group>"; };
 		1860717F2DD8D83F00D3461D /* RecorderProxy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecorderProxy.swift; sourceTree = "<group>"; };
-		186071812DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AVAudioPCMBuffer+RMS.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,7 +112,6 @@
 		1806C1792DD373640066C50F /* openai-transcriber-ios */ = {
 			isa = PBXGroup;
 			children = (
-				186071812DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift */,
 				1860717F2DD8D83F00D3461D /* RecorderProxy.swift */,
 				1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */,
 				1860717B2DD8D55F00D3461D /* TranscriptView.swift */,
@@ -287,7 +284,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				186071772DD8BF2700D3461D /* SettingsView.swift in Sources */,
-				186071822DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift in Sources */,
 				186071782DD8BF2700D3461D /* KeychainHelper.swift in Sources */,
 				186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */,
 				1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */,
