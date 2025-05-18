@@ -10,12 +10,12 @@
       }
     },
     {
-      "identity" : "libfvad-ios",
+      "identity" : "voiceactivitydetector",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/TeHikuMedia/libfvad-ios.git",
+      "location" : "https://github.com/dn36772386/VoiceActivityDetector.git",
       "state" : {
-        "revision" : "fe8982538561e9cdad97174d91f73f93f6b426a3",
-        "version" : "1.0.1"
+        "branch" : "master",
+        "revision" : "50c4583f74af4ae64ab38ec62bc3c765b635d274"
       }
     }
   ],
