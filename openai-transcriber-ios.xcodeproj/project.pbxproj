@@ -23,6 +23,8 @@
 		1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */; };
 		186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717F2DD8D83F00D3461D /* RecorderProxy.swift */; };
 		186071822DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071812DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift */; };
+		18B22B962DD9C0920084808B /* VoiceActivityDetector in Frameworks */ = {isa = PBXBuildFile; productRef = 18B22B952DD9C0920084808B /* VoiceActivityDetector */; };
+		18B22B982DD9C0920084808B /* libfvad in Frameworks */ = {isa = PBXBuildFile; productRef = 18B22B972DD9C0920084808B /* libfvad */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +72,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				18B22B962DD9C0920084808B /* VoiceActivityDetector in Frameworks */,
+				18B22B982DD9C0920084808B /* libfvad in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,6 +185,8 @@
 			);
 			name = "openai-transcriber-ios";
 			packageProductDependencies = (
+				18B22B952DD9C0920084808B /* VoiceActivityDetector */,
+				18B22B972DD9C0920084808B /* libfvad */,
 			);
 			productName = "openai-transcriber-ios";
 			productReference = 1806C1772DD373640066C50F /* openai-transcriber-ios.app */;
@@ -255,7 +261,7 @@
 			);
 			mainGroup = 1806C16E2DD373640066C50F;
 			packageReferences = (
-				1860718D2DD99FC400D3461D /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */,
+				18B22B942DD9C0820084808B /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */,
 			);
 			productRefGroup = 1806C1782DD373640066C50F /* Products */;
 			projectDirPath = "";
@@ -657,7 +663,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		1860718D2DD99FC400D3461D /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */ = {
+		18B22B942DD9C0820084808B /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/dn36772386/VoiceActivityDetector.git";
 			requirement = {
@@ -666,6 +672,19 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		18B22B952DD9C0920084808B /* VoiceActivityDetector */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 18B22B942DD9C0820084808B /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */;
+			productName = VoiceActivityDetector;
+		};
+		18B22B972DD9C0920084808B /* libfvad */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 18B22B942DD9C0820084808B /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */;
+			productName = libfvad;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1806C16F2DD373640066C50F /* Project object */;
 }
