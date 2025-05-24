@@ -9,7 +9,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     }
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        print("✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegate is initialized!")
+        print("✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegateが初期化されました！")
         // BackgroundSessionManagerの初期化を促す
         let manager = BackgroundSessionManager.shared
         print("✅ AppDelegate: BackgroundSessionManager = \(manager)")

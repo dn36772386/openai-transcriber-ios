@@ -44,7 +44,13 @@ class HistoryManager: ObservableObject {
         }
     }
 
-    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
+func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
+        // 空のセッションは保存しない
+        guard !lines.isEmpty else {
+            print("ℹ️ No transcript lines to save")
+            return
+        }
+        
         let newItem = HistoryItem(
             lines: lines,
             fullAudioURL: fullAudioURL,
@@ -60,20 +66,14 @@ class HistoryManager: ObservableObject {
             deleteAssociatedFiles(for: oldItem)
         }
         
-        if let sourceURL = fullAudioURL, sourceURL.isFileURL {
-             do {
-                 try FileManager.default.removeItem(at: sourceURL)
-                 print("🗑️ Removed temporary full session audio: \(sourceURL.lastPathComponent)")
-             } catch {
-                 print("⚠️ Error removing temporary full session audio \(sourceURL.path): \(error)")
-             }
-        }
+        // 一時ファイルの削除（すでにDocumentsにコピー済み）
         lines.forEach { line in
             if let segmentURL = line.audioURL, segmentURL.isFileURL {
                 do {
                     try FileManager.default.removeItem(at: segmentURL)
+                    print("🗑️ Removed temporary segment audio: \(segmentURL.lastPathComponent)")
                 } catch {
-                    // print("⚠️ Error removing temporary segment audio \(segmentURL.path): \(error)")
+                    print("⚠️ Error removing temporary segment audio \(segmentURL.path): \(error)")
                 }
             }
         }
