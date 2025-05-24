@@ -2,6 +2,7 @@ import SwiftUI
 import AVFoundation
 import Foundation
 import Combine // Combineをインポート
+import UniformTypeIdentifiers
 
 // MARK: - Color Palette
 extension Color {
@@ -62,6 +63,11 @@ struct ContentView: View {
     @State private var isCancelling = false
     @State private var transcriptionTasks: [URL: UUID] = [:] // URLと行IDのマッピング
     @State private var cancellables = Set<AnyCancellable>()
+    @State private var showFilePicker = false
+    @StateObject private var fileProcessor = AudioFileProcessor()
+    @State private var showProcessingProgress = false
+    @State private var showFormatAlert = false
+    @State private var formatAlertMessage = ""
 
     private let client = OpenAIClient()
     
@@ -110,6 +116,14 @@ struct ContentView: View {
                                 Text(modeIsManual ? "manual" : "auto")
                                     .font(.caption)
                                     .foregroundColor(Color.textSecondary)
+                                
+                                Button {
+                                    showFilePicker = true
+                                } label: {
+                                    Image(systemName: "square.and.arrow.down")
+                                        .font(.system(size: 22, weight: .light))
+                                        .foregroundColor(Color.accent)
+                                }
                             }
 
                             if recorder.isRecording {
@@ -166,6 +180,42 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .fileImporter(
+            isPresented: $showFilePicker,
+            allowedContentTypes: AudioFormatHandler.supportedFormats,
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                if let url = urls.first {
+                    processImportedFileWithFormatSupport(url)
+                }
+            case .failure(let error):
+                formatAlertMessage = "ファイル選択エラー: \(error.localizedDescription)"
+                showFormatAlert = true
+            }
+        }
+        .sheet(isPresented: $showProcessingProgress) {
+            VStack(spacing: 20) {
+                Text("音声ファイルを処理中...")
+                    .font(.headline)
+                
+                ProgressView(value: fileProcessor.progress)
+                    .progressViewStyle(LinearProgressViewStyle())
+                    .padding(.horizontal)
+                
+                Text("\(Int(fileProcessor.progress * 100))%")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(40)
+            .interactionDisabled(true)
+        }
+        .alert("フォーマットエラー", isPresented: $showFormatAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(formatAlertMessage)
+        }
         .onAppear {
             if KeychainHelper.shared.apiKey() == nil {
                 DispatchQueue.main.async { showSettings = true }
@@ -464,6 +514,54 @@ struct ContentView: View {
         // Sidebarを閉じる (Phoneの場合)
         if UIDevice.current.userInterfaceIdiom == .phone {
             withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
+        }
+    }
+    
+    // ファイルインポート処理
+    private func processImportedFile(_ url: URL) {
+        Task {
+            do {
+                showProcessingProgress = true
+                
+                // 新しいセッションを準備
+                prepareNewTranscriptionSession(saveCurrentSession: true)
+                
+                // ファイルを処理
+                let result = try await fileProcessor.processFile(at: url)
+                
+                // 各セグメントを文字起こし
+                for (index, segment) in result.segments.enumerated() {
+                    let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
+                    
+                    // 最初のセグメントを再生対象に設定
+                    if index == 0 {
+                        self.currentPlayingURL = segment.url
+                    }
+                    
+                    // TranscriptLineを追加
+                    let newLine = TranscriptLine(
+                        id: UUID(),
+                        time: startDate,
+                        text: "…文字起こし中…",
+                        audioURL: segment.url
+                    )
+                    self.transcriptLines.append(newLine)
+                    self.transcriptionTasks[segment.url] = newLine.id
+                    
+                    // Whisperに送信
+                    try client.transcribeInBackground(
+                        url: segment.url,
+                        started: startDate
+                    )
+                }
+                
+                showProcessingProgress = false
+                
+            } catch {
+                showProcessingProgress = false
+                print("❌ File processing error: \(error)")
+                // エラーアラートを表示
+            }
         }
     }
 }
@@ -815,6 +913,210 @@ class AudioPlayerDelegateWrapper: NSObject, ObservableObject, AVAudioPlayerDeleg
     func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
         Debug.log("❌ AVAudioPlayerDelegate: Decode error: \(error?.localizedDescription ?? "Unknown")")
     }
+}
+
+// MARK: - ContentView Extension for File Import
+extension ContentView {
+    
+    // ファイルインポート処理（拡張版）
+    func processImportedFileWithFormatSupport(_ url: URL) {
+        // フォーマット検証
+        let validation = AudioFormatHandler.validateFormat(url: url)
+        
+        guard validation.isValid else {
+            // エラーアラート表示
+            showFormatError(validation.error ?? "不明なエラー")
+            return
+        }
+        
+        // メタデータ表示（オプション）
+        if let metadata = AudioFormatHandler.getAudioMetadata(from: url) {
+            print("📊 Audio Metadata:")
+            print("  Duration: \(metadata.formattedDuration)")
+            print("  Sample Rate: \(metadata.sampleRate) Hz")
+            print("  Channels: \(metadata.channelCount)")
+            print("  Bit Rate: \(metadata.formattedBitRate)")
+            print("  File Size: \(metadata.formattedFileSize)")
+            print("  Codec: \(metadata.codec)")
+        }
+        
+        // プログレス表示開始
+        showProcessingProgress = true
+        
+        // 音声抽出/変換処理
+        AudioFormatHandler.extractAudio(from: url) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let processedURL):
+                    // 抽出/変換成功後、無音分割処理へ
+                    self?.performSilenceSplitting(processedURL, originalURL: url)
+                    
+                case .failure(let error):
+                    self?.showProcessingProgress = false
+                    self?.showFormatError(error.localizedDescription)
+                }
+            }
+        }
+    }
+    
+    // 無音分割処理の実行
+    private func performSilenceSplitting(_ url: URL, originalURL: URL) {
+        Task {
+            do {
+                // 新しいセッションを準備
+                prepareNewTranscriptionSession(saveCurrentSession: true)
+                
+                // ファイルを処理
+                let result = try await fileProcessor.processFile(at: url)
+                
+                // 元のファイル名を表示用に保存
+                let originalFileName = originalURL.lastPathComponent
+                
+                // 各セグメントを文字起こし
+                for (index, segment) in result.segments.enumerated() {
+                    let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
+                    
+                    // 最初のセグメントを再生対象に設定
+                    if index == 0 {
+                        self.currentPlayingURL = segment.url
+                    }
+                    
+                    // TranscriptLineを追加
+                    let newLine = TranscriptLine(
+                        id: UUID(),
+                        time: startDate,
+                        text: "…文字起こし中… [\(originalFileName) - セグメント\(index + 1)]",
+                        audioURL: segment.url
+                    )
+                    self.transcriptLines.append(newLine)
+                    self.transcriptionTasks[segment.url] = newLine.id
+                    
+                    // Whisperに送信
+                    try client.transcribeInBackground(
+                        url: segment.url,
+                        started: startDate
+                    )
+                }
+                
+                showProcessingProgress = false
+                
+                // 一時ファイルのクリーンアップ（変換されたファイルの場合）
+                if url != originalURL {
+                    try? FileManager.default.removeItem(at: url)
+                }
+                
+            } catch {
+                showProcessingProgress = false
+                showFormatError("処理エラー: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // エラーアラート表示
+    private func showFormatError(_ message: String) {
+        formatAlertMessage = message
+        showFormatAlert = true
+    }
+}
+
+// MARK: - Enhanced File Picker View
+struct EnhancedFilePickerButton: View {
+    @Binding var showFilePicker: Bool
+    @State private var showFormatInfo = false
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Button {
+                showFilePicker = true
+            } label: {
+                Label("音声をインポート", systemImage: "square.and.arrow.down")
+                    .font(.system(size: 16))
+            }
+            
+            Button {
+                showFormatInfo = true
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .sheet(isPresented: $showFormatInfo) {
+            SupportedFormatsView()
+        }
+    }
+}
+
+// MARK: - Supported Formats Info View
+struct SupportedFormatsView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    private let formats = [
+        ("音声ファイル", ["WAV", "MP3", "M4A/AAC", "AIFF", "FLAC"]),
+        ("動画ファイル", ["MP4", "MOV", "その他（音声トラック付き）"]),
+        ("制限事項", ["OGG Vorbisは変換が必要", "WEBMは一部のみ対応", "DRM保護されたファイルは非対応"])
+    ]
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(formats, id: \.0) { section in
+                    Section(header: Text(section.0)) {
+                        ForEach(section.1, id: \.self) { format in
+                            HStack {
+                                Image(systemName: formatIcon(for: format))
+                                    .foregroundColor(.accentColor)
+                                    .frame(width: 30)
+                                Text(format)
+                                    .font(.system(size: 14))
+                            }
+                        }
+                    }
+                }
+                
+                Section(header: Text("ヒント")) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("長い録音は自動的に分割されます", systemImage: "scissors")
+                        Label("動画から音声が自動抽出されます", systemImage: "film")
+                        Label("最適な品質のため16kHzに変換されます", systemImage: "waveform")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+            }
+            .navigationTitle("対応フォーマット")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("閉じる") { dismiss() }
+                }
+            }
+        }
+    }
+    
+    private func formatIcon(for format: String) -> String {
+        if format.contains("WAV") || format.contains("AIFF") {
+            return "waveform"
+        } else if format.contains("MP") || format.contains("AAC") {
+            return "music.note"
+        } else if format.contains("MOV") || format.contains("動画") {
+            return "film"
+        } else if format.contains("DRM") {
+            return "lock"
+        } else {
+            return "doc"
+        }
+    }
+}
+
+// MARK: - File Import Configuration
+struct FileImportConfiguration {
+    static let allowedContentTypes: [UTType] = AudioFormatHandler.supportedFormats
+    
+    static let importOptions: UIDocumentPickerViewController.Options = [
+        .shouldShowFileExtensions,
+        .treatPackagesAsDirectories
+    ]
 }
 
 // MARK: - Preview (Optional)
