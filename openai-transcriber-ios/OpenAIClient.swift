@@ -1,5 +1,5 @@
 import Foundation
-import UIKit // ← 追加: AppDelegate にアクセスするため
+import UIKit
 
 /// OpenAI 音声文字起こしクライアント
 ///
@@ -8,17 +8,8 @@ import UIKit // ← 追加: AppDelegate にアクセスするため
 /// * 1 クラス = 1 エンドポイントのシンプル実装
 final class OpenAIClient {
 
-    // MARK: - Private state (recentContext はここでは管理しない)
-    // private var recentContext = ""
-    // private let maxPromptLen  = 120
-
-    // AppDelegate への参照を取得
-    private var appDelegate: AppDelegate? {
-        UIApplication.shared.delegate as? AppDelegate
-    }
-
     // MARK: - Public API
-    /// (修正) バックグラウンドセッションを使ってアップロードを開始 (戻り値なし)
+    /// バックグラウンドセッションを使ってアップロードを開始 (戻り値なし)
     /// - Parameters:
     ///   - url: 音声ファイルのURL
     ///   - started: セグメントの開始時刻
@@ -44,16 +35,8 @@ final class OpenAIClient {
         try form.appendFile(url: url, fieldName: "file", filename: "audio.wav")
         let formData = try form.encode()
 
-         // ▼▼▼ デバッグログを追加 ▼▼▼
-        print("🔍 Checking AppDelegate: \(String(describing: UIApplication.shared.delegate))")
-        // ▲▲▲ ここまで追加 ▲▲▲
-
         // ── バックグラウンドセッションを取得 ─────────────────────
-        guard let appDelegate = self.appDelegate else {
-             throw NSError(domain: "OpenAIClient", code: -101,
-                           userInfo: [NSLocalizedDescriptionKey: "AppDelegate not found."])
-        }
-        let session = appDelegate.backgroundSession
+        let session = BackgroundSessionManager.shared.backgroundSession
 
         // ── リクエストを作成 ────────────────────────────────────
         let apiKey = try fetchAPIKey()
@@ -73,15 +56,19 @@ final class OpenAIClient {
         // ── アップロードタスクを作成して開始 ───────────────────
         let task = session.uploadTask(with: req, fromFile: tempFormURL)
 
-        // ── AppDelegate にタスク情報を登録 ─────────────────────
-        appDelegate.registerBackgroundTask(taskId: task.taskIdentifier, url: url, startTime: started, tempURL: tempFormURL)
+        // ── BackgroundSessionManager にタスク情報を登録 ─────────────────────
+        BackgroundSessionManager.shared.registerBackgroundTask(
+            taskId: task.taskIdentifier, 
+            url: url, 
+            startTime: started, 
+            tempURL: tempFormURL
+        )
 
         Debug.log("🔵 [\(task.taskIdentifier)] Starting background upload task for \(url.lastPathComponent)")
         task.resume()
     }
 
     /// Keychain Helper などに置き換えてください
-
     private func fetchAPIKey() throws -> String {
         guard let key = KeychainHelper.shared.apiKey(), !key.isEmpty else {
             throw NSError(domain: "OpenAIClient", code: 0,

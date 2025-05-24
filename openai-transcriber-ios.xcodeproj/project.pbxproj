@@ -14,6 +14,7 @@
 		1806C18C2DD373670066C50F /* openai_transcriber_iosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C18B2DD373670066C50F /* openai_transcriber_iosTests.swift */; };
 		1806C1962DD373670066C50F /* openai_transcriber_iosUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */; };
 		1806C1982DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */; };
+		1856C80C2DE1E86600D0868F /* BackgroundSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */; };
 		1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716D2DD8B02500D3461D /* AudioRecorder.swift */; };
 		186071702DD8B2BD00D3461D /* OpenAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716F2DD8B2BD00D3461D /* OpenAIClient.swift */; };
 		186071772DD8BF2700D3461D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071752DD8BF2700D3461D /* SettingsView.swift */; };
@@ -57,6 +58,7 @@
 		1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosUITests.swift; sourceTree = "<group>"; };
 		1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		181594B92DD8959F00720E1C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundSessionManager.swift; sourceTree = "<group>"; };
 		1860716D2DD8B02500D3461D /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		1860716F2DD8B2BD00D3461D /* OpenAIClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OpenAIClient.swift; sourceTree = "<group>"; };
 		186071752DD8BF2700D3461D /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 		1806C1792DD373640066C50F /* openai-transcriber-ios */ = {
 			isa = PBXGroup;
 			children = (
+				1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */,
 				18E7CF5F2DE1D19A00002ABF /* AppDelegate.swift */,
 				18E7CF592DE1ADF800002ABF /* HistoryItem.swift */,
 				18E7CF5A2DE1ADF800002ABF /* HistoryManager.swift */,
@@ -318,6 +321,7 @@
 				186071702DD8B2BD00D3461D /* OpenAIClient.swift in Sources */,
 				1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */,
 				1860717D2DD8D55F00D3461D /* TranscriptView.swift in Sources */,
+				1856C80C2DE1E86600D0868F /* BackgroundSessionManager.swift in Sources */,
 				1806C17D2DD373640066C50F /* ContentView.swift in Sources */,
 				1860717A2DD8C07100D3461D /* Debug.swift in Sources */,
 				1806C17B2DD373640066C50F /* openai_transcriber_iosApp.swift in Sources */,

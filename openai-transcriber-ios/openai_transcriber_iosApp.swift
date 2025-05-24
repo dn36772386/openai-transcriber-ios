@@ -11,10 +11,19 @@ import SwiftUI
 struct openai_transcriber_iosApp: App {
     
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
+    init() {
+        print("✅ App: init() - App instance created!")
+        print("✅ App: appDelegate = \(String(describing: appDelegate))")
+    }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    print("✅ App: ContentView appeared")
+                    print("✅ App: AppDelegate instance = \(String(describing: UIApplication.shared.delegate))")
+                }
         }
     }
 }
