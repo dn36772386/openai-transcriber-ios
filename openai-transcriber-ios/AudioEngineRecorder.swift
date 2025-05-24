@@ -90,8 +90,10 @@ final class AudioEngineRecorder: ObservableObject {
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             // --- ▼▼▼ 変更 ▼▼▼ ---
             if self?.isManualMode == true {
+                print("Recorder: Manual mode tap - calling processManualAudio") // ← デバッグ用ログ
                 self?.processManualAudio(buffer) // 手動モード処理
             } else {
+                print("Recorder: Auto mode tap - calling processAudio") // ← デバッグ用ログ
                 self?.processAudio(buffer) // 自動モード処理
             }
             // --- ▲▲▲ 変更 ▲▲▲ ---

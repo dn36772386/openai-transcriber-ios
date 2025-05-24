@@ -54,8 +54,9 @@ struct ContentView: View {
                     modeIsManual: $modeIsManual,
                     isRecording: $recorder.isRecording,
                     transcriptLines: $transcriptLines, 
-                    audioPlayerURL: $currentPlayingURL, // 変更
-                    audioPlayer: $audioPlayer
+                    audioPlayerURL: $currentPlayingURL,
+                    audioPlayer: $audioPlayer,
+                    playNextSegmentCallback: self.playNextSegment // playNextSegmentメソッドを渡す
                 )
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -177,6 +178,7 @@ struct ContentView: View {
             if granted {
                 do { // do をここに配置
                     isCancelling = false
+                    print("Starting recorder with isManual: \(self.modeIsManual)") // ← デバッグ用ログ
                     try recorder.start(isManual: self.modeIsManual)
                 } catch { // catch をここに配置
                     print("[Recorder] start failed:", error.localizedDescription)
@@ -233,6 +235,27 @@ struct ContentView: View {
             }
         }
     }
+
+    // --- ▼▼▼ 追加 ▼▼▼ ---
+    private func playNextSegment() {
+        guard let currentURL = currentPlayingURL else { return }
+        
+        // 現在再生中のインデックスを探す
+        guard let currentIndex = transcriptLines.firstIndex(where: { $0.audioURL == currentURL }) else {
+            currentPlayingURL = nil // 見つからなければ停止
+            return
+        }
+
+        let nextIndex = currentIndex + 1
+        // 次のインデックスが存在し、かつURLがあれば再生
+        if transcriptLines.indices.contains(nextIndex),
+           let nextURL = transcriptLines[nextIndex].audioURL {
+            currentPlayingURL = nextURL
+        } else {
+            currentPlayingURL = nil // 次がなければ停止
+        }
+    }
+    // --- ▲▲▲ 追加 ▲▲▲ ---
 } // <-- ContentView の閉じ括弧
 
 // ... (HamburgerButton, SidebarView, AudioPlayerView, MainContentView, #Preview は変更なし) ...
@@ -389,8 +412,7 @@ struct AudioPlayerView: View {
     @State private var currentTime: TimeInterval = 0.0
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     // --- ▼▼▼ 追加 ▼▼▼ ---
-    // 連続再生のためのコールバック (次のステップで実装)
-    // var onPlaybackFinished: (() -> Void)? 
+    var onPlaybackFinished: (() -> Void)? // 連続再生のためのコールバック
     // --- ▲▲▲ 追加 ▲▲▲ ---
 
     var body: some View {
@@ -447,12 +469,18 @@ struct AudioPlayerView: View {
         guard let player = player, player.isPlaying else { return }
         currentTime = player.currentTime
         duration = player.duration // Ensure duration is updated
+        let wasPlaying = isPlaying // 再生終了を一度だけ検知するために以前の状態を保持
         progress = duration > 0 ? currentTime / duration : 0
-        if !player.isPlaying && duration > 0 && currentTime >= duration - 0.1 { // Check if finished
+        isPlaying = player.isPlaying // 現在の状態を更新
+        if wasPlaying && !isPlaying && duration > 0 && currentTime >= duration - 0.1 { // Check if *just* finished
              isPlaying = false
              progress = 1.0
              currentTime = duration
-             // onPlaybackFinished?() // 次のステップで有効化
+             // --- ▼▼▼ 追加 ▼▼▼ ---
+             DispatchQueue.main.async { // 状態更新後にコールバック
+                self.onPlaybackFinished?()
+             }
+             // --- ▲▲▲ 追加 ▲▲▲ ---
         }
     }
     
@@ -476,6 +504,7 @@ struct MainContentView: View {
     @Binding var audioPlayerURL: URL?
     // --- ▲▲▲ 変更 ▲▲▲ ---
     @Binding var audioPlayer: AVAudioPlayer?
+    let playNextSegmentCallback: () -> Void // ContentViewからコールバックを受け取るプロパティ
 
     var body: some View {
         VStack(spacing: 0) {
@@ -489,7 +518,7 @@ struct MainContentView: View {
                 .padding(.horizontal, 10)
 
             // --- ▼▼▼ 変更 ▼▼▼ ---
-            AudioPlayerView(url: $audioPlayerURL, player: $audioPlayer)
+            AudioPlayerView(url: $audioPlayerURL, player: $audioPlayer, onPlaybackFinished: playNextSegmentCallback) // 受け取ったコールバックを使用
             // --- ▲▲▲ 変更 ▲▲▲ ---
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
