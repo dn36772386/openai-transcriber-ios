@@ -63,10 +63,11 @@ final class AudioEngineRecorder: ObservableObject {
         isCancelled = false // 開始時にキャンセルをリセット
         // --- ▲▲▲ 追加 ▲▲▲ ---
 
+        // バックグラウンド録音対応のAudioSession設定
         try AVAudioSession.sharedInstance().setCategory(
             .playAndRecord,
             mode: .default,
-            options: .defaultToSpeaker)
+            options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
         try AVAudioSession.sharedInstance().setActive(true)
 
         let input  = engine.inputNode

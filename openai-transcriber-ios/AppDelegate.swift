@@ -7,12 +7,17 @@ struct WhisperResp: Decodable {
 }
 
 // 通知センターで使用する名前
-extension Notification.Name {
-    static let transcriptionDidFinish = Notification.Name("transcriptionDidFinishNotification")
-}
+//extension Notification.Name {
+//    static let transcriptionDidFinish = Notification.Name("transcriptionDidFinishNotification")
+//}
 
 class AppDelegate: NSObject, UIApplicationDelegate, URLSessionDelegate, URLSessionDataDelegate {
-
+    // ▼▼▼ このメソッドを追加 ▼▼▼
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        print("✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegate is initialized!")
+        return true
+    }
+    // ▲▲▲ ここまで追加 ▲▲▲
     var backgroundCompletionHandler: (() -> Void)?
     static let backgroundSessionIdentifier = "com.yourapp.openai-transcriber.backgroundUpload" // ★ ご自身のアプリIDなどに変更してください
 

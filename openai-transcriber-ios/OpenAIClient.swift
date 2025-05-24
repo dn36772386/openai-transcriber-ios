@@ -44,6 +44,10 @@ final class OpenAIClient {
         try form.appendFile(url: url, fieldName: "file", filename: "audio.wav")
         let formData = try form.encode()
 
+         // ▼▼▼ デバッグログを追加 ▼▼▼
+        print("🔍 Checking AppDelegate: \(String(describing: UIApplication.shared.delegate))")
+        // ▲▲▲ ここまで追加 ▲▲▲
+
         // ── バックグラウンドセッションを取得 ─────────────────────
         guard let appDelegate = self.appDelegate else {
              throw NSError(domain: "OpenAIClient", code: -101,
