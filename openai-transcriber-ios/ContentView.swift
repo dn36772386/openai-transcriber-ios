@@ -10,7 +10,7 @@ extension Color {
     static let accent = Color(hex: "#6b7280") // 変更: 薄いグレーに
     static let icon = Color(hex: "#374151")
     static let border = Color(hex: "#e5e7eb")
-    static let danger = Color(hex: "#dc2626")
+    static let danger = Color(hex: "#6b7280") // 変更: 薄いグレーに
     static let cardBackground = Color(hex: "#ffffff")
     static let textPrimary = Color(hex: "#1F2937")
     static let textSecondary = Color(hex: "#6b7280")
