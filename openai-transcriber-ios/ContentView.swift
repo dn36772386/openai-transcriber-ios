@@ -43,6 +43,7 @@ struct ContentView: View {
     @State private var currentPlayingURL: URL? // 再生中のURL
     // --- ▲▲▲ 変更 ▲▲▲ ---
     @State private var audioPlayer: AVAudioPlayer?
+    @StateObject private var historyManager = HistoryManager.shared // HistoryManagerを監視対象に
     @State private var isCancelling = false // キャンセル操作中フラグ
 
     private let client = OpenAIClient()
@@ -156,6 +157,10 @@ struct ContentView: View {
         Debug.log("✅ finish tapped")
         isCancelling = false
         recorder.stop()
+        // --- ▼▼▼ 追加 ▼▼▼ ---
+        // 録音完了時に履歴を保存 (fullAudioURL は現時点では最後のセグメントか、nil)
+        historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+        // --- ▲▲▲ 追加 ▲▲▲ ---
     }
 
     private func cancelRecording() {
@@ -282,15 +287,9 @@ struct SidebarView: View {
     @Binding var showSidebar: Bool
     @Binding var activeMenuItem: SidebarMenuItemType?
     @Binding var showSettings: Bool // Receive binding
-
-    struct HistoryItem: Identifiable {
-        let id = UUID()
-        let date: Date
-    }
-    @State private var historyItems: [HistoryItem] = [
-        HistoryItem(date: Date().addingTimeInterval(-3600)),
-        HistoryItem(date: Date().addingTimeInterval(-7200))
-    ]
+    // --- ▼▼▼ 変更 ▼▼▼ ---
+    @ObservedObject private var historyManager = HistoryManager.shared
+    // --- ▲▲▲ 変更 ▲▲▲ ---
     @State private var selectedHistoryItem: UUID?
 
     var body: some View {
@@ -321,30 +320,39 @@ struct SidebarView: View {
                         .font(.system(size: 14))
                         .foregroundColor(Color.textSecondary)
                     Spacer()
-                    Button { historyItems.removeAll() } label: {
+                    // --- ▼▼▼ 修正 ▼▼▼ ---
+                    Button {
+                        historyManager.clearAllHistory()
+                    } label: { // "label:" キーワードとコロンが必要
                         Image(systemName: "trash").foregroundColor(Color.icon)
                     }
+                    // --- ▲▲▲ 修正 ▲▲▲ ---
                     .buttonStyle(PlainButtonStyle())
                 }
                 .padding(.horizontal, 14).padding(.vertical, 6)
 
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(historyItems) { item in
+                        // --- ▼▼▼ 変更 ▼▼▼ ---
+                        ForEach(historyManager.historyItems) { item in // HistoryManagerのデータを使用
+                        // --- ▲▲▲ 変更 ▲▲▲ ---
                             HStack {
                                 Text(item.date.toLocaleString())
                                     .font(.system(size: 13)).foregroundColor(Color.icon)
                                 Spacer()
-                                Button { historyItems.removeAll { $0.id == item.id } } label: {
-                                    Image(systemName: "trash").foregroundColor(Color.icon)
+                                // --- ▼▼▼ 変更 ▼▼▼ ---
+                                // 個別削除 (今回は表示のみ。実際の削除はIndexSetが必要なため、別途実装)
+                                Image(systemName: "trash").foregroundColor(Color.icon) // 見た目だけ
                                         .opacity(selectedHistoryItem == item.id ? 1 : 0)
-                                }
-                                .buttonStyle(PlainButtonStyle())
+                                // --- ▲▲▲ 変更 ▲▲▲ ---
                             }
                             .padding(.vertical, 8).padding(.horizontal, 14)
                             .background(selectedHistoryItem == item.id ? Color.accent.opacity(0.12) : Color.clear)
                             .cornerRadius(4)
-                            .onTapGesture { selectedHistoryItem = item.id }
+                            .onTapGesture { 
+                                selectedHistoryItem = item.id 
+                                // TODO: 履歴読み込み処理を呼び出す (次のステップで)
+                            }
                             .padding(.horizontal, 6).padding(.vertical, 2)
                         }
                     }

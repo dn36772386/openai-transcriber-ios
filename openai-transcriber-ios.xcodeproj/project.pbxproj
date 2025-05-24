@@ -23,6 +23,8 @@
 		1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */; };
 		186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860717F2DD8D83F00D3461D /* RecorderProxy.swift */; };
 		186071822DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071812DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift */; };
+		18E7CF5C2DE1ADF800002ABF /* HistoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E7CF592DE1ADF800002ABF /* HistoryItem.swift */; };
+		18E7CF5D2DE1ADF800002ABF /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E7CF5A2DE1ADF800002ABF /* HistoryManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +65,8 @@
 		1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioEngineRecorder.swift; sourceTree = "<group>"; };
 		1860717F2DD8D83F00D3461D /* RecorderProxy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecorderProxy.swift; sourceTree = "<group>"; };
 		186071812DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AVAudioPCMBuffer+RMS.swift"; sourceTree = "<group>"; };
+		18E7CF592DE1ADF800002ABF /* HistoryItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HistoryItem.swift; sourceTree = "<group>"; };
+		18E7CF5A2DE1ADF800002ABF /* HistoryManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +119,8 @@
 		1806C1792DD373640066C50F /* openai-transcriber-ios */ = {
 			isa = PBXGroup;
 			children = (
+				18E7CF592DE1ADF800002ABF /* HistoryItem.swift */,
+				18E7CF5A2DE1ADF800002ABF /* HistoryManager.swift */,
 				186071812DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift */,
 				1860717F2DD8D83F00D3461D /* RecorderProxy.swift */,
 				1860717C2DD8D55F00D3461D /* AudioEngineRecorder.swift */,
@@ -303,6 +309,8 @@
 				186071782DD8BF2700D3461D /* KeychainHelper.swift in Sources */,
 				186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */,
 				1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */,
+				18E7CF5C2DE1ADF800002ABF /* HistoryItem.swift in Sources */,
+				18E7CF5D2DE1ADF800002ABF /* HistoryManager.swift in Sources */,
 				186071702DD8B2BD00D3461D /* OpenAIClient.swift in Sources */,
 				1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */,
 				1860717D2DD8D55F00D3461D /* TranscriptView.swift in Sources */,
