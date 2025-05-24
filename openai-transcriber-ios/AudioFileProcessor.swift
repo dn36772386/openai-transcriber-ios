@@ -10,6 +10,7 @@ import AVFoundation
 import Accelerate
 
 /// 音声ファイルを読み込んで無音で分割するプロセッサ
+@available(iOS 16.0, *)
 final class AudioFileProcessor: ObservableObject {
     
     // MARK: - Types
@@ -66,8 +67,20 @@ final class AudioFileProcessor: ObservableObject {
         }
         defer { url.stopAccessingSecurityScopedResource() }
         
-        // ファイルを開く
-        let file = try AVAudioFile(forReading: url)
+        // フォーマット検証
+        let validation = await AudioFormatHandler.validateFormat(url: url)
+        guard validation.isValid else {
+            throw ProcessingError.unsupportedFormat
+        }
+        
+        // ファイルを開く（AVAssetReader を使用する場合もある）
+        let file: AVAudioFile
+        do {
+            file = try AVAudioFile(forReading: url)
+        } catch {
+            // AVAudioFileで開けない場合は、先に変換が必要
+            throw ProcessingError.unsupportedFormat
+        }
         let inputFormat = file.processingFormat
         let totalFrames = AVAudioFrameCount(file.length)
         let totalDuration = Double(totalFrames) / inputFormat.sampleRate
@@ -79,6 +92,14 @@ final class AudioFileProcessor: ObservableObject {
         // フォーマット変換が必要かチェック
         let needsConversion = inputFormat.sampleRate != outputFormat.sampleRate ||
                             inputFormat.channelCount != outputFormat.channelCount
+        
+        // コンバーター作成（必要な場合）
+        let converter: AVAudioConverter?
+        if needsConversion {
+            converter = AVAudioConverter(from: inputFormat, to: outputFormat)
+        } else {
+            converter = nil
+        }
         
         // バッファサイズ（0.1秒分）
         let bufferSize = AVAudioFrameCount(inputFormat.sampleRate * 0.1)
@@ -133,7 +154,9 @@ final class AudioFileProcessor: ObservableObject {
                             frames: currentSegmentFrames,
                             inputFormat: inputFormat,
                             startTime: segmentStart,
-                            duration: segmentDuration
+                            duration: segmentDuration,
+                            needsConversion: needsConversion,
+                            converter: converter
                         ) {
                             segments.append((
                                 url: segmentURL,
@@ -153,9 +176,10 @@ final class AudioFileProcessor: ObservableObject {
             // 時間を更新
             currentTime += Double(buffer.frameLength) / inputFormat.sampleRate
             
-            // 進捗更新
+            // 進捗更新（currentTimeを安全にキャプチャ）
+            let capturedProgress = currentTime / totalDuration
             await MainActor.run {
-                self.progress = currentTime / totalDuration
+                self.progress = capturedProgress
             }
         }
         
@@ -167,7 +191,9 @@ final class AudioFileProcessor: ObservableObject {
                     frames: currentSegmentFrames,
                     inputFormat: inputFormat,
                     startTime: segmentStart,
-                    duration: segmentDuration
+                    duration: segmentDuration,
+                    needsConversion: needsConversion,
+                    converter: converter
                 ) {
                     segments.append((
                         url: segmentURL,
@@ -211,7 +237,9 @@ final class AudioFileProcessor: ObservableObject {
         frames: [AVAudioPCMBuffer],
         inputFormat: AVAudioFormat,
         startTime: TimeInterval,
-        duration: TimeInterval
+        duration: TimeInterval,
+        needsConversion: Bool,
+        converter: AVAudioConverter?
     ) async throws -> URL? {
         
         guard !frames.isEmpty else { return nil }
@@ -229,11 +257,7 @@ final class AudioFileProcessor: ObservableObject {
         )
         
         // フォーマット変換が必要な場合
-        if inputFormat != outputFormat {
-            guard let converter = AVAudioConverter(from: inputFormat, to: outputFormat) else {
-                throw ProcessingError.conversionFailed
-            }
-            
+        if needsConversion, let converter = converter {
             // 各フレームを変換して書き込み
             for frame in frames {
                 let outputFrameCapacity = AVAudioFrameCount(

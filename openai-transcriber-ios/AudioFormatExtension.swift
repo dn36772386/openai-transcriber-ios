@@ -13,7 +13,15 @@ extension UTType {
     static let wma = UTType(filenameExtension: "wma") ?? .audio
 }
 
+// MARK: - ContentView Extension for iOS 15 Compatibility
+@available(iOS 15.0, *)
+extension ContentView {
+    // iOS 16.0未満では機能を無効化
+    static let supportedFormats: [UTType] = [.audio]
+}
+
 // MARK: - Audio Format Handler
+@available(iOS 16.0, *)
 final class AudioFormatHandler {
     
     // サポートする音声フォーマット
@@ -22,14 +30,13 @@ final class AudioFormatHandler {
         .wav,           // WAV
         .aiff,          // AIFF
         .mp3,           // MP3
-        .mpeg4Audio,    // M4A, AAC
+        .mpeg4Audio,    // M4A, AAC を含む
         .audio,         // 汎用音声
         
         // 追加フォーマット
         .flac,          // FLAC
         .ogg,           // OGG Vorbis
         .opus,          // Opus
-        .m4a,           // M4A (明示的)
         
         // 動画ファイルから音声抽出
         .mpeg4Movie,    // MP4
@@ -108,88 +115,98 @@ final class AudioFormatHandler {
     
     // MARK: - Format Validation
     
-    /// ファイルフォーマットを検証
-    static func validateFormat(url: URL) -> (isValid: Bool, formatInfo: FormatInfo?, error: String?) {
+    struct ValidationResult {
+        let isValid: Bool
+        let formatInfo: FormatInfo?
+        let error: String?
+    }
+    
+    /// ファイルフォーマットを検証（async版）
+    static func validateFormat(url: URL) async -> ValidationResult {
         let fileExtension = url.pathExtension.lowercased()
         
         // 拡張子からフォーマット情報を取得
         guard let formatInfo = formatDetails[fileExtension] else {
-            return (false, nil, "サポートされていないファイル形式です: .\(fileExtension)")
+            return ValidationResult(isValid: false, formatInfo: nil, error: "サポートされていないファイル形式です: .\(fileExtension)")
         }
         
         // ファイルが実際に音声として読み込めるか確認
         do {
             let _ = try AVAudioFile(forReading: url)
-            return (true, formatInfo, nil)
+            return ValidationResult(isValid: true, formatInfo: formatInfo, error: nil)
         } catch {
             // AVAssetで再試行（動画ファイルの場合）
             let asset = AVAsset(url: url)
-            let audioTracks = asset.tracks(withMediaType: .audio)
+            let audioTracks = await asset.loadTracks(withMediaType: .audio)
             
             if !audioTracks.isEmpty {
-                return (true, formatInfo, nil)
-            } else if asset.tracks(withMediaType: .video).isEmpty {
-                return (false, formatInfo, "音声トラックが見つかりません")
+                return ValidationResult(isValid: true, formatInfo: formatInfo, error: nil)
             } else {
-                return (false, formatInfo, "ファイルを開けません: \(error.localizedDescription)")
+                let videoTracks = await asset.loadTracks(withMediaType: .video)
+                if videoTracks.isEmpty {
+                    return ValidationResult(isValid: false, formatInfo: formatInfo, error: "音声トラックが見つかりません")
+                } else {
+                    return ValidationResult(isValid: false, formatInfo: formatInfo, error: "ファイルを開けません: \(error.localizedDescription)")
+                }
             }
         }
     }
     
     // MARK: - Format Conversion
     
-    /// 音声を抽出または変換（必要に応じて）
-    static func extractAudio(from url: URL, completion: @escaping (Result<URL, Error>) -> Void) {
+    /// 音声を抽出または変換（async版）
+    static func extractAudio(from url: URL) async throws -> URL {
         let asset = AVAsset(url: url)
         
         // 音声トラックの確認
-        let audioTracks = asset.tracks(withMediaType: .audio)
+        let audioTracks = await asset.loadTracks(withMediaType: .audio)
         guard !audioTracks.isEmpty else {
-            completion(.failure(NSError(
+            throw NSError(
                 domain: "AudioFormat",
                 code: -1,
                 userInfo: [NSLocalizedDescriptionKey: "音声トラックが見つかりません"]
-            )))
-            return
+            )
         }
         
         // 動画ファイルかどうかチェック
-        let hasVideo = !asset.tracks(withMediaType: .video).isEmpty
+        let videoTracks = await asset.loadTracks(withMediaType: .video)
+        let hasVideo = !videoTracks.isEmpty
         
         if hasVideo {
             // 動画から音声を抽出
-            extractAudioFromVideo(asset: asset, completion: completion)
+            return try await extractAudioFromVideo(asset: asset)
         } else {
             // 音声ファイルはそのまま返す（AVAudioFileで読めるもの）
             do {
                 let _ = try AVAudioFile(forReading: url)
-                completion(.success(url))
+                return url
             } catch {
                 // フォーマット変換が必要な場合
-                convertAudioFormat(from: url, completion: completion)
+                return try await convertAudioFormat(from: url)
             }
         }
     }
     
     /// 動画から音声を抽出
-    private static func extractAudioFromVideo(asset: AVAsset, completion: @escaping (Result<URL, Error>) -> Void) {
+    private static func extractAudioFromVideo(asset: AVAsset) async throws -> URL {
         let composition = AVMutableComposition()
         
-        guard let audioTrack = asset.tracks(withMediaType: .audio).first,
+        let audioTracks = await asset.loadTracks(withMediaType: .audio)
+        guard let audioTrack = audioTracks.first,
               let compositionAudioTrack = composition.addMutableTrack(
                 withMediaType: .audio,
                 preferredTrackID: kCMPersistentTrackID_Invalid
               ) else {
-            completion(.failure(NSError(
+            throw NSError(
                 domain: "AudioFormat",
                 code: -2,
                 userInfo: [NSLocalizedDescriptionKey: "音声トラックの作成に失敗しました"]
-            )))
-            return
+            )
         }
         
         do {
-            let timeRange = CMTimeRange(start: .zero, duration: asset.duration)
+            let duration = try await asset.load(.duration)
+            let timeRange = CMTimeRange(start: .zero, duration: duration)
             try compositionAudioTrack.insertTimeRange(timeRange, of: audioTrack, at: .zero)
             
             // エクスポート設定
@@ -210,32 +227,31 @@ final class AudioFormatHandler {
             exportSession.outputURL = outputURL
             exportSession.outputFileType = .m4a
             
-            exportSession.exportAsynchronously {
-                switch exportSession.status {
-                case .completed:
-                    completion(.success(outputURL))
-                case .failed:
-                    completion(.failure(exportSession.error ?? NSError(
-                        domain: "AudioFormat",
-                        code: -4,
-                        userInfo: [NSLocalizedDescriptionKey: "エクスポートに失敗しました"]
-                    )))
-                default:
-                    completion(.failure(NSError(
-                        domain: "AudioFormat",
-                        code: -5,
-                        userInfo: [NSLocalizedDescriptionKey: "エクスポートがキャンセルされました"]
-                    )))
-                }
-            }
+            await exportSession.export()
             
+            switch exportSession.status {
+            case .completed:
+                return outputURL
+            case .failed:
+                throw exportSession.error ?? NSError(
+                    domain: "AudioFormat",
+                    code: -4,
+                    userInfo: [NSLocalizedDescriptionKey: "エクスポートに失敗しました"]
+                )
+            default:
+                throw NSError(
+                    domain: "AudioFormat",
+                    code: -5,
+                    userInfo: [NSLocalizedDescriptionKey: "エクスポートがキャンセルされました"]
+                )
+            }
         } catch {
-            completion(.failure(error))
+            throw error
         }
     }
     
     /// 音声フォーマットを変換
-    private static func convertAudioFormat(from url: URL, completion: @escaping (Result<URL, Error>) -> Void) {
+    private static func convertAudioFormat(from url: URL) async throws -> URL {
         // AVAssetを使用した汎用変換
         let asset = AVAsset(url: url)
         let outputURL = FileManager.default.temporaryDirectory
@@ -245,60 +261,61 @@ final class AudioFormatHandler {
             asset: asset,
             presetName: AVAssetExportPresetAppleM4A
         ) else {
-            completion(.failure(NSError(
+            throw NSError(
                 domain: "AudioFormat",
                 code: -6,
                 userInfo: [NSLocalizedDescriptionKey: "フォーマット変換に対応していません"]
-            )))
-            return
+            )
         }
         
         exportSession.outputURL = outputURL
         exportSession.outputFileType = .m4a
         
-        exportSession.exportAsynchronously {
-            switch exportSession.status {
-            case .completed:
-                completion(.success(outputURL))
-            case .failed:
-                completion(.failure(exportSession.error ?? NSError(
-                    domain: "AudioFormat",
-                    code: -7,
-                    userInfo: [NSLocalizedDescriptionKey: "フォーマット変換に失敗しました"]
-                )))
-            default:
-                completion(.failure(NSError(
-                    domain: "AudioFormat",
-                    code: -8,
-                    userInfo: [NSLocalizedDescriptionKey: "変換がキャンセルされました"]
-                )))
-            }
+        await exportSession.export()
+        
+        switch exportSession.status {
+        case .completed:
+            return outputURL
+        case .failed:
+            throw exportSession.error ?? NSError(
+                domain: "AudioFormat",
+                code: -7,
+                userInfo: [NSLocalizedDescriptionKey: "フォーマット変換に失敗しました"]
+            )
+        default:
+            throw NSError(
+                domain: "AudioFormat",
+                code: -8,
+                userInfo: [NSLocalizedDescriptionKey: "変換がキャンセルされました"]
+            )
         }
     }
     
     // MARK: - Metadata Extraction
     
-    /// 音声ファイルのメタデータを取得
-    static func getAudioMetadata(from url: URL) -> AudioMetadata? {
+    /// 音声ファイルのメタデータを取得（async版）
+    static func getAudioMetadata(from url: URL) async -> AudioMetadata? {
         let asset = AVAsset(url: url)
         
         // 基本情報
-        let duration = CMTimeGetSeconds(asset.duration)
-        let audioTracks = asset.tracks(withMediaType: .audio)
+        let duration = try? await asset.load(.duration)
+        let durationSeconds = duration.map { CMTimeGetSeconds($0) } ?? 0
+        let audioTracks = await asset.loadTracks(withMediaType: .audio)
         
         guard let audioTrack = audioTracks.first else { return nil }
         
         // フォーマット情報を取得
-        let formatDescriptions = audioTrack.formatDescriptions as? [CMFormatDescription] ?? []
-        guard let formatDescription = formatDescriptions.first else { return nil }
+        let formatDescriptions = try? await audioTrack.load(.formatDescriptions)
+        guard let formatDescription = formatDescriptions?.first else { return nil }
         
         let audioStreamBasicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription)?.pointee
+        let estimatedDataRate = try? await audioTrack.load(.estimatedDataRate)
         
         return AudioMetadata(
-            duration: duration,
+            duration: durationSeconds,
             sampleRate: audioStreamBasicDescription?.mSampleRate ?? 0,
             channelCount: Int(audioStreamBasicDescription?.mChannelsPerFrame ?? 0),
-            bitRate: audioTrack.estimatedDataRate,
+            bitRate: estimatedDataRate ?? 0,
             fileSize: getFileSize(at: url),
             codec: getCodecName(from: formatDescription)
         )

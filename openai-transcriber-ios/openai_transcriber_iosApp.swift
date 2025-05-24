@@ -19,7 +19,7 @@ struct openai_transcriber_iosApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentViewWrapper()  // ContentView → ContentViewWrapper に変更
                 .onAppear {
                     print("✅ App: ContentView appeared")
                     print("✅ App: AppDelegate instance = \(String(describing: UIApplication.shared.delegate))")
