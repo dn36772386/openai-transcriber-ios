@@ -1,15 +1,4 @@
-//  TranscriptView.swift
-//  openai-transcriber-ios
-//
 import SwiftUI
-
-// TranscriptView.swift の以下の部分を削除します
-// struct TranscriptLine: Identifiable {
-//     let id = UUID()
-//     var time: Date
-//     var text: String
-//     var audioURL: URL? = nil
-// }
 
 struct TranscriptView: View {
     @Binding var lines: [TranscriptLine]
@@ -21,11 +10,11 @@ struct TranscriptView: View {
                 LazyVStack(alignment: .leading, spacing: 6) {
                     ForEach(lines) { line in
                         HStack(alignment: .top, spacing: 12) {
-                            // 時刻表示
+                            // 時刻表示 (秒まで表示し、幅を調整)
                             Text(line.time.formatted(.dateTime.hour().minute().second()))
                                 .font(.caption)
                                 .foregroundColor(.textSecondary)
-                                .frame(width: 65, alignment: .leading) // ← 幅を広げて秒を表示
+                                .frame(width: 65, alignment: .leading) // 幅を調整
                             
                             // テキスト内容
                             Text(line.text)

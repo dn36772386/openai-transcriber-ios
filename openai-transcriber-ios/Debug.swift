@@ -25,9 +25,13 @@ actor WhisperQueue {
     /// `actor` の直列実行特性だけで十分。`DispatchSemaphore` は不要。
     private let client = OpenAIClient()
 
-    func enqueue(url: URL, started: Date) async throws -> String {
+    // async に変更し、MainActor上でクライアントメソッドを呼び出す
+    func enqueue(url: URL, started: Date) async throws {
         Debug.log("WhisperQueue ▶︎ segment started:", started)
-        return try await client.transcribe(url: url) // ← インスタンスメソッドを呼ぶ
+        // OpenAIClient.transcribeInBackground は @MainActor で実行する必要がある
+        try await MainActor.run {
+            try client.transcribeInBackground(url: url, started: started)
+        }
     }
 }
 

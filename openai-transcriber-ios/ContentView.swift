@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import Foundation
+import Combine // Combineをインポート
 
 // MARK: - Color Palette
 extension Color {
@@ -13,8 +14,8 @@ extension Color {
     static let cardBackground = Color(hex: "#ffffff")
     static let textPrimary = Color(hex: "#1F2937")
     static let textSecondary = Color(hex: "#6b7280")
-    static let playerBackground = Color(hex: "#1F2937")
-    static let playerText = Color(hex: "#ffffff")
+    static let playerBackground = Color(hex: "#1F2937") // これはCompactAudioPlayerViewの旧背景色ですが、Color拡張には残しておきます
+    static let playerText = Color(hex: "#ffffff")     // これも同様
 
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -31,6 +32,11 @@ extension Color {
     }
 }
 
+// MARK: - Sidebar Enum (ContentViewの外に移動)
+enum SidebarMenuItemType: CaseIterable {
+    case transcribe, proofread, copy, audioDownload, settings
+}
+
 // MARK: - Main View
 struct ContentView: View {
     @State private var proxy = RecorderProxy()
@@ -45,32 +51,34 @@ struct ContentView: View {
     @State private var audioPlayer: AVAudioPlayer?
     @StateObject private var historyManager = HistoryManager.shared
     @State private var isCancelling = false
+    @State private var transcriptionTasks: [URL: UUID] = [:] // URLと行IDのマッピング
+    @State private var cancellables = Set<AnyCancellable>() // Combineの購読管理
 
     private let client = OpenAIClient()
 
     var body: some View {
-        ZStack(alignment: .leading) {
+        ZStack(alignment: .leading) { // ZStack を alignment: .leading に変更
             NavigationView {
                 VStack(spacing: 0) {
-                    // メインコンテンツ
+                    // メインコンテンツ (再生バーより先に)
                     MainContentView(
                         modeIsManual: $modeIsManual,
                         isRecording: $recorder.isRecording,
                         transcriptLines: $transcriptLines,
                         audioPlayerURL: $currentPlayingURL,
                         audioPlayer: $audioPlayer,
-                        onLineTapped: self.playFrom, // ← 変更: タップ時の動作を追加
-                        playNextSegmentCallback: self.playNextSegment 
+                        onLineTapped: self.playFrom, // タップ時の動作を渡す
+                        playNextSegmentCallback: self.playNextSegment
                     )
                     
-                    // 下部の再生バー ← 移動
+                    // 下部の再生バー (再生バーが存在する場合のみ表示)
                     if currentPlayingURL != nil || !transcriptLines.isEmpty {
                         CompactAudioPlayerView(
                             url: $currentPlayingURL,
                             player: $audioPlayer,
                             onPlaybackFinished: self.playNextSegment
                         )
-                        .padding(.bottom, 8) // 必要に応じてSafeAreaを考慮したパディングを追加
+                        .padding(.bottom, 8) // Safe Area を考慮したパディング (必要に応じて調整)
                     }
                 }
                 .toolbar {
@@ -140,7 +148,7 @@ struct ContentView: View {
             if showSidebar && UIDevice.current.userInterfaceIdiom == .phone {
                 Color.black.opacity(0.35)
                     .edgesIgnoringSafeArea(.all)
-                    .onTapGesture { withAnimation { showSidebar = false } }
+                    .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false } } // アニメーション速度変更
                     .zIndex(0.5)
             }
         }
@@ -150,9 +158,18 @@ struct ContentView: View {
                 DispatchQueue.main.async { showSettings = true }
             }
             proxy.onSegment = { url, start in
-                self.handleSegment(url: url, start: start)
+                // バックグラウンド対応のハンドラを呼ぶ
+                self.handleSegmentInBackground(url: url, start: start)
             }
             recorder.delegate = proxy
+
+            // 通知センターの監視を追加
+            NotificationCenter.default.publisher(for: .transcriptionDidFinish)
+                .receive(on: DispatchQueue.main) // 必ずメインスレッドで受け取る
+                .sink { notification in
+                    self.handleTranscriptionResult(notification: notification)
+                }
+                .store(in: &cancellables) // 購読を管理
         }
         .alert("マイクへのアクセスが許可されていません", isPresented: $showPermissionAlert) {
             Button("設定を開く") {
@@ -166,16 +183,15 @@ struct ContentView: View {
         }
     }
 
-    // ← 追加: 指定URLから再生を開始し、連続再生をトリガーする
+    // 指定URLから再生を開始する
     private func playFrom(url: URL) {
         currentPlayingURL = url
-        // プレイヤーが準備できるのを少し待ってから再生
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { // プレイヤー準備待ち
             guard self.audioPlayer?.url == url, !(self.audioPlayer?.isPlaying ?? false) else { return }
             do {
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
                 try AVAudioSession.sharedInstance().setActive(true)
-                self.audioPlayer?.play() // 再生開始
+                self.audioPlayer?.play()
             } catch { print("❌ Playback Error:", error.localizedDescription) }
         }
     }
@@ -189,7 +205,10 @@ struct ContentView: View {
         Debug.log("✅ finish tapped")
         isCancelling = false
         recorder.stop()
-        historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+        // fullAudioURL は現在の CompactAudioPlayerView が再生中のURL (または最後に再生したURL) を渡す
+        // 履歴保存のタイミングと currentPlayingURL の整合性に注意
+        historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: recorder.url) // recorder.url は AudioEngineRecorder が最後に書き出したファイルのURL (セグメントかもしれない)
+                                                                                           // もしセッション全体の音声を別途保存しているなら、そのURLを渡す
     }
 
     private func cancelRecording() {
@@ -198,6 +217,8 @@ struct ContentView: View {
         recorder.cancel()
         transcriptLines.removeAll()
         currentPlayingURL = nil
+        audioPlayer?.stop()
+        audioPlayer = nil
     }
 
     private func requestMicrophonePermission() {
@@ -222,72 +243,105 @@ struct ContentView: View {
         }
     }
 
+    // バックグラウンド対応のセグメントハンドラ
     @MainActor
-    private func handleSegment(url: URL, start: Date) {
+    private func handleSegmentInBackground(url: URL, start: Date) {
         guard !isCancelling else {
             Debug.log("🚫 Segment ignored due to cancel.")
-            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: url) // キャンセル時は一時ファイルを削除
             return
         }
         print("🎧 Segment file path:", url.path)
-        if self.currentPlayingURL == nil { self.currentPlayingURL = url }
+        // currentPlayingURL は最初のセグメントで設定するか、再生ロジックで制御
+        // if self.currentPlayingURL == nil { self.currentPlayingURL = url } 
 
-        var currentLines = self.transcriptLines
-        let idx = currentLines.count - 1 < 0 ? 0 : currentLines.count - 1
+        let newLine = TranscriptLine(id: UUID(), time: start, text: "…文字起こし中…", audioURL: url)
+        self.transcriptLines.append(newLine)
+        self.transcriptionTasks[url] = newLine.id // URLをキーにしてIDを保存
 
-        if currentLines.isEmpty || currentLines[idx].text != "…文字起こし中…" {
-            currentLines.append(.init(id: UUID(), time: start, text: "…文字起こし中…", audioURL: url))
-        }
-        let currentIndex = currentLines.count - 1
-        self.transcriptLines = currentLines
-
-        Task {
-            let result: String
+        // Task に @MainActor を追加してUI関連プロパティへのアクセスを安全にする
+        Task { @MainActor in
             do {
-                result = try await client.transcribe(url: url)
+                try client.transcribeInBackground(url: url, started: start)
+                // 結果は NotificationCenter 経由で handleTranscriptionResult で処理される
             } catch {
-                result = "⚠️ \(error.localizedDescription)"
-            }
-
-            await MainActor.run {
-                guard !isCancelling else { return }
-                var finalLines = self.transcriptLines
-                if finalLines.indices.contains(currentIndex) {
-                    finalLines[currentIndex].text = result
-                    finalLines[currentIndex].audioURL = url 
-                    self.transcriptLines = finalLines
+                // 開始失敗時のエラー処理
+                if let lineId = self.transcriptionTasks[url],
+                   let index = self.transcriptLines.firstIndex(where: { $0.id == lineId }) {
+                    self.transcriptLines[index].text = "⚠️ 開始エラー: \(error.localizedDescription)"
+                    self.transcriptionTasks.removeValue(forKey: url) // エラー時もタスクリストから削除
+                    try? FileManager.default.removeItem(at: url) // エラー時は一時ファイルを削除
                 }
             }
         }
     }
+    
+    // 通知を受け取ってUIを更新するハンドラ
+    @MainActor
+    private func handleTranscriptionResult(notification: Notification) {
+        guard let originalURL = notification.object as? URL,
+              let lineId = self.transcriptionTasks[originalURL],
+              let index = self.transcriptLines.firstIndex(where: { $0.id == lineId }) else {
+            print("🔔 Received notification for unknown/completed task: \(notification.object ?? "N/A")")
+            return
+        }
 
+        if let error = notification.userInfo?["error"] as? Error {
+            self.transcriptLines[index].text = "⚠️ \(error.localizedDescription)"
+            try? FileManager.default.removeItem(at: originalURL) // エラー時は一時ファイルを削除
+        } else if let text = notification.userInfo?["text"] as? String {
+            self.transcriptLines[index].text = text
+            // 成功した場合、HistoryManager への保存は finishRecording で行うか、
+            // ここでセグメントごとの音声ファイルを永続化するならその処理を行う。
+            // 現在の実装では、HistoryManager はセッション終了時に呼ばれる。
+            // 個別セグメントファイル (originalURL) は文字起こし後に不要なら削除できる。
+            // HistoryItem が audioURL として実際のファイルパスを持つため、
+            // HistoryManager.addHistoryItem の中でコピー処理を行っている。
+            // ここで削除すると履歴から再生できなくなるため、削除タイミングは注意。
+            // `transcriptionTasks` からの削除はここで行う。
+        } else {
+             self.transcriptLines[index].text = "⚠️ 不明なエラー"
+            try? FileManager.default.removeItem(at: originalURL) // エラー時は一時ファイルを削除
+        }
+        self.transcriptionTasks.removeValue(forKey: originalURL)
+    }
+
+    // 次のセグメントを再生する
     private func playNextSegment() {
         guard let currentURL = currentPlayingURL else { return }
-        
         guard let currentIndex = transcriptLines.firstIndex(where: { $0.audioURL == currentURL }) else {
-            currentPlayingURL = nil
+            currentPlayingURL = nil // 見つからなければ再生終了
             return
         }
 
         let nextIndex = currentIndex + 1
         if transcriptLines.indices.contains(nextIndex),
            let nextURL = transcriptLines[nextIndex].audioURL {
-            currentPlayingURL = nextURL
+            currentPlayingURL = nextURL // 次のセグメントをセット
+            // playFrom を呼び出して再生開始
+            DispatchQueue.main.async { // UI関連の更新なのでメインスレッドで
+                 self.playFrom(url: nextURL)
+            }
         } else {
-            currentPlayingURL = nil
+            currentPlayingURL = nil // 次がなければ再生終了
         }
     }
     
+    // 新規セッション準備
     private func prepareNewTranscriptionSession() {
-        if !transcriptLines.isEmpty {
-            historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+        if !transcriptLines.isEmpty || currentPlayingURL != nil { // 何かあれば履歴に追加
+             // recorder.url (AudioEngineRecorderが最後に保存したファイル) またはセッション全体の音声URL
+            let sessionAudio = recorder.url // これは最後のセグメントの可能性あり。セッション全体のURLを管理する方が良い。
+            historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: sessionAudio)
         }
         transcriptLines.removeAll()
         currentPlayingURL = nil
         audioPlayer?.stop()
         audioPlayer = nil
+        isCancelling = false // キャンセルフラグもリセット
     }
 
+    // 履歴読み込み
     private func loadHistoryItem(_ historyItem: HistoryItem) {
         self.transcriptLines.removeAll()
         self.currentPlayingURL = nil
@@ -298,12 +352,12 @@ struct ContentView: View {
 
         if let fullAudio = historyItem.getFullAudioURL(documentsDirectory: historyManager.documentsDirectory) {
             self.currentPlayingURL = fullAudio
-        } else if let firstSegment = self.transcriptLines.first?.audioURL {
+        } else if let firstSegment = self.transcriptLines.first?.audioURL { // セグメントの音声があれば最初のものを
             self.currentPlayingURL = firstSegment
         }
         
         if UIDevice.current.userInterfaceIdiom == .phone {
-            withAnimation { showSidebar = false }
+            withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
         }
     }
 }
@@ -312,7 +366,7 @@ struct ContentView: View {
 struct HamburgerButton: View {
     @Binding var showSidebar: Bool
     var body: some View {
-        Button(action: { withAnimation { showSidebar.toggle() } }) {
+        Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showSidebar.toggle() } }) {
             Image(systemName: "line.horizontal.3")
                 .imageScale(.large)
                 .foregroundColor(Color.icon)
@@ -321,10 +375,6 @@ struct HamburgerButton: View {
 }
 
 // MARK: - Sidebar
-enum SidebarMenuItemType: CaseIterable {
-    case transcribe, proofread, copy, audioDownload, settings
-}
-
 struct SidebarView: View {
     @Binding var showSidebar: Bool
     @Binding var activeMenuItem: SidebarMenuItemType?
@@ -344,15 +394,15 @@ struct SidebarView: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 SidebarMenuItem(icon: "mic", text: "文字起こし", type: .transcribe, activeMenuItem: $activeMenuItem, action: {
-                    if activeMenuItem == .transcribe {
+                    if activeMenuItem == .transcribe { // 既に選択されている場合は新規セッション準備
                         onPrepareNewSession()
                     }
                     activeMenuItem = .transcribe
                     closeSidebar()
                 })
-                SidebarMenuItem(icon: "text.badge.checkmark", text: "校正", type: .proofread, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
-                SidebarMenuItem(icon: "doc.on.doc", text: "コピー", type: .copy, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
-                SidebarMenuItem(icon: "arrow.down.circle", text: "音声DL", type: .audioDownload, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
+                SidebarMenuItem(icon: "text.badge.checkmark", text: "校正", type: .proofread, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .proofread; closeSidebar() })
+                SidebarMenuItem(icon: "doc.on.doc", text: "コピー", type: .copy, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .copy; closeSidebar() })
+                SidebarMenuItem(icon: "arrow.down.circle", text: "音声DL", type: .audioDownload, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .audioDownload; closeSidebar() })
                 SidebarMenuItem(icon: "gearshape.fill", text: "設定", type: .settings, activeMenuItem: $activeMenuItem, action: {
                     showSettings = true
                     closeSidebar()
@@ -414,7 +464,7 @@ struct SidebarView: View {
 
     private func closeSidebar() {
         if UIDevice.current.userInterfaceIdiom == .phone {
-            withAnimation { showSidebar = false }
+            withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
         }
     }
 }
@@ -422,7 +472,7 @@ struct SidebarView: View {
 extension Date {
     func toLocaleString() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/M/d HH:mm:ss"
+        formatter.dateFormat = "yyyy/M/d HH:mm:ss" // 履歴の日時フォーマット
         return formatter.string(from: self)
     }
 }
@@ -436,7 +486,7 @@ struct SidebarMenuItem: View {
     var isActive: Bool { activeMenuItem == type }
 
     var body: some View {
-        Button(action: { activeMenuItem = type; action() }) {
+        Button(action: { action() /* activeMenuItem = type は action 内で行うことが多い */ }) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
@@ -456,56 +506,51 @@ struct SidebarMenuItem: View {
     }
 }
 
-// MARK: - Compact Audio Player (上部バー用)
+// MARK: - Compact Audio Player (下部バー用)
 struct CompactAudioPlayerView: View {
     @Binding var url: URL?
     @Binding var player: AVAudioPlayer?
+    var onPlaybackFinished: (() -> Void)?
+
     @State private var isPlaying = false
     @State private var progress: Double = 0.0
     @State private var duration: TimeInterval = 0.0
     @State private var currentTime: TimeInterval = 0.0
-    @State private var isEditingSlider = false // ← 追加: Slider操作中フラグ
+    @State private var isEditingSlider = false 
+
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
-    var onPlaybackFinished: (() -> Void)?
 
     var body: some View {
-        HStack(spacing: 15) { // ← 変更: VStackをHStackに
-            // 再生/一時停止ボタン
+        HStack(spacing: 15) {
             Button { togglePlayPause() } label: {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(Color.accent) // ← 変更: 色をAccentに
+                    .foregroundColor(Color.accent)
                     .frame(width: 44, height: 44)
             }
             
-            // プログレスバーをSliderに変更
             Slider(value: $progress, in: 0...1) { editing in
                 isEditingSlider = editing
                 if !editing {
                     player?.currentTime = progress * duration
-                    // スライダー操作完了時に再生中だったら再生再開
                     if isPlaying && !(player?.isPlaying ?? false) {
                        player?.play()
                     }
-                } else {
-                    // スライダー操作開始時に再生中だったら一時停止
-                    if isPlaying {
-                        player?.pause()
-                    }
+                } else if isPlaying {
+                    player?.pause()
                 }
             }
-            .tint(Color.accent) // ← 追加: Sliderの色
+            .tint(Color.accent)
 
-            // 時間表示 (現在時刻のみ)
             Text(formatTime(currentTime))
                 .font(.caption)
-                .foregroundColor(.textSecondary) // ← 変更: 色をSecondaryに
+                .foregroundColor(.textSecondary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.appBackground) // ← 変更: 背景色をAppBackgroundに
+        .background(Color.appBackground)
         .onReceive(timer) { _ in updateProgress() }
-        .onChange(of: url) { resetPlayer(url: url) }
+        .onChange(of: url) { newURL in resetPlayer(url: newURL) } // onChange(of:perform:) の推奨される使い方
     }
     
     private func formatTime(_ time: TimeInterval) -> String {
@@ -516,34 +561,37 @@ struct CompactAudioPlayerView: View {
     
     private func togglePlayPause() {
         guard let player = player else { return }
-        if player.isPlaying { player.pause(); isPlaying = false }
-        else {
+        if player.isPlaying {
+            player.pause()
+            isPlaying = false
+        } else {
             do {
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
                 try AVAudioSession.sharedInstance().setActive(true)
-                player.play(); isPlaying = true
+                player.play()
+                isPlaying = true
             } catch { print("❌ Playback Error:", error.localizedDescription) }
         }
     }
     
     private func updateProgress() {
-        // プレイヤーが存在し、かつユーザーがスライダーを操作していない場合のみ更新
         guard let player = player, !isEditingSlider else { return }
 
         currentTime = player.currentTime
-        duration = player.duration
+        // duration は resetPlayer で設定されるので、ここでは不要な場合が多い
+        // duration = player.duration 
         let wasPlaying = isPlaying
-        isPlaying = player.isPlaying // 実際の再生状態を反映
+        isPlaying = player.isPlaying
 
         if player.isPlaying {
-            progress = duration > 0 ? currentTime / duration : 0
+             progress = (duration > 0) ? (currentTime / duration) : 0
         }
 
-        // 再生が終了したかチェック (0.1秒の許容誤差)
-        if wasPlaying && !isPlaying && duration > 0 && currentTime >= duration - 0.1 {
+        // 再生終了検知
+        if wasPlaying && !player.isPlaying && duration > 0 && abs(currentTime - duration) < 0.1 { // 終了間際
             isPlaying = false
             progress = 1.0
-            currentTime = duration
+            currentTime = duration // きっちり最後に合わせる
             DispatchQueue.main.async {
                 self.onPlaybackFinished?()
             }
@@ -551,13 +599,24 @@ struct CompactAudioPlayerView: View {
     }
     
     private func resetPlayer(url: URL?) {
-        player?.stop(); isPlaying = false; progress = 0.0; currentTime = 0.0; duration = 0.0; isEditingSlider = false // ← 追加: isEditingSliderもリセット
-        guard let urlToPlay = url else { self.player = nil; return }
+        player?.stop()
+        isPlaying = false
+        progress = 0.0
+        currentTime = 0.0
+        duration = 0.0 // duration もリセット
+        isEditingSlider = false
+        guard let urlToPlay = url else {
+            self.player = nil
+            return
+        }
         do {
             self.player = try AVAudioPlayer(contentsOf: urlToPlay)
             self.player?.prepareToPlay()
-            self.duration = self.player?.duration ?? 0.0
-        } catch { print("❌ Failed to load audio:", error.localizedDescription); self.player = nil }
+            self.duration = self.player?.duration ?? 0.0 // ここでdurationを正しく設定
+        } catch {
+            print("❌ Failed to load audio:", error.localizedDescription)
+            self.player = nil
+        }
     }
 }
 
@@ -568,12 +627,11 @@ struct MainContentView: View {
     @Binding var transcriptLines: [TranscriptLine]
     @Binding var audioPlayerURL: URL?
     @Binding var audioPlayer: AVAudioPlayer?
-    let onLineTapped: (URL) -> Void // ← 追加: タップ時のコールバック
+    let onLineTapped: (URL) -> Void
     let playNextSegmentCallback: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            // ← 変更: onLineTapped を TranscriptView に渡す
             TranscriptView(lines: $transcriptLines, onLineTapped: onLineTapped)
             .padding(.top, 10)
             .padding(.horizontal, 10)
