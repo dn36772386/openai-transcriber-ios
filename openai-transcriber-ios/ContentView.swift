@@ -1,72 +1,47 @@
-//
-//  ContentView.swift
-//  openai-transcriber-ios
-//
-//  Created by apple on 2025/05/13.
-//
-
 import SwiftUI
 import AVFoundation
 import Foundation
 
-// CSSカラーパレットの定義
+// MARK: - Color Palette
 extension Color {
-    static let appBackground = Color(hex: "#F9FAFB") // Slightly lighter grey
+    static let appBackground = Color(hex: "#F9FAFB")
     static let sidebarBackground = Color(hex: "#ffffff")
-    static let accent = Color(hex: "#10B981") // Teal/Green accent
-    static let icon = Color(hex: "#374151")   // Darker grey icon
-    // static let hover = Color(hex: "#111827") // Hover is handled differently
+    static let accent = Color(hex: "#10B981")
+    static let icon = Color(hex: "#374151")
     static let border = Color(hex: "#e5e7eb")
     static let danger = Color(hex: "#dc2626")
     static let cardBackground = Color(hex: "#ffffff")
-    static let textPrimary = Color(hex: "#1F2937") // Darker text
+    static let textPrimary = Color(hex: "#1F2937")
     static let textSecondary = Color(hex: "#6b7280")
-}
 
-// 16進数カラーコードからColorを生成するイニシャライザ
-extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
+        case 3: (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default: (a, r, g, b) = (255, 0, 0, 0)
         }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
+        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: Double(a) / 255)
     }
 }
 
-
+// MARK: - Main View
 struct ContentView: View {
-    @State private var proxy = RecorderProxy()           // ← 追加
+    @State private var proxy = RecorderProxy()
     @StateObject private var recorder = AudioEngineRecorder()
     @State private var showPermissionAlert = false
-    @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone // iPadなら最初から表示
-    @State private var showApiKeyModal = false
+    @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone
     @State private var modeIsManual = false
-    @State private var activeMenuItem: SidebarMenuItemType? = .transcribe // 初期選択
-    @State private var permissionChecked = false    // デバッグ用
-    @State private var showSettings = false        // ← モーダル制御
-    @State private var transcriptLines: [TranscriptLine] = [] // 文字起こし結果
-    @State private var lastSegmentURL: URL? // 最後に録音されたファイルのURL (再生用)
-    @State private var audioPlayer: AVAudioPlayer? // 再生用プレイヤー
+    @State private var activeMenuItem: SidebarMenuItemType? = .transcribe
+    @State private var showSettings = false
+    @State private var transcriptLines: [TranscriptLine] = []
+    @State private var lastSegmentURL: URL?
+    @State private var audioPlayer: AVAudioPlayer?
 
-    /// OpenAI 文字起こしクライアント（ビューが生きている間に 1 度だけ生成）
     private let client = OpenAIClient()
 
     var body: some View {
@@ -74,11 +49,10 @@ struct ContentView: View {
             NavigationView {
                 MainContentView(
                     modeIsManual: $modeIsManual,
-                    showApiKeyModal: $showApiKeyModal,
                     isRecording: $recorder.isRecording,
                     transcriptLines: $transcriptLines,
-                    lastSegmentURL: $lastSegmentURL, // ◀︎◀︎ 渡す
-                    audioPlayer: $audioPlayer        // ◀︎◀︎ 渡す
+                    lastSegmentURL: $lastSegmentURL,
+                    audioPlayer: $audioPlayer
                 )
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -97,7 +71,7 @@ struct ContentView: View {
                                 .foregroundColor(Color.textSecondary)
 
                             Button {
-                                toggleRecording() // 録音開始/停止
+                                toggleRecording()
                             } label: {
                                 Image(systemName: "mic.fill")
                                     .font(.system(size: 18))
@@ -109,42 +83,35 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .background(Color.appBackground.edgesIgnoringSafeArea(.all))
             }
-            .navigationViewStyle(StackNavigationViewStyle()) // iPadでの挙動を調整
+            .navigationViewStyle(StackNavigationViewStyle())
 
-            // Sidebar
             if showSidebar {
                 SidebarView(
                     showSidebar: $showSidebar,
-                    showApiKeyModal: $showApiKeyModal,
-                    activeMenuItem: $activeMenuItem
+                    activeMenuItem: $activeMenuItem,
+                    showSettings: $showSettings // Pass binding
                 )
                 .transition(.move(edge: .leading))
-                .zIndex(1) // Sidebarを前面に
+                .zIndex(1)
             }
 
-            // Backdrop for phone
             if showSidebar && UIDevice.current.userInterfaceIdiom == .phone {
                 Color.black.opacity(0.35)
                     .edgesIgnoringSafeArea(.all)
-                    .onTapGesture {
-                        withAnimation {
-                            showSidebar = false
-                        }
-                    }
-                    .zIndex(0.5) // Sidebarより後ろ、MainContentより前
+                    .onTapGesture { withAnimation { showSidebar = false } }
+                    .zIndex(0.5)
             }
         }
-        .sheet(isPresented: $showApiKeyModal) {
-            ApiKeyModalView(showApiKeyModal: $showApiKeyModal)
-        }
-        .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showSettings) { SettingsView() } // Use SettingsView
         .onAppear {
-            if KeychainHelper.shared.apiKey() == nil {          // 未設定なら即表示
+            if KeychainHelper.shared.apiKey() == nil {
                 DispatchQueue.main.async { showSettings = true }
             }
+            // Set delegate and closure
+            proxy.onSegment = handleSegment(url:start:)
+            recorder.delegate = proxy
         }
-        .alert("マイクへのアクセスが許可されていません",
-               isPresented: $showPermissionAlert) {
+        .alert("マイクへのアクセスが許可されていません", isPresented: $showPermissionAlert) {
             Button("設定を開く") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
@@ -156,27 +123,18 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Private
-
     private func toggleRecording() {
         if recorder.isRecording {
             Debug.log("🔴 stop tapped")
             recorder.stop()
         } else {
-            requestMicrophonePermission()   // 開始前に権限確認
+            requestMicrophonePermission()
         }
     }
 
     private func requestMicrophonePermission() {
-        if #available(iOS 17, *) {
-            AVAudioApplication.requestRecordPermission(completionHandler: { granted in
-                handlePermissionResult(granted)
-            })
-        } else {
-            AVAudioSession.sharedInstance()
-                .requestRecordPermission { granted in
-                    handlePermissionResult(granted)
-                }
+        AVAudioApplication.requestRecordPermission { granted in
+            handlePermissionResult(granted)
         }
     }
 
@@ -184,9 +142,7 @@ struct ContentView: View {
         DispatchQueue.main.async {
             if granted {
                 do {
-                    proxy.onSegment = handleSegment(url:start:)   // クロージャ設定
-                    recorder.delegate = proxy                     // delegate 差替え
-                    try recorder.start()          // 録音開始
+                    try recorder.start()
                 } catch {
                     print("[Recorder] start failed:", error.localizedDescription)
                 }
@@ -196,45 +152,47 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - segment 受信ハンドラ
     @MainActor
     private func handleSegment(url: URL, start: Date) {
-        transcriptLines.append(.init(time: start, text: "…文字起こし中…"))
+        print("🎧 Segment file path:", url.path)
         self.lastSegmentURL = url // URLを保存
-        let idx = transcriptLines.count - 1
 
-        // 非同期処理はバックグラウンドで走らせつつ、
-        // UI 更新は必ず MainActor 上で行う
+        // --- 修正箇所 START ---
+        var currentLines = self.transcriptLines // @State のコピーを作成
+        let idx = currentLines.count - 1 < 0 ? 0 : currentLines.count - 1
+
+        // 「…文字起こし中…」を追加または確認
+        if currentLines.isEmpty || currentLines[idx].text != "…文字起こし中…" {
+             currentLines.append(.init(time: start, text: "…文字起こし中…"))
+        }
+        let currentIndex = currentLines.count - 1
+        self.transcriptLines = currentLines // @State にコピーを再代入
+
         Task {
             let result: String
             do {
-                // 生成しておいたインスタンス `client` を使う
-                result = try await client.transcribe(url: url)
+                result = try await client.transcribe(url: url) // 非同期処理
             } catch {
                 result = "⚠️ \(error.localizedDescription)"
             }
 
             await MainActor.run {
-                // in-place ではなく、コピーして置き換える
-                var lines = transcriptLines
-                if lines.indices.contains(idx) {
-                    lines[idx].text = result
-                    transcriptLines = lines
+                var finalLines = self.transcriptLines // 再度コピーを作成
+                if finalLines.indices.contains(currentIndex) {
+                   finalLines[currentIndex].text = result
+                   self.transcriptLines = finalLines // 最終結果を @State に再代入
                 }
             }
         }
+        // --- 修正箇所 END ---
     }
 }
 
+// MARK: - Hamburger Button
 struct HamburgerButton: View {
     @Binding var showSidebar: Bool
-
     var body: some View {
-        Button(action: {
-            withAnimation {
-                showSidebar.toggle()
-            }
-        }) {
+        Button(action: { withAnimation { showSidebar.toggle() } }) {
             Image(systemName: "line.horizontal.3")
                 .imageScale(.large)
                 .foregroundColor(Color.icon)
@@ -242,16 +200,16 @@ struct HamburgerButton: View {
     }
 }
 
+// MARK: - Sidebar
 enum SidebarMenuItemType: CaseIterable {
     case transcribe, proofread, copy, audioDownload, settings
 }
 
 struct SidebarView: View {
     @Binding var showSidebar: Bool
-    @Binding var showApiKeyModal: Bool
     @Binding var activeMenuItem: SidebarMenuItemType?
+    @Binding var showSettings: Bool // Receive binding
 
-    // 履歴アイテムのプレースホルダー
     struct HistoryItem: Identifiable {
         let id = UUID()
         let date: Date
@@ -261,114 +219,86 @@ struct SidebarView: View {
         HistoryItem(date: Date().addingTimeInterval(-7200))
     ]
     @State private var selectedHistoryItem: UUID?
-    @State private var showSettings = false // 設定モーダル用
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header (ロゴ表示エリア)
             Text("Transcriber")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(Color.textPrimary)
                 .padding(.horizontal, 14)
-                .frame(height: 44) // CSSの #sidebar header の高さに合わせる
+                .frame(height: 50) // Height adjustment
 
-            // Menu items
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 5) { // Spacing adjustment
                 SidebarMenuItem(icon: "mic", text: "文字起こし", type: .transcribe, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
                 SidebarMenuItem(icon: "text.badge.checkmark", text: "校正", type: .proofread, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
                 SidebarMenuItem(icon: "doc.on.doc", text: "コピー", type: .copy, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
                 SidebarMenuItem(icon: "arrow.down.circle", text: "音声DL", type: .audioDownload, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
                 SidebarMenuItem(icon: "gearshape.fill", text: "設定", type: .settings, activeMenuItem: $activeMenuItem, action: {
-                    showSettings = true // 設定モーダルを表示
+                    showSettings = true // Show SettingsView
                     closeSidebar()
                 })
             }
+            .padding(.vertical, 10)
 
-            // History Section
+            Divider().background(Color.border).padding(.vertical, 5)
+
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     Text("履歴")
                         .font(.system(size: 14))
                         .foregroundColor(Color.textSecondary)
                     Spacer()
-                    Button(action: {
-                        // TODO: Clear all history
-                        historyItems.removeAll()
-                    }) {
-                        Image(systemName: "trash")
-                            .foregroundColor(Color.icon)
+                    Button { historyItems.removeAll() } label: {
+                        Image(systemName: "trash").foregroundColor(Color.icon)
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 6)
-                .border(width: 1, edges: [.top], color: Color.border)
-                
+                .padding(.horizontal, 14).padding(.vertical, 6)
+
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(historyItems) { item in
                             HStack {
-                                Text(item.date.toLocaleString()) // より詳細なフォーマットが必要
-                                    .font(.system(size: 13))
-                                    .foregroundColor(Color.icon)
-                                
+                                Text(item.date.toLocaleString())
+                                    .font(.system(size: 13)).foregroundColor(Color.icon)
                                 Spacer()
-                                Button(action: {
-                                    // TODO: Delete specific history item
-                                    historyItems.removeAll(where: { $0.id == item.id })
-                                }) {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(Color.icon)
-                                        .opacity(selectedHistoryItem == item.id ? 1 : 0) // ホバーのような効果
+                                Button { historyItems.removeAll { $0.id == item.id } } label: {
+                                    Image(systemName: "trash").foregroundColor(Color.icon)
+                                        .opacity(selectedHistoryItem == item.id ? 1 : 0)
                                 }
-                                .buttonStyle(PlainButtonStyle()) // ボタンのデフォルトスタイルを解除
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8).padding(.horizontal, 14)
                             .background(selectedHistoryItem == item.id ? Color.accent.opacity(0.12) : Color.clear)
-                            .cornerRadius(4) // 少し角を丸める
-                            .onTapGesture {
-                                selectedHistoryItem = item.id
-                                // TODO: Load history item
-                            }
-                            .padding(.horizontal, 6) // List内の左右パディング
-                            .padding(.vertical, 2)   // List内の上下パディング
+                            .cornerRadius(4)
+                            .onTapGesture { selectedHistoryItem = item.id }
+                            .padding(.horizontal, 6).padding(.vertical, 2)
                         }
                     }
                 }
             }
-            .padding(.top, 8)
-
-
-            Spacer() // Pushes content to top
+            Spacer()
         }
         .frame(width: 240)
         .background(Color.sidebarBackground)
-        .border(width: 1, edges: [.trailing], color: Color.border)
-        .edgesIgnoringSafeArea(UIDevice.current.userInterfaceIdiom == .phone ? .vertical : []) // iPhoneでは上下無視
-        .sheet(isPresented: $showSettings) { // 設定モーダル表示
-            SettingsView()
-        }
+        // Removed border to match new design
+        .edgesIgnoringSafeArea(UIDevice.current.userInterfaceIdiom == .phone ? .vertical : [])
     }
 
     private func closeSidebar() {
         if UIDevice.current.userInterfaceIdiom == .phone {
-            withAnimation {
-                showSidebar = false
-            }
+            withAnimation { showSidebar = false }
         }
     }
 }
 
-// Date extension for toLocaleString (simplified)
 extension Date {
     func toLocaleString() -> String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .medium
+        formatter.dateFormat = "yyyy/M/d HH:mm:ss" // Match image format
         return formatter.string(from: self)
     }
 }
-
 
 struct SidebarMenuItem: View {
     let icon: String
@@ -376,90 +306,30 @@ struct SidebarMenuItem: View {
     let type: SidebarMenuItemType
     @Binding var activeMenuItem: SidebarMenuItemType?
     let action: () -> Void
-
-    var isActive: Bool {
-        activeMenuItem == type
-    }
+    var isActive: Bool { activeMenuItem == type }
 
     var body: some View {
-        Button(action: {
-            activeMenuItem = type
-            action()
-        }) {
-            HStack(spacing: 10) {
+        Button(action: { activeMenuItem = type; action() }) {
+            HStack(spacing: 12) { // Spacing adjustment
                 Image(systemName: icon)
-                    .font(.system(size: 18)) // アイコンサイズ調整
-                    .frame(width: 24, alignment: .center)
+                    .font(.system(size: 16)) // Size adjustment
+                    .frame(width: 20, alignment: .center)
                     .foregroundColor(isActive ? Color.accent : Color.icon)
-                Text(text) // 文字サイズ調整
-                    .font(.system(size: 15)) // 文字サイズ調整
-                    .foregroundColor(isActive ? Color.textPrimary : Color.textSecondary) // 色変更
+                Text(text)
+                    .font(.system(size: 14)) // Size adjustment
+                    .foregroundColor(isActive ? Color.textPrimary : Color.textSecondary)
                 Spacer()
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12) // パディング調整
-            .background(isActive ? Color.accent.opacity(0.1) : Color.clear) // アクティブ時の背景
-            .cornerRadius(6) // 角を丸める
-            .padding(.horizontal, 8) // 左右にマージン
-            .padding(.vertical, 2)   // 上下にマージン
+            .padding(.horizontal, 14).padding(.vertical, 10) // Padding adjustment
+            .background(isActive ? Color.accent.opacity(0.1) : Color.clear)
+            .cornerRadius(6)
+            .padding(.horizontal, 8).padding(.vertical, 2)
         }
-        .buttonStyle(PlainButtonStyle()) // ボタンのデフォルトスタイルを解除
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
-// 古いヘッダーコントロールは削除 - コメントアウト
-/*
-struct HeaderRecordingControls: View {
-    @Binding var isRecording: Bool
-    @Binding var modeIsManual: Bool
-    var startAction: () -> Void
-    var stopAndSendAction: () -> Void
-    var cancelAction: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 4) {
-                Text(modeIsManual ? "manual" : "auto")
-                    .font(.system(size: 12)) // modeLabel
-                    .foregroundColor(Color.textPrimary)
-                Toggle("", isOn: $modeIsManual)
-                    .labelsHidden()
-                    .scaleEffect(0.8) // トグルを少し小さく
-                    .tint(Color.accent)
-            }
-
-            if !isRecording {
-                // ▶︎ 録音開始
-                Button(action: { startAction() }) {
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color.accent)
-                }
-            } else {
-                // ■ 録音停止
-                Button(action: { stopAndSendAction() }) {
-                    Image(systemName: "stop.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(Color.red)
-                }
-            }
-
-            // キャンセルボタン (常に表示)
-            Button(action: { cancelAction() }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(Color.icon)
-            }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Color.cardBackground)
-        .cornerRadius(8)
-        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-}
-*/
-
+// MARK: - Audio Player
 struct AudioPlayerView: View {
     @Binding var url: URL?
     @Binding var player: AVAudioPlayer?
@@ -470,31 +340,26 @@ struct AudioPlayerView: View {
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button { togglePlayPause() } label: {
-                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-            }
-            Text(formatTime(currentTime))
+        HStack(spacing: 10) {
+            Button { togglePlayPause() } label: { Image(systemName: isPlaying ? "pause.fill" : "play.fill") }
+            Text(formatTime(currentTime) + " / " + formatTime(duration))
+                .font(.caption)
+                .foregroundColor(.textSecondary)
             Slider(value: $progress, in: 0...1, onEditingChanged: sliderChanged)
                 .tint(Color.accent)
-            Text(formatTime(duration))
-            Button { /* TODO: Volume */ } label: {
-                Image(systemName: "speaker.wave.2.fill")
-            }
-            Button { /* TODO: More Options */ } label: {
-                Image(systemName: "ellipsis")
-            }
+            Button { /* TODO: Volume */ } label: { Image(systemName: "speaker.wave.2.fill") }
+            Button { /* TODO: More Options */ } label: { Image(systemName: "ellipsis") }
         }
-        .font(.system(size: 16))
+        .font(.system(size: 18))
         .foregroundColor(Color.icon)
-        .padding(15)
+        .padding(.horizontal, 15).padding(.vertical, 12)
         .background(Color.cardBackground)
         .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, y: -2) // 上向きの影を少し
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.border, lineWidth: 1)) // Add border
         .padding(.horizontal)
         .padding(.bottom, 10)
         .onReceive(timer) { _ in updateProgress() }
-        .onChange(of: url) { newUrl in resetPlayer(url: newUrl) }
+        .onChange(of: url) { _, newUrl in resetPlayer(url: newUrl) } // Updated onChange
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
@@ -505,19 +370,13 @@ struct AudioPlayerView: View {
 
     private func togglePlayPause() {
         guard let player = player else { return }
-        if player.isPlaying {
-            player.pause()
-            isPlaying = false
-        } else {
-            // 再生セッション設定
+        if player.isPlaying { player.pause(); isPlaying = false }
+        else {
             do {
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
                 try AVAudioSession.sharedInstance().setActive(true)
-                player.play()
-                isPlaying = true
-            } catch {
-                print("❌ Playback Error:", error.localizedDescription)
-            }
+                player.play(); isPlaying = true
+            } catch { print("❌ Playback Error:", error.localizedDescription) }
         }
     }
 
@@ -530,154 +389,47 @@ struct AudioPlayerView: View {
     private func updateProgress() {
         guard let player = player, player.isPlaying else { return }
         currentTime = player.currentTime
-        progress = player.duration > 0 ? player.currentTime / player.duration : 0
-        if !player.isPlaying {
-            isPlaying = false
-            currentTime = player.duration // 終わったら最後に
-            progress = 1.0
+        duration = player.duration // Ensure duration is updated
+        progress = duration > 0 ? currentTime / duration : 0
+        if !player.isPlaying && duration > 0 && currentTime >= duration - 0.1 { // Check if finished
+             isPlaying = false
+             progress = 1.0
+             currentTime = duration
         }
     }
     
     private func resetPlayer(url: URL?) {
-        player?.stop()
-        isPlaying = false
-        progress = 0.0
-        currentTime = 0.0
-        duration = 0.0
-        guard let urlToPlay = url else {
-            self.player = nil
-            return
-        }
+        player?.stop(); isPlaying = false; progress = 0.0; currentTime = 0.0; duration = 0.0
+        guard let urlToPlay = url else { self.player = nil; return }
         do {
             self.player = try AVAudioPlayer(contentsOf: urlToPlay)
             self.player?.prepareToPlay()
             self.duration = self.player?.duration ?? 0.0
-        } catch {
-            print("❌ Failed to load audio for player:", error.localizedDescription)
-            self.player = nil
-        }
+        } catch { print("❌ Failed to load audio:", error.localizedDescription); self.player = nil }
     }
 }
 
+// MARK: - Main Content
 struct MainContentView: View {
     @Binding var modeIsManual: Bool
-    @Binding var showApiKeyModal: Bool
     @Binding var isRecording: Bool
     @Binding var transcriptLines: [TranscriptLine]
-    @Binding var lastSegmentURL: URL? // ◀︎◀︎ 追加
-    @Binding var audioPlayer: AVAudioPlayer? // ◀︎◀︎ 追加
+    @Binding var lastSegmentURL: URL?
+    @Binding var audioPlayer: AVAudioPlayer?
 
     var body: some View {
         VStack(spacing: 0) {
-            // Content Area
-            VStack(spacing: 15) { // 間隔を調整
-                ZStack(alignment: .topLeading) {
-                    TranscriptView(lines: $transcriptLines)
-                }
-                .frame(maxHeight: .infinity)
-                .padding(.top) // 上部に少しパディング
+            TranscriptView(lines: $transcriptLines)
+                .padding(.top, 10)
+                .padding(.horizontal, 10)
 
-                // New Audio Player
-                AudioPlayerView(url: $lastSegmentURL, player: $audioPlayer)
-            }
-            .padding(.horizontal, 10) // 左右のパディングを少し減らす
+            AudioPlayerView(url: $lastSegmentURL, player: $audioPlayer)
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
     }
-
-struct ApiKeyModalView: View {
-    @Binding var showApiKeyModal: Bool
-    @State private var apiKey: String = ""
-
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 10) {
-                Text("OpenAI APIキー")
-                    .font(.system(size: 18, weight: .semibold))
-                    .padding(.bottom, 6)
-                TextField("sk-...", text: $apiKey)
-                    .padding(EdgeInsets(top: 8, leading: 6, bottom: 8, trailing: 6))
-                    .background(Color.white)
-                    .cornerRadius(4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.border, lineWidth: 1)
-                    )
-                Button("保存") {
-                    // TODO: Save API Key logic
-                    showApiKeyModal = false
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(Color.accent)
-                .foregroundColor(.white)
-                .cornerRadius(4)
-                .padding(.top, 10)
-                Spacer()
-            }
-            .padding(16)
-            .frame(width: 260)
-            .background(Color.white)
-            .cornerRadius(6)
-            .shadow(color: Color.black.opacity(0.25), radius: 12, x: 0, y: 4)
-            .navigationBarItems(trailing: Button("閉じる") {
-                showApiKeyModal = false
-            })
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("APIキー設定")
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.3).edgesIgnoringSafeArea(.all))
-    }
 }
 
-// EdgeBorder extension for applying border to specific edges
-struct EdgeBorder: Shape {
-    var width: CGFloat
-    var edges: [Edge]
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        for edge in edges {
-            var x: CGFloat {
-                switch edge {
-                case .top, .bottom, .leading: return rect.minX
-                case .trailing: return rect.maxX - width
-                }
-            }
-
-            var y: CGFloat {
-                switch edge {
-                case .top, .leading, .trailing: return rect.minY
-                case .bottom: return rect.maxY - width
-                }
-            }
-
-            var w: CGFloat {
-                switch edge {
-                case .top, .bottom: return rect.width
-                case .leading, .trailing: return self.width
-                }
-            }
-
-            var h: CGFloat {
-                switch edge {
-                case .top, .bottom: return self.width
-                case .leading, .trailing: return rect.height
-                }
-            }
-            path.addPath(Path(CGRect(x: x, y: y, width: w, height: h)))
-        }
-        return path
-    }
-}
-
-extension View {
-    func border(width: CGFloat, edges: [Edge], color: Color) -> some View {
-        overlay(EdgeBorder(width: width, edges: edges).foregroundColor(color))
-    }
-}
-
+// MARK: - Preview (Optional)
 #Preview {
     ContentView()
 }
