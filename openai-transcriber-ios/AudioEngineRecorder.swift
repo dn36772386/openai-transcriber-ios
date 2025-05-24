@@ -28,6 +28,12 @@ final class AudioEngineRecorder: ObservableObject {
     private var startDate   = Date()
     private let engine = AVAudioEngine() // ◀︎◀︎ インスタンス化
 
+    // ◀︎◀︎ 追加: フォーマット変換用プロパティ ▼▼
+    private var inputFormat: AVAudioFormat?
+    private var outputFormat: AVAudioFormat?
+    private var audioConverter: AVAudioConverter?
+    // ◀︎◀︎ 追加 ▲▲
+
     // MARK: - 初期化 ------------------------------------------------
     init() {
         let session = AVAudioSession.sharedInstance()
@@ -35,6 +41,15 @@ final class AudioEngineRecorder: ObservableObject {
                                  mode: .measurement,
                                  options: [.defaultToSpeaker, .allowBluetooth])
         try? session.setActive(true)
+
+        // ◀︎◀︎ 追加: 出力フォーマットを定義 ▼▼
+        self.outputFormat = AVAudioFormat(
+            commonFormat: .pcmFormatInt16, // 16-bit Int
+            sampleRate: 16_000,           // 16 kHz
+            channels: 1,                  // Mono
+            interleaved: true
+        )!
+        // ◀︎◀︎ 追加 ▲▲
     }
 
     func start() throws {
@@ -49,6 +64,19 @@ final class AudioEngineRecorder: ObservableObject {
         let input  = engine.inputNode
         let format = input.inputFormat(forBus: 0)
         input.removeTap(onBus: 0)
+
+        // ◀︎◀︎ 追加: 入力フォーマットを保存し、コンバーターを初期化 ▼▼
+        self.inputFormat = format
+        if let inputFmt = inputFormat, let outputFmt = outputFormat {
+            // 入力と出力フォーマットが異なる場合のみコンバーターを作成
+            if inputFmt.sampleRate != outputFmt.sampleRate || 
+               inputFmt.commonFormat != outputFmt.commonFormat {
+                self.audioConverter = AVAudioConverter(from: inputFmt, to: outputFmt)
+            } else {
+                self.audioConverter = nil // フォーマットが同じ場合は変換不要
+            }
+        }
+        // ◀︎◀︎ 追加 ▲▲
 
         // Tapをインストールし、RMSで音声区間を判定
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
@@ -83,9 +111,21 @@ final class AudioEngineRecorder: ObservableObject {
         if isVoice {
             // ─ 発話継続 ─
             if audioFile == nil {
-                openNewSegment(format: buffer.format) // 新規セグメント開始
+                openNewSegment() // 新規セグメント開始（フォーマット引数を削除）
             }
-            try? audioFile?.write(from: buffer) // 音声を書き込み
+            
+            // ◀︎◀︎ 追加: フォーマット変換を行う ▼▼
+            let bufferToWrite: AVAudioPCMBuffer
+            if let converter = audioConverter, let outputFmt = outputFormat {
+                // フォーマット変換が必要な場合
+                bufferToWrite = convertBuffer(buffer, using: converter, to: outputFmt)
+            } else {
+                // フォーマット変換が不要な場合
+                bufferToWrite = buffer
+            }
+            try? audioFile?.write(from: bufferToWrite) // 変換後の音声を書き込み
+            // ◀︎◀︎ 追加 ▲▲
+            
             silenceStart = nil
             isSpeaking   = true
         } else if isSpeaking {
@@ -100,13 +140,8 @@ final class AudioEngineRecorder: ObservableObject {
     }
 
     // openNewSegment, finalizeSegment, resetState は VAD 版と同様
-    private func openNewSegment(format: AVAudioFormat) {
-        let recordingFormat = AVAudioFormat(
-            commonFormat: .pcmFormatInt16,
-            sampleRate: 16_000,
-            channels: 1,
-            interleaved: true
-        )!
+    private func openNewSegment() {
+        guard let outputFmt = outputFormat else { return }
 
         let fileURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -114,9 +149,9 @@ final class AudioEngineRecorder: ObservableObject {
 
         audioFile = try? AVAudioFile(
             forWriting: fileURL,
-            settings: recordingFormat.settings,
-            commonFormat: recordingFormat.commonFormat,
-            interleaved: recordingFormat.isInterleaved
+            settings: outputFmt.settings,
+            commonFormat: outputFmt.commonFormat,
+            interleaved: outputFmt.isInterleaved
         )
         self.fileURL = fileURL
     }
@@ -146,6 +181,28 @@ final class AudioEngineRecorder: ObservableObject {
         silenceStart = nil
         startDate    = Date()
     }
+
+    // ◀︎◀︎ 追加: フォーマット変換メソッド ▼▼
+    private func convertBuffer(_ inputBuffer: AVAudioPCMBuffer, using converter: AVAudioConverter, to outputFormat: AVAudioFormat) -> AVAudioPCMBuffer {
+        let outputFrameCapacity = AVAudioFrameCount(Double(inputBuffer.frameLength) * outputFormat.sampleRate / inputBuffer.format.sampleRate)
+        guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outputFrameCapacity) else {
+            return inputBuffer // 変換失敗時は元のバッファを返す
+        }
+        
+        var error: NSError?
+        let status = converter.convert(to: outputBuffer, error: &error) { _, outStatus in
+            outStatus.pointee = .haveData
+            return inputBuffer
+        }
+        
+        if status == .error {
+            Debug.log("⚠️ フォーマット変換エラー: \(error?.localizedDescription ?? "Unknown")")
+            return inputBuffer // 変換失敗時は元のバッファを返す
+        }
+        
+        return outputBuffer
+    }
+    // ◀︎◀︎ 追加 ▲▲
 
     deinit { /* 何も不要 */ }
 }

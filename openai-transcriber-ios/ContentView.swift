@@ -63,6 +63,11 @@ struct ContentView: View {
     @State private var permissionChecked = false    // デバッグ用
     @State private var showSettings = false        // ← モーダル制御
     @State private var transcriptLines: [TranscriptLine] = []
+    
+    // ◀︎◀︎ デバッグ用変数 - 後で削除 ▼▼
+    @State private var lastSegmentURL: URL?
+    @State private var audioPlayer: AVAudioPlayer?
+    // ◀︎◀︎ デバッグ用変数 - 後で削除 ▲▲
 
     /// OpenAI 文字起こしクライアント（ビューが生きている間に 1 度だけ生成）
     private let client = OpenAIClient()
@@ -74,7 +79,11 @@ struct ContentView: View {
                     modeIsManual: $modeIsManual,
                     showApiKeyModal: $showApiKeyModal,
                     isRecording: $recorder.isRecording,         // バインド
-                    transcriptLines: $transcriptLines
+                    transcriptLines: $transcriptLines,
+                    // ◀︎◀︎ デバッグ用Binding - 後で削除 ▼▼
+                    lastSegmentURL: $lastSegmentURL,
+                    audioPlayer: $audioPlayer
+                    // ◀︎◀︎ デバッグ用Binding - 後で削除 ▲▲
                 )
                 .navigationBarItems(
                     leading: HamburgerButton(showSidebar: $showSidebar),
@@ -184,6 +193,14 @@ struct ContentView: View {
     // MARK: - segment 受信ハンドラ
     @MainActor
     private func handleSegment(url: URL, start: Date) {
+        // ◀︎◀︎ ここに追加 ▼▼
+        print("🎧 Segment file path:", url.path) 
+        // ◀︎◀︎ ここに追加 ▲▲
+        
+        // ◀︎◀︎ デバッグ用: URLを保存 - 後で削除 ▼▼
+        self.lastSegmentURL = url
+        // ◀︎◀︎ デバッグ用: URLを保存 - 後で削除 ▲▲
+
         transcriptLines.append(.init(time: start, text: "…文字起こし中…"))
         let idx = transcriptLines.count - 1
 
@@ -445,6 +462,11 @@ struct MainContentView: View {
     @Binding var showApiKeyModal: Bool
     @Binding var isRecording: Bool
     @Binding var transcriptLines: [TranscriptLine]
+    
+    // ◀︎◀︎ デバッグ用Binding - 後で削除 ▼▼
+    @Binding var lastSegmentURL: URL?
+    @Binding var audioPlayer: AVAudioPlayer?
+    // ◀︎◀︎ デバッグ用Binding - 後で削除 ▲▲
 
     var body: some View {
         VStack(spacing: 0) {
@@ -463,6 +485,17 @@ struct MainContentView: View {
                 }
                 .frame(maxHeight: .infinity)
 
+                // ◀︎◀︎ デバッグ用再生ボタン - 後で削除 ▼▼
+                Button("最後のセグメントを再生") {
+                    guard let url = lastSegmentURL else {
+                        print("再生するファイルがありません。")
+                        return
+                    }
+                    playAudio(url: url)
+                }
+                .padding()
+                .disabled(lastSegmentURL == nil)
+                // ◀︎◀︎ デバッグ用再生ボタン - 後で削除 ▲▲
 
                 // Audio Player (Simplified placeholder)
                 HStack {
@@ -496,6 +529,22 @@ struct MainContentView: View {
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
     }
+    
+    // ◀︎◀︎ デバッグ用再生メソッド - 後で削除 ▼▼
+    private func playAudio(url: URL) {
+        do {
+            // 再生前にオーディオセッションを再生用に設定 (必要に応じて)
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.play()
+            print("▶️ Playing:", url.lastPathComponent)
+        } catch {
+            print("❌ Audio Player Error:", error.localizedDescription)
+        }
+    }
+    // ◀︎◀︎ デバッグ用再生メソッド - 後で削除 ▲▲
 }
 
 struct ApiKeyModalView: View {
