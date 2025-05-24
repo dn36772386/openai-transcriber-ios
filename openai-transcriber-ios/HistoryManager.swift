@@ -2,7 +2,7 @@ import Foundation
 
 class HistoryManager: ObservableObject {
     static let shared = HistoryManager()
-    private let historyKey = "transcriptionHistory_v3" // キー変更で以前のデータとの衝突を回避
+    private let historyKey = "transcriptionHistory_v3"
     private let maxHistoryItems = 10
 
     @Published var historyItems: [HistoryItem] = []
@@ -24,7 +24,7 @@ class HistoryManager: ObservableObject {
         }
         do {
             let decoder = JSONDecoder()
-            let items = try decoder.decode([HistoryItem].self, from: data) // 'from:' が正しく使われている
+            let items = try decoder.decode([HistoryItem].self, from: data)
             self.historyItems = items.sorted(by: { $0.date > $1.date })
             print("✅ Loaded \(items.count) history items from UserDefaults.")
         } catch {
@@ -44,7 +44,7 @@ class HistoryManager: ObservableObject {
         }
     }
 
-func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
+    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
         // 空のセッションは保存しない
         guard !lines.isEmpty else {
             print("ℹ️ No transcript lines to save")
@@ -66,20 +66,27 @@ func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
             deleteAssociatedFiles(for: oldItem)
         }
         
-        // 一時ファイルの削除（すでにDocumentsにコピー済み）
-        lines.forEach { line in
-            if let segmentURL = line.audioURL, segmentURL.isFileURL {
-                do {
-                    try FileManager.default.removeItem(at: segmentURL)
-                    print("🗑️ Removed temporary segment audio: \(segmentURL.lastPathComponent)")
-                } catch {
-                    print("⚠️ Error removing temporary segment audio \(segmentURL.path): \(error)")
-                }
-            }
-        }
+        // 一時ファイルの削除は行わない（現在のセッション中は保持する必要があるため）
+        // cleanupTemporaryFiles メソッドを別途呼び出すこと
 
         saveHistoryItemsToUserDefaults()
         objectWillChange.send()
+    }
+
+    // 一時ファイルをクリーンアップする専用メソッド
+    func cleanupTemporaryFiles(for lines: [TranscriptLine]) {
+        lines.forEach { line in
+            if let segmentURL = line.audioURL, 
+               segmentURL.isFileURL,
+               segmentURL.path.contains("/tmp/") { // 一時ディレクトリのファイルのみ削除
+                do {
+                    try FileManager.default.removeItem(at: segmentURL)
+                    print("🗑️ Cleaned up temporary segment audio: \(segmentURL.lastPathComponent)")
+                } catch {
+                    print("⚠️ Error cleaning up temporary segment audio \(segmentURL.path): \(error)")
+                }
+            }
+        }
     }
 
     private func deleteAssociatedFiles(for item: HistoryItem) {
@@ -97,13 +104,13 @@ func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
         item.transcriptLines.forEach { lineData in
             if let segName = lineData.audioSegmentFileName {
                 let segURL = documentsDirectory.appendingPathComponent(segName)
-                 if FileManager.default.fileExists(atPath: segURL.path) {
+                if FileManager.default.fileExists(atPath: segURL.path) {
                     do {
                         try FileManager.default.removeItem(at: segURL)
                     } catch {
-                        // print("❌ Error deleting segment audio file \(segName) from Documents: \(error)")
+                        // エラーログは冗長なので省略
                     }
-                 }
+                }
             }
         }
     }
@@ -116,11 +123,20 @@ func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
             }
         }
         for item in itemsToDelete {
-             deleteAssociatedFiles(for: item)
+            deleteAssociatedFiles(for: item)
         }
         historyItems.remove(atOffsets: offsets)
         saveHistoryItemsToUserDefaults()
         print("🗑️ Deleted history item(s) at offsets: \(offsets)")
+    }
+
+    func deleteHistoryItem(id: UUID) {
+        if let index = historyItems.firstIndex(where: { $0.id == id }) {
+            let itemToDelete = historyItems.remove(at: index)
+            deleteAssociatedFiles(for: itemToDelete)
+            saveHistoryItemsToUserDefaults()
+            print("🗑️ Deleted history item with ID: \(id)")
+        }
     }
 
     func clearAllHistory() {
@@ -132,16 +148,3 @@ func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
         print("🗑️ Cleared all history items and associated files.")
     }
 }
-
-// --- ▼▼▼ 追加 (ステップ6) ▼▼▼ ---
-extension HistoryManager {
-    func deleteHistoryItem(id: UUID) {
-        if let index = historyItems.firstIndex(where: { $0.id == id }) {
-            let itemToDelete = historyItems.remove(at: index)
-            deleteAssociatedFiles(for: itemToDelete)
-            saveHistoryItemsToUserDefaults()
-            print("🗑️ Deleted history item with ID: \(id)")
-        }
-    }
-}
-// --- ▲▲▲ 追加 (ステップ6) ▲▲▲ ---

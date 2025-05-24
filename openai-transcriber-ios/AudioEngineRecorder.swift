@@ -55,49 +55,44 @@ final class AudioEngineRecorder: ObservableObject {
     }
 
     // --- ▼▼▼ 変更 ▼▼▼ ---
+    // start メソッドの修正版（バックグラウンド録音対応）
     func start(isManual: Bool) throws {
         guard !isRecording else { return }
-        self.isManualMode = isManual // モードを設定
-
-        // --- ▼▼▼ 追加 ▼▼▼ ---
-        isCancelled = false // 開始時にキャンセルをリセット
-        // --- ▲▲▲ 追加 ▲▲▲ ---
+        self.isManualMode = isManual
+        isCancelled = false
 
         // バックグラウンド録音対応のAudioSession設定
-        try AVAudioSession.sharedInstance().setCategory(
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(
             .playAndRecord,
             mode: .default,
             options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
-        try AVAudioSession.sharedInstance().setActive(true)
+        
+        // バックグラウンドでも録音を継続
+        try session.setActive(true, options: .notifyOthersOnDeactivation)
 
-        let input  = engine.inputNode
+        let input = engine.inputNode
         let format = input.inputFormat(forBus: 0)
         input.removeTap(onBus: 0)
 
-        // ◀︎◀︎ 追加: 入力フォーマットを保存し、コンバーターを初期化 ▼▼
+        // フォーマット設定
         self.inputFormat = format
         if let inputFmt = inputFormat, let outputFmt = outputFormat {
-            // 入力と出力フォーマットが異なる場合のみコンバーターを作成
             if inputFmt.sampleRate != outputFmt.sampleRate || 
-               inputFmt.commonFormat != outputFmt.commonFormat {
+            inputFmt.commonFormat != outputFmt.commonFormat {
                 self.audioConverter = AVAudioConverter(from: inputFmt, to: outputFmt)
             } else {
-                self.audioConverter = nil // フォーマットが同じ場合は変換不要
+                self.audioConverter = nil
             }
         }
-        // ◀︎◀︎ 追加 ▲▲
 
-        // Tapをインストールし、RMSで音声区間を判定
+        // タップをインストール
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            // --- ▼▼▼ 変更 ▼▼▼ ---
             if self?.isManualMode == true {
-                print("Recorder: Manual mode tap - calling processManualAudio") // ← デバッグ用ログ
-                self?.processManualAudio(buffer) // 手動モード処理
+                self?.processManualAudio(buffer)
             } else {
-                print("Recorder: Auto mode tap - calling processAudio") // ← デバッグ用ログ
-                self?.processAudio(buffer) // 自動モード処理
+                self?.processAudio(buffer)
             }
-            // --- ▲▲▲ 変更 ▲▲▲ ---
         }
 
         engine.prepare()
@@ -105,6 +100,10 @@ final class AudioEngineRecorder: ObservableObject {
 
         startDate = Date()
         isRecording = true
+        
+        print("🎙️ Recording started in \(isManual ? "manual" : "auto") mode")
+        print("🎙️ Input format: \(format)")
+        print("🎙️ Output format: \(String(describing: outputFormat))")
     }
 
     // --- ▼▼▼ 変更 ▼▼▼ ---
@@ -206,60 +205,84 @@ final class AudioEngineRecorder: ObservableObject {
     }
 
     // openNewSegment, finalizeSegment, resetState は VAD 版と同様
+    // openNewSegment メソッドの修正版
     private func openNewSegment() {
-        // --- ▼▼▼ 追加 ▼▼▼ ---
-        guard !isCancelled else { return } // キャンセル中は開かない
-        // --- ▲▲▲ 追加 ▲▲▲ ---
+        guard !isCancelled else { return }
         guard let outputFmt = outputFormat else { return }
 
         let fileURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("wav")
 
-        audioFile = try? AVAudioFile(
-            forWriting: fileURL,
-            settings: outputFmt.settings,
-            commonFormat: outputFmt.commonFormat,
-            interleaved: outputFmt.isInterleaved
-        )
-        self.fileURL = fileURL
-        self.startDate = Date() // 新規セグメント開始時に日付を更新
+        do {
+            // WAVファイルとして明示的に作成
+            audioFile = try AVAudioFile(
+                forWriting: fileURL,
+                settings: outputFmt.settings,
+                commonFormat: outputFmt.commonFormat,
+                interleaved: outputFmt.isInterleaved
+            )
+            
+            self.fileURL = fileURL
+            self.startDate = Date()
+            
+            print("📝 Created new audio file: \(fileURL.lastPathComponent)")
+            print("📝 Format: \(outputFmt)")
+            
+        } catch {
+            print("❌ Failed to create audio file: \(error)")
+        }
     }
 
+    // finalizeSegment メソッドの修正版
     private func finalizeSegment() {
-        guard let url = fileURL else { resetState(); return } // URLがなければリセットして終了
+        guard let url = fileURL else { resetState(); return }
 
-        // --- ▼▼▼ 変更 ▼▼▼ ---
-        // キャンセルされている場合、ファイルを削除してリセット
         if isCancelled {
             try? FileManager.default.removeItem(at: url)
             Debug.log("🗑️ Finalize skipped/deleted due to cancel:", url.path)
             resetState()
             return
         }
-        // --- ▲▲▲ 変更 ▲▲▲ ---
-        let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]
-                     as? NSNumber)?.intValue ?? 0
 
-        if bytes < minSegmentBytes { // 極短 or 無音ファイルは破棄
+        // ファイルを閉じる
+        audioFile = nil
+        
+        // ファイルサイズを確認
+        let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]
+                    as? NSNumber)?.intValue ?? 0
+        
+        print("📊 Segment finalized: \(url.lastPathComponent), size: \(bytes) bytes")
+
+        if bytes < minSegmentBytes {
+            try? FileManager.default.removeItem(at: url)
+            print("🗑️ Segment too small, deleted: \(url.lastPathComponent)")
+            resetState()
+            return
+        }
+
+        // AVAudioFileを使用してファイルの整合性を確認
+        do {
+            let testFile = try AVAudioFile(forReading: url)
+            print("✅ Audio file valid: duration=\(Double(testFile.length) / testFile.fileFormat.sampleRate)s")
+        } catch {
+            print("❌ Audio file validation failed: \(error)")
             try? FileManager.default.removeItem(at: url)
             resetState()
             return
         }
 
-        // --- ▼▼▼ 変更 ▼▼▼ ---
-        // デリゲート呼び出し後にリセットするように順序を整理
         let segmentURL = url
         let segmentStartDate = startDate
         
-        audioFile    = nil
-        fileURL      = nil
+        // 状態をリセット
+        fileURL = nil
         silenceStart = nil
-        isSpeaking = false // 発話状態もリセット
+        isSpeaking = false
 
+        // デリゲートに通知
         delegate?.recorder(self, didFinishSegment: segmentURL, start: segmentStartDate)
-        startDate = Date() // 次のセグメントのために開始日時を更新
-        // --- ▲▲▲ 変更 ▲▲▲ ---
+        startDate = Date()
     }
 
     private func resetState() {

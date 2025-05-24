@@ -56,9 +56,12 @@ struct ContentView: View {
     @State private var currentPlayingURL: URL?
     @State private var audioPlayer: AVAudioPlayer?
     @StateObject private var historyManager = HistoryManager.shared
+    @StateObject private var audioPlayerDelegate = AudioPlayerDelegateWrapper()
     @State private var isCancelling = false
     @State private var transcriptionTasks: [URL: UUID] = [:] // URLと行IDのマッピング
-    @State private var cancellables = Set<AnyCancellable>() // Combineの購読管理
+    //@State private var cancellables = Set<AnyCombine.AnyCancellable>() // Combineの購読管理
+    @State private var cancellables = Set<AnyCancellable>()
+
 
     private let client = OpenAIClient()
 
@@ -166,12 +169,18 @@ struct ContentView: View {
             if KeychainHelper.shared.apiKey() == nil {
                 DispatchQueue.main.async { showSettings = true }
             }
+            
             // RecorderProxyのセットアップ
             proxy.onSegment = { url, start in
                 self.handleSegmentInBackground(url: url, start: start)
             }
             recorder.delegate = proxy
-
+            
+            // AudioPlayerDelegateのセットアップ
+            audioPlayerDelegate.onPlaybackFinished = {
+                playNextSegment()
+            }
+            
             // NotificationCenterの監視セットアップ
             NotificationCenter.default.publisher(for: .transcriptionDidFinish)
                 .receive(on: DispatchQueue.main)
@@ -189,31 +198,6 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("音声録音を行うには、設定アプリの「プライバシー > マイク」で本アプリを許可してください。")
-        }
-    }
-
-    // 指定URLから再生を開始する
-    private func playFrom(url: URL) {
-        currentPlayingURL = url // 再生中のURLを更新 (これによりCompactAudioPlayerViewも更新される)
-        
-        // AVAudioPlayerを準備して再生
-        do {
-            // 既存のプレイヤーがあれば停止
-            audioPlayer?.stop()
-            
-            // 再生セッションの設定
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-            
-            // 新しいプレイヤーを作成
-            audioPlayer = try AVAudioPlayer(contentsOf: url)
-            audioPlayer?.prepareToPlay()
-            audioPlayer?.play() // 再生開始
-            
-        } catch {
-            print("❌ Playback Error or Failed to load audio:", error.localizedDescription)
-            audioPlayer = nil
-            currentPlayingURL = nil
         }
     }
 
@@ -252,11 +236,18 @@ struct ContentView: View {
             if granted {
                 do {
                     isCancelling = false
-                    transcriptLines.removeAll() // 新規録音開始時にリストをクリア
-                    currentPlayingURL = nil     // 再生URLもクリア
-                    audioPlayer?.stop()         // プレイヤーも停止
+                    
+                    // 前のセッションの一時ファイルをクリーンアップ
+                    if !transcriptLines.isEmpty {
+                        historyManager.cleanupTemporaryFiles(for: transcriptLines)
+                    }
+                    
+                    transcriptLines.removeAll()
+                    currentPlayingURL = nil
+                    audioPlayer?.stop()
                     audioPlayer = nil
-                    transcriptionTasks.removeAll() // タスクもクリア
+                    transcriptionTasks.removeAll()
+                    
                     print("Starting recorder with isManual: \(self.modeIsManual)")
                     try recorder.start(isManual: self.modeIsManual)
                 } catch {
@@ -326,29 +317,154 @@ struct ContentView: View {
 
     // 次のセグメントを再生する (CompactAudioPlayerViewから呼ばれる)
     private func playNextSegment() {
-        guard let currentURL = currentPlayingURL else { return }
+        Debug.log("🎵 playNextSegment called")
         
-        guard let currentIndex = transcriptLines.firstIndex(where: { $0.audioURL == currentURL }) else {
-            currentPlayingURL = nil // 見つからなければ再生終了
+        guard let currentURL = currentPlayingURL else {
+            Debug.log("❌ No current playing URL")
             return
         }
-
+        
+        Debug.log("📍 Current URL: \(currentURL.lastPathComponent)")
+        
+        guard let currentIndex = transcriptLines.firstIndex(where: { $0.audioURL == currentURL }) else {
+            Debug.log("❌ Current URL not found in transcript lines")
+            currentPlayingURL = nil
+            return
+        }
+        
+        Debug.log("📍 Current index: \(currentIndex), Total lines: \(transcriptLines.count)")
+        
         let nextIndex = currentIndex + 1
-        if transcriptLines.indices.contains(nextIndex),
-           let nextURL = transcriptLines[nextIndex].audioURL {
-            playFrom(url: nextURL) // 次のセグメントを再生
+        if transcriptLines.indices.contains(nextIndex) {
+            if let nextURL = transcriptLines[nextIndex].audioURL {
+                Debug.log("✅ Playing next segment: \(nextURL.lastPathComponent)")
+                playFrom(url: nextURL) // 次のセグメントを再生
+            } else {
+                Debug.log("❌ Next segment has no audio URL")
+                currentPlayingURL = nil
+                audioPlayer?.stop()
+                audioPlayer = nil
+            }
         } else {
-            currentPlayingURL = nil // 次がなければ再生終了
+            Debug.log("🏁 Reached end of segments")
+            currentPlayingURL = nil
             audioPlayer?.stop()
+            audioPlayer = nil
+        }
+    }
+    
+    /// 指定されたURLのオーディオファイルを再生する
+    /// - Parameter url: 再生するオーディオファイルのURL
+    private func playFrom(url: URL) {
+        Debug.log("🎵 playFrom called with URL: \(url.lastPathComponent)")
+        
+        // 1. ファイル存在検証
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            Debug.log("❌ Audio file does not exist: \(url.path)")
+            if let index = transcriptLines.firstIndex(where: { $0.audioURL == url }) {
+                transcriptLines[index].text = "⚠️ オーディオファイルが見つかりません"
+            }
+            return
+        }
+        
+        // 2. ファイルサイズ検証
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            let fileSize = attributes[.size] as? UInt64 ?? 0
+            Debug.log("📊 Audio file size: \(fileSize) bytes")
+            
+            if fileSize == 0 {
+                Debug.log("❌ Audio file is empty: \(url.path)")
+                if let index = transcriptLines.firstIndex(where: { $0.audioURL == url }) {
+                    transcriptLines[index].text = "⚠️ オーディオファイルが空です"
+                }
+                return
+            }
+        } catch {
+            Debug.log("❌ Failed to get file attributes: \(error.localizedDescription)")
+        }
+        
+        // 3. 現在の再生を停止
+        audioPlayer?.stop()
+        audioPlayer?.delegate = nil  // 古いデリゲートをクリア
+        audioPlayer = nil
+        
+        // 4. オーディオセッション設定
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setActive(true)
+            Debug.log("✅ Audio session configured for playback")
+        } catch {
+            Debug.log("⚠️ Audio session setup warning: \(error.localizedDescription)")
+        }
+        
+        // 5. AVAudioFileを使用してファイル整合性を検証
+        do {
+            let audioFile = try AVAudioFile(forReading: url)
+            let duration = Double(audioFile.length) / audioFile.fileFormat.sampleRate
+            Debug.log("✅ Audio file validation successful - Duration: \(String(format: "%.2f", duration))s")
+        } catch {
+            Debug.log("❌ Audio file validation failed: \(error.localizedDescription)")
+            if let index = transcriptLines.firstIndex(where: { $0.audioURL == url }) {
+                transcriptLines[index].text = "⚠️ オーディオファイルが破損しています"
+            }
+            return
+        }
+        
+        // 6. AVAudioPlayerを作成して再生
+        do {
+            let newPlayer = try AVAudioPlayer(contentsOf: url)
+            
+            // ★ デリゲートを設定（シンプルに）
+            newPlayer.delegate = audioPlayerDelegate
+            
+            newPlayer.prepareToPlay()
+            
+            Debug.log("🎧 Player created - Duration: \(String(format: "%.2f", newPlayer.duration))s, Channels: \(newPlayer.numberOfChannels)")
+            Debug.log("🎧 Delegate set: \(newPlayer.delegate != nil ? "YES" : "NO")")
+            
+            // 状態を更新
+            audioPlayer = newPlayer
+            currentPlayingURL = url
+            
+            // 実際に再生を開始
+            if newPlayer.play() {
+                Debug.log("▶️ Playback started successfully for: \(url.lastPathComponent)")
+            } else {
+                Debug.log("❌ Failed to start playback")
+                audioPlayer = nil
+                currentPlayingURL = nil
+            }
+            
+        } catch {
+            Debug.log("❌ Failed to create AVAudioPlayer: \(error.localizedDescription)")
+            
+            if (error as NSError).domain == NSOSStatusErrorDomain {
+                let status = (error as NSError).code
+                Debug.log("❌ Audio error code: \(status)")
+            }
+            
+            if let index = transcriptLines.firstIndex(where: { $0.audioURL == url }) {
+                transcriptLines[index].text = "⚠️ オーディオファイルの読み込みに失敗しました"
+            }
+            
+            currentPlayingURL = nil
             audioPlayer = nil
         }
     }
     
     // 新規セッション準備
     private func prepareNewTranscriptionSession() {
+        // 現在のセッションを保存
         if !transcriptLines.isEmpty || currentPlayingURL != nil {
             historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+            
+            // 保存後、前のセッションの一時ファイルをクリーンアップ
+            historyManager.cleanupTemporaryFiles(for: transcriptLines)
         }
+        
+        // セッションをリセット
         transcriptLines.removeAll()
         currentPlayingURL = nil
         audioPlayer?.stop()
@@ -618,23 +734,28 @@ struct CompactAudioPlayerView: View {
         guard let player = player, !isEditingSlider else { return }
 
         currentTime = player.currentTime
-        duration = player.duration // 常に最新の duration を取得
+        duration = player.duration
         let currentPlayingState = player.isPlaying
 
         if currentPlayingState {
-             progress = (duration > 0) ? (currentTime / duration) : 0
+            progress = (duration > 0) ? (currentTime / duration) : 0
         }
 
-        // isPlaying の状態と実際の再生状態が異なり、かつ再生が終了した場合
-        if isPlaying && !currentPlayingState && duration > 0 && abs(currentTime - duration) < 0.15 {
-            progress = 1.0
-            currentTime = duration 
-            isPlaying = false // isPlaying を false に更新
-            DispatchQueue.main.async {
-                self.onPlaybackFinished?()
+        // より正確な再生終了の検出
+        if isPlaying && !currentPlayingState && duration > 0 {
+            // 再生位置が最後に近いか、正確に最後にある場合
+            if currentTime >= duration - 0.1 || progress >= 0.99 {
+                Debug.log("🏁 Timer detected playback finished - progress: \(progress), time: \(currentTime)/\(duration)")
+                progress = 1.0
+                currentTime = duration
+                isPlaying = false
+                
+                // デリゲートが機能しない場合のバックアップ
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.onPlaybackFinished?()
+                }
             }
         } else if isPlaying != currentPlayingState {
-             // 通常の再生/一時停止で状態が食い違った場合、実際の状態に合わせる
             isPlaying = currentPlayingState
         }
     }
@@ -682,6 +803,22 @@ struct MainContentView: View {
                 .padding(.horizontal, 10)
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
+    }
+}
+
+// MARK: - AudioPlayerDelegateWrapper
+class AudioPlayerDelegateWrapper: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    var onPlaybackFinished: (() -> Void)?
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Debug.log("🏁 AVAudioPlayerDelegate: Playback finished (success: \(flag))")
+        DispatchQueue.main.async {
+            self.onPlaybackFinished?()
+        }
+    }
+    
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        Debug.log("❌ AVAudioPlayerDelegate: Decode error: \(error?.localizedDescription ?? "Unknown")")
     }
 }
 
