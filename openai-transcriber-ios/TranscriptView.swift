@@ -3,12 +3,13 @@
 //
 import SwiftUI
 
-struct TranscriptLine: Identifiable {
-    let id = UUID()
-    var time: Date
-    var text: String
-    var audioURL: URL? = nil // <-- ▼▼▼ 追加 ▼▼▼ 音声セグメントのURL
-}
+// TranscriptView.swift の以下の部分を削除します
+// struct TranscriptLine: Identifiable {
+//     let id = UUID()
+//     var time: Date
+//     var text: String
+//     var audioURL: URL? = nil
+// }
 
 struct TranscriptView: View {
     @Binding var lines: [TranscriptLine]

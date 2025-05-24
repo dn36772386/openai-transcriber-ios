@@ -203,18 +203,15 @@ struct ContentView: View {
             return
         }
         print("🎧 Segment file path:", url.path)
-        // --- ▼▼▼ 変更 ▼▼▼ ---
-        // 最初のセグメントなら、それを再生対象にする
         if self.currentPlayingURL == nil { self.currentPlayingURL = url }
-        // --- ▲▲▲ 変更 ▲▲▲ ---
 
         var currentLines = self.transcriptLines
         let idx = currentLines.count - 1 < 0 ? 0 : currentLines.count - 1
 
         if currentLines.isEmpty || currentLines[idx].text != "…文字起こし中…" {
-             // --- ▼▼▼ 変更 ▼▼▼ ---
-             currentLines.append(.init(time: start, text: "…文字起こし中…", audioURL: url)) // URLも保存
-             // --- ▲▲▲ 変更 ▲▲▲ ---
+            // --- ▼▼▼ 修正 ▼▼▼ ---
+            currentLines.append(.init(id: UUID(), time: start, text: "…文字起こし中…", audioURL: url)) // id を追加
+            // --- ▲▲▲ 修正 ▲▲▲ ---
         }
         let currentIndex = currentLines.count - 1
         self.transcriptLines = currentLines
@@ -231,11 +228,9 @@ struct ContentView: View {
                 guard !isCancelling else { return }
                 var finalLines = self.transcriptLines
                 if finalLines.indices.contains(currentIndex) {
-                   // --- ▼▼▼ 変更 ▼▼▼ ---
-                   finalLines[currentIndex].text = result
-                   finalLines[currentIndex].audioURL = url // テキスト確定時にもURLを再確認
-                   // --- ▲▲▲ 変更 ▲▲▲ ---
-                   self.transcriptLines = finalLines
+                    finalLines[currentIndex].text = result
+                    finalLines[currentIndex].audioURL = url 
+                    self.transcriptLines = finalLines
                 }
             }
         }

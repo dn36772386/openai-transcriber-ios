@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - TranscriptLine
-// TranscriptViewなど他の場所でも使われるため、グローバルスコープに定義 (または適切な場所に)
+// TranscriptViewなど他の場所でも使われるため、HistoryItem.swiftの先頭などに一元化
 struct TranscriptLine: Identifiable, Equatable {
     let id: UUID // 初期化時に渡される想定
     var time: Date
@@ -11,14 +11,19 @@ struct TranscriptLine: Identifiable, Equatable {
     static func == (lhs: TranscriptLine, rhs: TranscriptLine) -> Bool {
         lhs.id == rhs.id && lhs.time == rhs.time && lhs.text == rhs.text && lhs.audioURL == rhs.audioURL
     }
-    
-    // TranscriptLineDataへの変換メソッド (HistoryManager.addHistoryItemで直接行うので必須ではない)
+
+    // HistoryItem.TranscriptLineDataへの変換メソッド (オプション)
     func toTranscriptLineData(documentsDirectory: URL, historyItemId: UUID) -> HistoryItem.TranscriptLineData {
         var segmentFileName: String? = nil
         if let sourceURL = self.audioURL {
-            let fileName = "segment_\(historyItemId.uuidString)_\(self.id.uuidString).wav"
+            // セグメントごとにユニークなファイル名を生成 (履歴アイテムIDとセグメントIDを使用)
+            let fileName = "segment_\(historyItemId.uuidString)_\(self.id.uuidString).\(sourceURL.pathExtension.isEmpty ? "wav" : sourceURL.pathExtension)"
             let destinationURL = documentsDirectory.appendingPathComponent(fileName)
             do {
+                // コピー先に同名ファイルが存在する場合は上書きを試みる (またはエラー処理)
+                if FileManager.default.fileExists(atPath: destinationURL.path) {
+                    try FileManager.default.removeItem(at: destinationURL)
+                }
                 try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
                 segmentFileName = fileName
             } catch {
@@ -33,8 +38,8 @@ struct TranscriptLine: Identifiable, Equatable {
 struct HistoryItem: Identifiable, Codable {
     let id: UUID
     var date: Date
-    var transcriptLines: [TranscriptLineData] // 文字起こし結果 (Codable用)
     var fullAudioFileName: String?            // セッション全体の音声ファイル名 (Documents内)
+    var transcriptLines: [TranscriptLineData] // 文字起こし結果 (Codable用)
 
     // Codable対応のためのシンプルな文字起こしデータ構造
     struct TranscriptLineData: Identifiable, Codable {
@@ -47,37 +52,32 @@ struct HistoryItem: Identifiable, Codable {
     init(id: UUID = UUID(), date: Date = Date(), lines: [TranscriptLine], fullAudioURL: URL?, documentsDirectory: URL) {
         self.id = id
         self.date = date
-        self.fullAudioFileName = nil // まずnilで初期化
 
         // 1. セッション全体の音声ファイルをDocumentsにコピーし、ファイル名を保存
+        // fullAudioFileName を先に初期化 (self.id を使用するため)
+        var tempFullAudioFileName: String? = nil
         if let sourceFullAudioURL = fullAudioURL {
-            // historyItemのIDを使ってユニークなファイル名を生成
-            let uniqueFullAudioFileName = "full_session_\(self.id.uuidString).\(sourceFullAudioURL.pathExtension)"
+            let uniqueFullAudioFileName = "full_session_\(self.id.uuidString).\(sourceFullAudioURL.pathExtension.isEmpty ? "wav" : sourceFullAudioURL.pathExtension)"
             let destinationFullAudioURL = documentsDirectory.appendingPathComponent(uniqueFullAudioFileName)
             do {
+                if FileManager.default.fileExists(atPath: destinationFullAudioURL.path) {
+                    try FileManager.default.removeItem(at: destinationFullAudioURL)
+                }
                 try FileManager.default.copyItem(at: sourceFullAudioURL, to: destinationFullAudioURL)
-                self.fullAudioFileName = uniqueFullAudioFileName
-                print("✅ Saved full audio to: \(destinationFullAudioURL.path)")
+                tempFullAudioFileName = uniqueFullAudioFileName // 一時変数に格納
+                print("✅ Saved full audio to: \\(destinationFullAudioURL.path)")
             } catch {
-                print("❌ Error copying full audio from \(sourceFullAudioURL.path) to \(destinationFullAudioURL.path): \(error)")
+                print("❌ Error copying full audio from \\(sourceFullAudioURL.path) to \\(destinationFullAudioURL.path): \\(error)")
             }
         }
+        self.fullAudioFileName = tempFullAudioFileName // プロパティに代入
         
         // 2. TranscriptLine を TranscriptLineData に変換し、セグメント音声もコピー
+        // transcriptLines を初期化 (self.id と documentsDirectory を使用)
         self.transcriptLines = lines.map { line in
-            var segmentFileNameForData: String? = nil
-            if let sourceSegmentURL = line.audioURL {
-                // historyItemのIDとlineのIDを使ってユニークなファイル名を生成
-                let uniqueSegmentFileName = "segment_\(self.id.uuidString)_\(line.id.uuidString).\(sourceSegmentURL.pathExtension)"
-                let destinationSegmentURL = documentsDirectory.appendingPathComponent(uniqueSegmentFileName)
-                do {
-                    try FileManager.default.copyItem(at: sourceSegmentURL, to: destinationSegmentURL)
-                    segmentFileNameForData = uniqueSegmentFileName
-                } catch {
-                    print("❌ Error copying segment audio from \(sourceSegmentURL.path) to \(destinationSegmentURL.path): \(error)")
-                }
-            }
-            return TranscriptLineData(id: line.id, time: line.time, text: line.text, audioSegmentFileName: segmentFileNameForData)
+            // lineからTranscriptLineDataを生成し、その際に音声ファイルもコピーする
+            
+            line.toTranscriptLineData(documentsDirectory: documentsDirectory, historyItemId: id) // self.id を id に変更
         }
     }
 
@@ -90,9 +90,10 @@ struct HistoryItem: Identifiable, Codable {
                 if FileManager.default.fileExists(atPath: potentialURL.path) {
                     url = potentialURL
                 } else {
-                    print("⚠️ Segment file not found: \(fileName)")
+                    print("⚠️ Segment file not found in Documents: \(fileName)")
                 }
             }
+            // TranscriptLineのイニシャライザがidを要求する場合
             return TranscriptLine(id: data.id, time: data.time, text: data.text, audioURL: url)
         }
     }

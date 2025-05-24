@@ -2,7 +2,7 @@ import Foundation
 
 class HistoryManager: ObservableObject {
     static let shared = HistoryManager()
-    private let historyKey = "transcriptionHistory_v3" // キーを変更して以前のデータとの衝突を避ける
+    private let historyKey = "transcriptionHistory_v3" // キー変更で以前のデータとの衝突を回避
     private let maxHistoryItems = 10
 
     @Published var historyItems: [HistoryItem] = []
@@ -24,13 +24,12 @@ class HistoryManager: ObservableObject {
         }
         do {
             let decoder = JSONDecoder()
-            let items = try decoder.decode([HistoryItem].self, from: data)
+            let items = try decoder.decode([HistoryItem].self, from: data) // 'from:' が正しく使われている
             self.historyItems = items.sorted(by: { $0.date > $1.date })
             print("✅ Loaded \(items.count) history items from UserDefaults.")
         } catch {
             print("❌ Error decoding history: \(error)")
             self.historyItems = []
-            // UserDefaults.standard.removeObject(forKey: historyKey) // 不正なデータを削除する場合
         }
     }
 
@@ -46,24 +45,21 @@ class HistoryManager: ObservableObject {
     }
 
     func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
-        // HistoryItemのinit内でファイルコピーとファイル名設定を行う
         let newItem = HistoryItem(
             lines: lines,
-            fullAudioURL: fullAudioURL, // これは一時ディレクトリのURLのはず
+            fullAudioURL: fullAudioURL,
             documentsDirectory: self.documentsDirectory
         )
 
         historyItems.insert(newItem, at: 0)
         print("➕ Added new history item: ID \(newItem.id), Date: \(newItem.date)")
 
-        // 古いアイテムを削除 (音声ファイルも含む)
         while historyItems.count > maxHistoryItems {
             let oldItem = historyItems.removeLast()
-            print("古い履歴を削除: \(oldItem.id)")
+            print("🗑️ Deleting old history item: \(oldItem.id)")
             deleteAssociatedFiles(for: oldItem)
         }
         
-        // 一時ファイル（引数で渡された fullAudioURL）を削除
         if let sourceURL = fullAudioURL, sourceURL.isFileURL {
              do {
                  try FileManager.default.removeItem(at: sourceURL)
@@ -72,12 +68,10 @@ class HistoryManager: ObservableObject {
                  print("⚠️ Error removing temporary full session audio \(sourceURL.path): \(error)")
              }
         }
-        // 一時ファイル（引数で渡された lines 内の audioURL）を削除
         lines.forEach { line in
             if let segmentURL = line.audioURL, segmentURL.isFileURL {
                 do {
                     try FileManager.default.removeItem(at: segmentURL)
-                    // print("🗑️ Removed temporary segment audio: \(segmentURL.lastPathComponent)")
                 } catch {
                     // print("⚠️ Error removing temporary segment audio \(segmentURL.path): \(error)")
                 }
@@ -85,11 +79,10 @@ class HistoryManager: ObservableObject {
         }
 
         saveHistoryItemsToUserDefaults()
-        objectWillChange.send() // UI更新のため
+        objectWillChange.send()
     }
 
     private func deleteAssociatedFiles(for item: HistoryItem) {
-        // 全体音声ファイルを削除
         if let fileName = item.fullAudioFileName {
             let fileURL = documentsDirectory.appendingPathComponent(fileName)
             if FileManager.default.fileExists(atPath: fileURL.path) {
@@ -101,14 +94,12 @@ class HistoryManager: ObservableObject {
                 }
             }
         }
-        // セグメント音声ファイルを削除
         item.transcriptLines.forEach { lineData in
             if let segName = lineData.audioSegmentFileName {
                 let segURL = documentsDirectory.appendingPathComponent(segName)
                  if FileManager.default.fileExists(atPath: segURL.path) {
                     do {
                         try FileManager.default.removeItem(at: segURL)
-                        // print("🗑️ Deleted segment audio file from Documents: \(segName)")
                     } catch {
                         // print("❌ Error deleting segment audio file \(segName) from Documents: \(error)")
                     }
@@ -120,9 +111,11 @@ class HistoryManager: ObservableObject {
     func deleteHistoryItem(at offsets: IndexSet) {
         var itemsToDelete: [HistoryItem] = []
         offsets.forEach { index in
-            itemsToDelete.append(historyItems[index])
+            if historyItems.indices.contains(index) {
+                itemsToDelete.append(historyItems[index])
+            }
         }
-        for item in itemsToDelete { // 削除対象のファイルも先に消す
+        for item in itemsToDelete {
              deleteAssociatedFiles(for: item)
         }
         historyItems.remove(atOffsets: offsets)
