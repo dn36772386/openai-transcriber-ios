@@ -113,7 +113,8 @@ struct ContentView: View {
                 SidebarView(
                     showSidebar: $showSidebar,
                     activeMenuItem: $activeMenuItem,
-                    showSettings: $showSettings
+                    showSettings: $showSettings,
+                    onLoadHistoryItem: self.loadHistoryItem // --- ▼▼▼ 追加 (ステップ6修正) ▼▼▼ ---
                 )
                 .transition(.move(edge: .leading))
                 .zIndex(1)
@@ -256,6 +257,30 @@ struct ContentView: View {
         }
     }
     // --- ▲▲▲ 追加 ▲▲▲ ---
+
+    // --- ▼▼▼ 追加 (ステップ6) ▼▼▼ ---
+    private func loadHistoryItem(_ historyItem: HistoryItem) {
+        // 現在の文字起こし内容とプレイヤーをクリア
+        self.transcriptLines.removeAll()
+        self.currentPlayingURL = nil
+        self.audioPlayer?.stop()
+        self.audioPlayer = nil
+
+        // HistoryItem から TranscriptLine 配列を復元
+        self.transcriptLines = historyItem.getTranscriptLines(documentsDirectory: historyManager.documentsDirectory)
+
+        // 最初のセグメントまたは全体の音声を再生対象に設定 (お好みで調整)
+        if let fullAudio = historyItem.getFullAudioURL(documentsDirectory: historyManager.documentsDirectory) {
+            self.currentPlayingURL = fullAudio
+        } else if let firstSegment = self.transcriptLines.first?.audioURL {
+            self.currentPlayingURL = firstSegment
+        }
+        // サイドバーを閉じる (iPhoneの場合)
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            withAnimation { showSidebar = false }
+        }
+    }
+    // --- ▲▲▲ 追加 (ステップ6) ▲▲▲ ---
 } // <-- ContentView の閉じ括弧
 
 // ... (HamburgerButton, SidebarView, AudioPlayerView, MainContentView, #Preview は変更なし) ...
@@ -281,7 +306,8 @@ enum SidebarMenuItemType: CaseIterable {
 struct SidebarView: View {
     @Binding var showSidebar: Bool
     @Binding var activeMenuItem: SidebarMenuItemType?
-    @Binding var showSettings: Bool // Receive binding
+    @Binding var showSettings: Bool
+    var onLoadHistoryItem: (HistoryItem) -> Void // --- ▼▼▼ 追加 (ステップ6修正) ▼▼▼ ---
     // --- ▼▼▼ 変更 ▼▼▼ ---
     @ObservedObject private var historyManager = HistoryManager.shared
     // --- ▲▲▲ 変更 ▲▲▲ ---
@@ -335,18 +361,24 @@ struct SidebarView: View {
                                 Text(item.date.toLocaleString())
                                     .font(.system(size: 13)).foregroundColor(Color.icon)
                                 Spacer()
-                                // --- ▼▼▼ 変更 ▼▼▼ ---
-                                // 個別削除 (今回は表示のみ。実際の削除はIndexSetが必要なため、別途実装)
-                                Image(systemName: "trash").foregroundColor(Color.icon) // 見た目だけ
-                                        .opacity(selectedHistoryItem == item.id ? 1 : 0)
-                                // --- ▲▲▲ 変更 ▲▲▲ ---
+                                // --- ▼▼▼ 変更 (ステップ6) ▼▼▼ ---
+                                // ゴミ箱アイコンをボタンにする
+                                if selectedHistoryItem == item.id { // 選択されているアイテムの時だけ表示 (お好みで調整)
+                                    Button {
+                                        historyManager.deleteHistoryItem(id: item.id)
+                                    } label: {
+                                        Image(systemName: "trash.fill").foregroundColor(Color.danger)
+                                    }
+                                    .buttonStyle(PlainButtonStyle()) // ボタンのデフォルトスタイルを解除
+                                }
+                                // --- ▲▲▲ 変更 (ステップ6) ▲▲▲ ---
                             }
                             .padding(.vertical, 8).padding(.horizontal, 14)
                             .background(selectedHistoryItem == item.id ? Color.accent.opacity(0.12) : Color.clear)
                             .cornerRadius(4)
                             .onTapGesture { 
                                 selectedHistoryItem = item.id 
-                                // TODO: 履歴読み込み処理を呼び出す (次のステップで)
+                                onLoadHistoryItem(item) // --- ▼▼▼ 変更 (ステップ6修正) ▼▼▼ ---
                             }
                             .padding(.horizontal, 6).padding(.vertical, 2)
                         }

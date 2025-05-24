@@ -132,3 +132,16 @@ class HistoryManager: ObservableObject {
         print("🗑️ Cleared all history items and associated files.")
     }
 }
+
+// --- ▼▼▼ 追加 (ステップ6) ▼▼▼ ---
+extension HistoryManager {
+    func deleteHistoryItem(id: UUID) {
+        if let index = historyItems.firstIndex(where: { $0.id == id }) {
+            let itemToDelete = historyItems.remove(at: index)
+            deleteAssociatedFiles(for: itemToDelete)
+            saveHistoryItemsToUserDefaults()
+            print("🗑️ Deleted history item with ID: \(id)")
+        }
+    }
+}
+// --- ▲▲▲ 追加 (ステップ6) ▲▲▲ ---
