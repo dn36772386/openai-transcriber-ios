@@ -14,7 +14,6 @@
 		1806C18C2DD373670066C50F /* openai_transcriber_iosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C18B2DD373670066C50F /* openai_transcriber_iosTests.swift */; };
 		1806C1962DD373670066C50F /* openai_transcriber_iosUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1952DD373670066C50F /* openai_transcriber_iosUITests.swift */; };
 		1806C1982DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */; };
-		181743702DDA1ADE0085D4D5 /* libfvad in Frameworks */ = {isa = PBXBuildFile; productRef = 1817436F2DDA1ADE0085D4D5 /* libfvad */; };
 		1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716D2DD8B02500D3461D /* AudioRecorder.swift */; };
 		186071702DD8B2BD00D3461D /* OpenAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716F2DD8B2BD00D3461D /* OpenAIClient.swift */; };
 		186071772DD8BF2700D3461D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071752DD8BF2700D3461D /* SettingsView.swift */; };
@@ -71,7 +70,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				181743702DDA1ADE0085D4D5 /* libfvad in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -183,7 +181,6 @@
 			);
 			name = "openai-transcriber-ios";
 			packageProductDependencies = (
-				1817436F2DDA1ADE0085D4D5 /* libfvad */,
 			);
 			productName = "openai-transcriber-ios";
 			productReference = 1806C1772DD373640066C50F /* openai-transcriber-ios.app */;
@@ -258,8 +255,6 @@
 			);
 			mainGroup = 1806C16E2DD373640066C50F;
 			packageReferences = (
-				18B22B942DD9C0820084808B /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */,
-				1817436E2DDA1ADE0085D4D5 /* XCRemoteSwiftPackageReference "libfvad" */,
 			);
 			productRefGroup = 1806C1782DD373640066C50F /* Products */;
 			projectDirPath = "";
@@ -659,33 +654,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		1817436E2DDA1ADE0085D4D5 /* XCRemoteSwiftPackageReference "libfvad" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/gfreezy/libfvad";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
-		};
-		18B22B942DD9C0820084808B /* XCRemoteSwiftPackageReference "VoiceActivityDetector" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/dn36772386/VoiceActivityDetector.git";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		1817436F2DDA1ADE0085D4D5 /* libfvad */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1817436E2DDA1ADE0085D4D5 /* XCRemoteSwiftPackageReference "libfvad" */;
-			productName = libfvad;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1806C16F2DD373640066C50F /* Project object */;
 }
