@@ -39,11 +39,11 @@ struct ContentView: View {
     @State private var activeMenuItem: SidebarMenuItemType? = .transcribe
     @State private var showSettings = false
     @State private var transcriptLines: [TranscriptLine] = []
-    @State private var lastSegmentURL: URL?
+    // --- ▼▼▼ 変更 ▼▼▼ ---
+    @State private var currentPlayingURL: URL? // 再生中のURL
+    // --- ▲▲▲ 変更 ▲▲▲ ---
     @State private var audioPlayer: AVAudioPlayer?
-    // --- ▼▼▼ 追加 ▼▼▼ ---
     @State private var isCancelling = false // キャンセル操作中フラグ
-    // --- ▲▲▲ 追加 ▲▲▲ ---
 
     private let client = OpenAIClient()
 
@@ -53,8 +53,8 @@ struct ContentView: View {
                 MainContentView(
                     modeIsManual: $modeIsManual,
                     isRecording: $recorder.isRecording,
-                    transcriptLines: $transcriptLines,
-                    lastSegmentURL: $lastSegmentURL,
+                    transcriptLines: $transcriptLines, 
+                    audioPlayerURL: $currentPlayingURL, // 変更
                     audioPlayer: $audioPlayer
                 )
                 .toolbar {
@@ -65,9 +65,7 @@ struct ContentView: View {
                         Text("Transcriber").font(.headline)
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        // --- ▼▼▼ 変更 ▼▼▼ ---
                         HStack(spacing: 15) {
-                            // モードトグル (録音中は非表示にするなど、後で調整可能)
                             if !recorder.isRecording {
                                 Toggle("", isOn: $modeIsManual)
                                     .labelsHidden()
@@ -77,17 +75,16 @@ struct ContentView: View {
                                     .foregroundColor(Color.textSecondary)
                             }
 
-                            // 録音制御ボタン
                             if recorder.isRecording {
                                 Button {
-                                    finishRecording() // 完了ボタン
+                                    finishRecording()
                                 } label: {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 22))
                                         .foregroundColor(Color.accent)
                                 }
                                 Button {
-                                    cancelRecording() // キャンセルボタン
+                                    cancelRecording()
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.system(size: 22))
@@ -95,7 +92,7 @@ struct ContentView: View {
                                 }
                             } else {
                                 Button {
-                                    startRecording() // 開始ボタン
+                                    startRecording()
                                 } label: {
                                     Image(systemName: "mic.fill")
                                         .font(.system(size: 18))
@@ -103,7 +100,6 @@ struct ContentView: View {
                                 }
                             }
                         }
-                        // --- ▲▲▲ 変更 ▲▲▲ ---
                     }
                 }
                 .navigationBarTitleDisplayMode(.inline)
@@ -115,7 +111,7 @@ struct ContentView: View {
                 SidebarView(
                     showSidebar: $showSidebar,
                     activeMenuItem: $activeMenuItem,
-                    showSettings: $showSettings // Pass binding
+                    showSettings: $showSettings
                 )
                 .transition(.move(edge: .leading))
                 .zIndex(1)
@@ -128,14 +124,12 @@ struct ContentView: View {
                     .zIndex(0.5)
             }
         }
-        .sheet(isPresented: $showSettings) { SettingsView() } // Use SettingsView
+        .sheet(isPresented: $showSettings) { SettingsView() }
         .onAppear {
             if KeychainHelper.shared.apiKey() == nil {
                 DispatchQueue.main.async { showSettings = true }
             }
-            // Set delegate and closure
             proxy.onSegment = { url, start in
-                // @MainActor 関数を呼び出すクロージャを作成して代入
                 self.handleSegment(url: url, start: start)
             }
             recorder.delegate = proxy
@@ -152,31 +146,24 @@ struct ContentView: View {
         }
     }
 
-    // --- ▼▼▼ 変更 ▼▼▼ ---
-    // startRecording に変更し、開始のみ担当
     private func startRecording() {
         guard !recorder.isRecording else { return }
         requestMicrophonePermission()
     }
 
-    // --- ▼▼▼ 追加 ▼▼▼ ---
-    // 完了処理
     private func finishRecording() {
         Debug.log("✅ finish tapped")
         isCancelling = false
-        recorder.stop() // AudioEngineRecorder の stop() を呼び出す
+        recorder.stop()
     }
 
-    // キャンセル処理
     private func cancelRecording() {
         Debug.log("❌ cancel tapped")
         isCancelling = true
-        recorder.cancel() // AudioEngineRecorder の cancel() を呼び出す
-        // キャンセル時は表示を即時クリア
+        recorder.cancel()
         transcriptLines.removeAll()
-        lastSegmentURL = nil
+        currentPlayingURL = nil // 変更
     }
-    // --- ▲▲▲ 追加 ▲▲▲ ---
 
     private func requestMicrophonePermission() {
         AVAudioApplication.requestRecordPermission { granted in
@@ -184,69 +171,72 @@ struct ContentView: View {
         }
     }
 
+    // --- ▼▼▼ 修正箇所 ▼▼▼ ---
     private func handlePermissionResult(_ granted: Bool) {
         DispatchQueue.main.async {
             if granted {
-                // --- ▼▼▼ 追加 ▼▼▼ ---
-                isCancelling = false // 開始時にフラグをリセット
-                // --- ▲▲▲ 追加 ▲▲▲ ---
-                do {
-                    try recorder.start()
-                } catch {
+                do { // do をここに配置
+                    isCancelling = false
+                    try recorder.start(isManual: self.modeIsManual)
+                } catch { // catch をここに配置
                     print("[Recorder] start failed:", error.localizedDescription)
-                }
+                } // catch の閉じ括弧
             } else {
                 showPermissionAlert = true
             }
         }
     }
+    // --- ▲▲▲ 修正箇所 ▲▲▲ ---
 
     @MainActor
     private func handleSegment(url: URL, start: Date) {
-        // --- ▼▼▼ 追加 ▼▼▼ ---
-        // キャンセル操作中はセグメントを処理しない
         guard !isCancelling else {
             Debug.log("🚫 Segment ignored due to cancel.")
-            try? FileManager.default.removeItem(at: url) // ファイルも削除
+            try? FileManager.default.removeItem(at: url)
             return
         }
-        // --- ▲▲▲ 追加 ▲▲▲ ---
         print("🎧 Segment file path:", url.path)
-        self.lastSegmentURL = url // URLを保存
+        // --- ▼▼▼ 変更 ▼▼▼ ---
+        // 最初のセグメントなら、それを再生対象にする
+        if self.currentPlayingURL == nil { self.currentPlayingURL = url }
+        // --- ▲▲▲ 変更 ▲▲▲ ---
 
-        // --- 修正箇所 START ---
-        var currentLines = self.transcriptLines // @State のコピーを作成
+        var currentLines = self.transcriptLines
         let idx = currentLines.count - 1 < 0 ? 0 : currentLines.count - 1
 
-        // 「…文字起こし中…」を追加または確認
         if currentLines.isEmpty || currentLines[idx].text != "…文字起こし中…" {
-             currentLines.append(.init(time: start, text: "…文字起こし中…"))
+             // --- ▼▼▼ 変更 ▼▼▼ ---
+             currentLines.append(.init(time: start, text: "…文字起こし中…", audioURL: url)) // URLも保存
+             // --- ▲▲▲ 変更 ▲▲▲ ---
         }
         let currentIndex = currentLines.count - 1
-        self.transcriptLines = currentLines // @State にコピーを再代入
+        self.transcriptLines = currentLines
 
         Task {
             let result: String
             do {
-                result = try await client.transcribe(url: url) // 非同期処理
+                result = try await client.transcribe(url: url)
             } catch {
                 result = "⚠️ \(error.localizedDescription)"
             }
 
             await MainActor.run {
-                // --- ▼▼▼ 追加 ▼▼▼ ---
-                guard !isCancelling else { return } // 非同期処理後に再度チェック
-                // --- ▲▲▲ 追加 ▲▲▲ ---
-                var finalLines = self.transcriptLines // 再度コピーを作成
+                guard !isCancelling else { return }
+                var finalLines = self.transcriptLines
                 if finalLines.indices.contains(currentIndex) {
+                   // --- ▼▼▼ 変更 ▼▼▼ ---
                    finalLines[currentIndex].text = result
-                   self.transcriptLines = finalLines // 最終結果を @State に再代入
+                   finalLines[currentIndex].audioURL = url // テキスト確定時にもURLを再確認
+                   // --- ▲▲▲ 変更 ▲▲▲ ---
+                   self.transcriptLines = finalLines
                 }
             }
         }
-        // --- 修正箇所 END ---
     }
-}
+} // <-- ContentView の閉じ括弧
+
+// ... (HamburgerButton, SidebarView, AudioPlayerView, MainContentView, #Preview は変更なし) ...
+// (元のファイルにあるこれらの構造体をそのまま残してください)
 
 // MARK: - Hamburger Button
 struct HamburgerButton: View {
@@ -398,6 +388,10 @@ struct AudioPlayerView: View {
     @State private var duration: TimeInterval = 0.0
     @State private var currentTime: TimeInterval = 0.0
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+    // --- ▼▼▼ 追加 ▼▼▼ ---
+    // 連続再生のためのコールバック (次のステップで実装)
+    // var onPlaybackFinished: (() -> Void)? 
+    // --- ▲▲▲ 追加 ▲▲▲ ---
 
     var body: some View {
         HStack(spacing: 10) {
@@ -419,7 +413,10 @@ struct AudioPlayerView: View {
         .padding(.horizontal)
         .padding(.bottom, 10)
         .onReceive(timer) { _ in updateProgress() }
-        .onChange(of: url) { _, newUrl in resetPlayer(url: newUrl) } // Updated onChange
+        // --- ▼▼▼ 変更 ▼▼▼ ---
+        .onChange(of: url) { // iOS 17+
+            resetPlayer(url: url)
+        }
     }
 
     private func formatTime(_ time: TimeInterval) -> String {
@@ -455,6 +452,7 @@ struct AudioPlayerView: View {
              isPlaying = false
              progress = 1.0
              currentTime = duration
+             // onPlaybackFinished?() // 次のステップで有効化
         }
     }
     
@@ -474,16 +472,25 @@ struct MainContentView: View {
     @Binding var modeIsManual: Bool
     @Binding var isRecording: Bool
     @Binding var transcriptLines: [TranscriptLine]
-    @Binding var lastSegmentURL: URL?
+    // --- ▼▼▼ 変更 ▼▼▼ ---
+    @Binding var audioPlayerURL: URL?
+    // --- ▲▲▲ 変更 ▲▲▲ ---
     @Binding var audioPlayer: AVAudioPlayer?
 
     var body: some View {
         VStack(spacing: 0) {
-            TranscriptView(lines: $transcriptLines)
+            // --- ▼▼▼ 変更 ▼▼▼ ---
+            TranscriptView(lines: $transcriptLines) { tappedURL in
+                // 行がタップされたらプレイヤーのURLを更新
+                audioPlayerURL = tappedURL
+            }
+            // --- ▲▲▲ 変更 ▲▲▲ ---
                 .padding(.top, 10)
                 .padding(.horizontal, 10)
 
-            AudioPlayerView(url: $lastSegmentURL, player: $audioPlayer)
+            // --- ▼▼▼ 変更 ▼▼▼ ---
+            AudioPlayerView(url: $audioPlayerURL, player: $audioPlayer)
+            // --- ▲▲▲ 変更 ▲▲▲ ---
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
     }

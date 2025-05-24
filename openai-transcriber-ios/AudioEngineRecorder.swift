@@ -32,9 +32,10 @@ final class AudioEngineRecorder: ObservableObject {
     private var inputFormat: AVAudioFormat?
     private var outputFormat: AVAudioFormat?
     private var audioConverter: AVAudioConverter?
-    // --- ▼▼▼ 追加 ▼▼▼ ---
+    // --- ▼▼▼ ステップ1で追加 ▼▼▼ ---
     private var isCancelled = false // キャンセルフラグ
-    // --- ▲▲▲ 追加 ▲▲▲ ---
+    // --- ▲▲▲ ステップ1で追加 ▲▲▲ ---
+    private var isManualMode = false // 手動モードフラグ
 
     // MARK: - 初期化 ------------------------------------------------
     init() {
@@ -51,11 +52,12 @@ final class AudioEngineRecorder: ObservableObject {
             channels: 1,                  // Mono
             interleaved: true
         )!
-        // ◀︎◀︎ 追加 ▲▲
     }
 
-    func start() throws {
+    // --- ▼▼▼ 変更 ▼▼▼ ---
+    func start(isManual: Bool) throws {
         guard !isRecording else { return }
+        self.isManualMode = isManual // モードを設定
 
         // --- ▼▼▼ 追加 ▼▼▼ ---
         isCancelled = false // 開始時にキャンセルをリセット
@@ -86,7 +88,13 @@ final class AudioEngineRecorder: ObservableObject {
 
         // Tapをインストールし、RMSで音声区間を判定
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            self?.processAudio(buffer) // ◀︎◀︎ 変更: RMSベースの処理を呼ぶ
+            // --- ▼▼▼ 変更 ▼▼▼ ---
+            if self?.isManualMode == true {
+                self?.processManualAudio(buffer) // 手動モード処理
+            } else {
+                self?.processAudio(buffer) // 自動モード処理
+            }
+            // --- ▲▲▲ 変更 ▲▲▲ ---
         }
 
         engine.prepare()
@@ -123,6 +131,29 @@ final class AudioEngineRecorder: ObservableObject {
         
         finalizeSegment() // 状態リセットのために呼ぶ
         isRecording = false
+    }
+    // --- ▲▲▲ 追加 ▲▲▲ ---
+
+    // --- ▼▼▼ 追加 ▼▼▼ ---
+    /// 手動モードで音声データを処理する
+    private func processManualAudio(_ buffer: AVAudioPCMBuffer) {
+        guard !isCancelled else { return } // キャンセル中は処理しない
+
+        // まだファイルを開いていなければ開く（一度だけ）
+        if audioFile == nil {
+            openNewSegment()
+        }
+        
+        // フォーマット変換
+        let bufferToWrite: AVAudioPCMBuffer
+        if let converter = audioConverter, let outputFmt = outputFormat {
+            bufferToWrite = convertBuffer(buffer, using: converter, to: outputFmt)
+        } else {
+            bufferToWrite = buffer
+        }
+        
+        // ファイルに書き込み
+        try? audioFile?.write(from: bufferToWrite)
     }
     // --- ▲▲▲ 追加 ▲▲▲ ---
 
@@ -236,7 +267,7 @@ final class AudioEngineRecorder: ObservableObject {
         // --- ▼▼▼ 追加 ▼▼▼ ---
         isCancelled  = false // 状態リセット時にフラグもリセット
         isSpeaking   = false
-        // --- ▲▲▲ 追加 ▲▲▲ ---
+        isManualMode = false // モードもリセット
     }
 
     // ◀︎◀︎ 追加: フォーマット変換メソッド ▼▼
