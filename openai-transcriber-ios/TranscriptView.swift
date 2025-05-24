@@ -13,32 +13,40 @@ import SwiftUI
 
 struct TranscriptView: View {
     @Binding var lines: [TranscriptLine]
-    // --- ▼▼▼ 追加 ▼▼▼ ---
-    var onLineTapped: (URL) -> Void // タップ時にURLを渡すコールバック
-    // --- ▲▲▲ 追加 ▲▲▲ ---
+    var onLineTapped: (URL) -> Void
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
                     ForEach(lines) { line in
-                        Text("\(line.time.toLocaleString()) \(line.text)")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .id(line.id)
-                            // --- ▼▼▼ 追加 ▼▼▼ ---
-                            .padding(.vertical, 2) // タップしやすくするため少しパディング
-                            .onTapGesture {
-                                // audioURLがあればコールバックを呼ぶ
-                                if let url = line.audioURL {
-                                    onLineTapped(url)
-                                }
+                        HStack(alignment: .top, spacing: 12) {
+                            // 時刻表示
+                            Text(line.time, style: .time)
+                                .font(.caption)
+                                .foregroundColor(.textSecondary)
+                                .frame(width: 50, alignment: .leading)
+                            
+                            // テキスト内容
+                            Text(line.text)
+                                .font(.system(size: 14))
+                                .foregroundColor(.textPrimary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .id(line.id)
+                        .onTapGesture {
+                            // audioURLがあればコールバックを呼ぶ
+                            if let url = line.audioURL {
+                                onLineTapped(url)
                             }
-                            // --- ▲▲▲ 追加 ▲▲▲ ---
+                        }
                     }
                 }
-                .padding(8)
             }
-            .onChange(of: lines.count) { // ← 変更後 (iOS 17+)
+            .onChange(of: lines.count) {
                 if let last = lines.last { proxy.scrollTo(last.id, anchor: .bottom) }
             }
             .background(Color.cardBackground)
