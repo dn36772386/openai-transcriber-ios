@@ -24,7 +24,7 @@ struct TranscriptView: View {
                 }
                 .padding(8)
             }
-            .onChange(of: lines.count) { _ in
+            .onChange(of: lines.count) { // ← 変更後 (iOS 17+)
                 if let last = lines.last { proxy.scrollTo(last.id, anchor: .bottom) }
             }
             .background(Color.cardBackground)

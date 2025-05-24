@@ -41,6 +41,9 @@ struct ContentView: View {
     @State private var transcriptLines: [TranscriptLine] = []
     @State private var lastSegmentURL: URL?
     @State private var audioPlayer: AVAudioPlayer?
+    // --- ▼▼▼ 追加 ▼▼▼ ---
+    @State private var isCancelling = false // キャンセル操作中フラグ
+    // --- ▲▲▲ 追加 ▲▲▲ ---
 
     private let client = OpenAIClient()
 
@@ -62,22 +65,45 @@ struct ContentView: View {
                         Text("Transcriber").font(.headline)
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
+                        // --- ▼▼▼ 変更 ▼▼▼ ---
                         HStack(spacing: 15) {
-                            Toggle("", isOn: $modeIsManual)
-                                .labelsHidden()
-                                .tint(Color.accent)
-                            Text(modeIsManual ? "manual" : "auto")
-                                .font(.caption)
-                                .foregroundColor(Color.textSecondary)
+                            // モードトグル (録音中は非表示にするなど、後で調整可能)
+                            if !recorder.isRecording {
+                                Toggle("", isOn: $modeIsManual)
+                                    .labelsHidden()
+                                    .tint(Color.accent)
+                                Text(modeIsManual ? "manual" : "auto")
+                                    .font(.caption)
+                                    .foregroundColor(Color.textSecondary)
+                            }
 
-                            Button {
-                                toggleRecording()
-                            } label: {
-                                Image(systemName: "mic.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(recorder.isRecording ? Color.danger : Color.accent)
+                            // 録音制御ボタン
+                            if recorder.isRecording {
+                                Button {
+                                    finishRecording() // 完了ボタン
+                                } label: {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundColor(Color.accent)
+                                }
+                                Button {
+                                    cancelRecording() // キャンセルボタン
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundColor(Color.danger)
+                                }
+                            } else {
+                                Button {
+                                    startRecording() // 開始ボタン
+                                } label: {
+                                    Image(systemName: "mic.fill")
+                                        .font(.system(size: 18))
+                                        .foregroundColor(Color.accent)
+                                }
                             }
                         }
+                        // --- ▲▲▲ 変更 ▲▲▲ ---
                     }
                 }
                 .navigationBarTitleDisplayMode(.inline)
@@ -108,7 +134,10 @@ struct ContentView: View {
                 DispatchQueue.main.async { showSettings = true }
             }
             // Set delegate and closure
-            proxy.onSegment = handleSegment(url:start:)
+            proxy.onSegment = { url, start in
+                // @MainActor 関数を呼び出すクロージャを作成して代入
+                self.handleSegment(url: url, start: start)
+            }
             recorder.delegate = proxy
         }
         .alert("マイクへのアクセスが許可されていません", isPresented: $showPermissionAlert) {
@@ -123,14 +152,31 @@ struct ContentView: View {
         }
     }
 
-    private func toggleRecording() {
-        if recorder.isRecording {
-            Debug.log("🔴 stop tapped")
-            recorder.stop()
-        } else {
-            requestMicrophonePermission()
-        }
+    // --- ▼▼▼ 変更 ▼▼▼ ---
+    // startRecording に変更し、開始のみ担当
+    private func startRecording() {
+        guard !recorder.isRecording else { return }
+        requestMicrophonePermission()
     }
+
+    // --- ▼▼▼ 追加 ▼▼▼ ---
+    // 完了処理
+    private func finishRecording() {
+        Debug.log("✅ finish tapped")
+        isCancelling = false
+        recorder.stop() // AudioEngineRecorder の stop() を呼び出す
+    }
+
+    // キャンセル処理
+    private func cancelRecording() {
+        Debug.log("❌ cancel tapped")
+        isCancelling = true
+        recorder.cancel() // AudioEngineRecorder の cancel() を呼び出す
+        // キャンセル時は表示を即時クリア
+        transcriptLines.removeAll()
+        lastSegmentURL = nil
+    }
+    // --- ▲▲▲ 追加 ▲▲▲ ---
 
     private func requestMicrophonePermission() {
         AVAudioApplication.requestRecordPermission { granted in
@@ -141,6 +187,9 @@ struct ContentView: View {
     private func handlePermissionResult(_ granted: Bool) {
         DispatchQueue.main.async {
             if granted {
+                // --- ▼▼▼ 追加 ▼▼▼ ---
+                isCancelling = false // 開始時にフラグをリセット
+                // --- ▲▲▲ 追加 ▲▲▲ ---
                 do {
                     try recorder.start()
                 } catch {
@@ -154,6 +203,14 @@ struct ContentView: View {
 
     @MainActor
     private func handleSegment(url: URL, start: Date) {
+        // --- ▼▼▼ 追加 ▼▼▼ ---
+        // キャンセル操作中はセグメントを処理しない
+        guard !isCancelling else {
+            Debug.log("🚫 Segment ignored due to cancel.")
+            try? FileManager.default.removeItem(at: url) // ファイルも削除
+            return
+        }
+        // --- ▲▲▲ 追加 ▲▲▲ ---
         print("🎧 Segment file path:", url.path)
         self.lastSegmentURL = url // URLを保存
 
@@ -177,6 +234,9 @@ struct ContentView: View {
             }
 
             await MainActor.run {
+                // --- ▼▼▼ 追加 ▼▼▼ ---
+                guard !isCancelling else { return } // 非同期処理後に再度チェック
+                // --- ▲▲▲ 追加 ▲▲▲ ---
                 var finalLines = self.transcriptLines // 再度コピーを作成
                 if finalLines.indices.contains(currentIndex) {
                    finalLines[currentIndex].text = result

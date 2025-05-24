@@ -32,7 +32,9 @@ final class AudioEngineRecorder: ObservableObject {
     private var inputFormat: AVAudioFormat?
     private var outputFormat: AVAudioFormat?
     private var audioConverter: AVAudioConverter?
-    // ◀︎◀︎ 追加 ▲▲
+    // --- ▼▼▼ 追加 ▼▼▼ ---
+    private var isCancelled = false // キャンセルフラグ
+    // --- ▲▲▲ 追加 ▲▲▲ ---
 
     // MARK: - 初期化 ------------------------------------------------
     init() {
@@ -54,6 +56,10 @@ final class AudioEngineRecorder: ObservableObject {
 
     func start() throws {
         guard !isRecording else { return }
+
+        // --- ▼▼▼ 追加 ▼▼▼ ---
+        isCancelled = false // 開始時にキャンセルをリセット
+        // --- ▲▲▲ 追加 ▲▲▲ ---
 
         try AVAudioSession.sharedInstance().setCategory(
             .playAndRecord,
@@ -90,16 +96,42 @@ final class AudioEngineRecorder: ObservableObject {
         isRecording = true
     }
 
+    // --- ▼▼▼ 変更 ▼▼▼ ---
+    // stop() は「完了」として扱います
     func stop() {
         guard isRecording else { return }
+        isCancelled = false // 正常停止（完了）なのでフラグは false
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         finalizeSegment()
         isRecording = false
     }
 
+    // --- ▼▼▼ 追加 ▼▼▼ ---
+    // キャンセルメソッド
+    func cancel() {
+        guard isRecording else { return }
+        isCancelled = true // キャンセルフラグを立てる
+        engine.inputNode.removeTap(onBus: 0)
+        engine.stop()
+
+        // キャンセル時は現在のファイルを削除
+        if let url = fileURL {
+            try? FileManager.default.removeItem(at: url)
+            Debug.log("🗑️ Cancelled & Deleted:", url.lastPathComponent)
+        }
+        
+        finalizeSegment() // 状態リセットのために呼ぶ
+        isRecording = false
+    }
+    // --- ▲▲▲ 追加 ▲▲▲ ---
+
     /// RMS値で音声区間を判定しセグメントを切り出す
     private func processAudio(_ buffer: AVAudioPCMBuffer) {
+        // --- ▼▼▼ 追加 ▼▼▼ ---
+        guard !isCancelled else { return } // キャンセル中は処理しない
+        // --- ▲▲▲ 追加 ▲▲▲ ---
+
         let rms = buffer.rmsMagnitude() // RMS値を取得
         let now = Date()
 
@@ -141,6 +173,9 @@ final class AudioEngineRecorder: ObservableObject {
 
     // openNewSegment, finalizeSegment, resetState は VAD 版と同様
     private func openNewSegment() {
+        // --- ▼▼▼ 追加 ▼▼▼ ---
+        guard !isCancelled else { return } // キャンセル中は開かない
+        // --- ▲▲▲ 追加 ▲▲▲ ---
         guard let outputFmt = outputFormat else { return }
 
         let fileURL = FileManager.default.temporaryDirectory
@@ -154,11 +189,21 @@ final class AudioEngineRecorder: ObservableObject {
             interleaved: outputFmt.isInterleaved
         )
         self.fileURL = fileURL
+        self.startDate = Date() // 新規セグメント開始時に日付を更新
     }
 
     private func finalizeSegment() {
-        guard let url = fileURL else { return }
+        guard let url = fileURL else { resetState(); return } // URLがなければリセットして終了
 
+        // --- ▼▼▼ 変更 ▼▼▼ ---
+        // キャンセルされている場合、ファイルを削除してリセット
+        if isCancelled {
+            try? FileManager.default.removeItem(at: url)
+            Debug.log("🗑️ Finalize skipped/deleted due to cancel:", url.path)
+            resetState()
+            return
+        }
+        // --- ▲▲▲ 変更 ▲▲▲ ---
         let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]
                      as? NSNumber)?.intValue ?? 0
 
@@ -168,11 +213,19 @@ final class AudioEngineRecorder: ObservableObject {
             return
         }
 
+        // --- ▼▼▼ 変更 ▼▼▼ ---
+        // デリゲート呼び出し後にリセットするように順序を整理
+        let segmentURL = url
+        let segmentStartDate = startDate
+        
         audioFile    = nil
         fileURL      = nil
         silenceStart = nil
-        delegate?.recorder(self, didFinishSegment: url, start: startDate)
-        startDate    = Date()
+        isSpeaking = false // 発話状態もリセット
+
+        delegate?.recorder(self, didFinishSegment: segmentURL, start: segmentStartDate)
+        startDate = Date() // 次のセグメントのために開始日時を更新
+        // --- ▲▲▲ 変更 ▲▲▲ ---
     }
 
     private func resetState() {
@@ -180,6 +233,10 @@ final class AudioEngineRecorder: ObservableObject {
         fileURL      = nil
         silenceStart = nil
         startDate    = Date()
+        // --- ▼▼▼ 追加 ▼▼▼ ---
+        isCancelled  = false // 状態リセット時にフラグもリセット
+        isSpeaking   = false
+        // --- ▲▲▲ 追加 ▲▲▲ ---
     }
 
     // ◀︎◀︎ 追加: フォーマット変換メソッド ▼▼
