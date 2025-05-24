@@ -49,7 +49,7 @@ struct ContentView: View {
     private let client = OpenAIClient()
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .leading) {
             NavigationView {
                 VStack(spacing: 0) {
                     // 上部の再生バー
