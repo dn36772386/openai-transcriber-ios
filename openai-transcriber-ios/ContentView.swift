@@ -52,16 +52,6 @@ struct ContentView: View {
         ZStack(alignment: .leading) {
             NavigationView {
                 VStack(spacing: 0) {
-                    // 上部の再生バー
-                    if currentPlayingURL != nil || !transcriptLines.isEmpty {
-                        CompactAudioPlayerView(
-                            url: $currentPlayingURL,
-                            player: $audioPlayer,
-                            onPlaybackFinished: self.playNextSegment
-                        )
-                        .background(Color.playerBackground)
-                    }
-                    
                     // メインコンテンツ
                     MainContentView(
                         modeIsManual: $modeIsManual,
@@ -69,8 +59,19 @@ struct ContentView: View {
                         transcriptLines: $transcriptLines,
                         audioPlayerURL: $currentPlayingURL,
                         audioPlayer: $audioPlayer,
-                        playNextSegmentCallback: self.playNextSegment
+                        onLineTapped: self.playFrom, // ← 変更: タップ時の動作を追加
+                        playNextSegmentCallback: self.playNextSegment 
                     )
+                    
+                    // 下部の再生バー ← 移動
+                    if currentPlayingURL != nil || !transcriptLines.isEmpty {
+                        CompactAudioPlayerView(
+                            url: $currentPlayingURL,
+                            player: $audioPlayer,
+                            onPlaybackFinished: self.playNextSegment
+                        )
+                        .padding(.bottom, 8) // 必要に応じてSafeAreaを考慮したパディングを追加
+                    }
                 }
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -162,6 +163,20 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("音声録音を行うには、設定アプリの「プライバシー > マイク」で本アプリを許可してください。")
+        }
+    }
+
+    // ← 追加: 指定URLから再生を開始し、連続再生をトリガーする
+    private func playFrom(url: URL) {
+        currentPlayingURL = url
+        // プレイヤーが準備できるのを少し待ってから再生
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            guard self.audioPlayer?.url == url, !(self.audioPlayer?.isPlaying ?? false) else { return }
+            do {
+                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+                try AVAudioSession.sharedInstance().setActive(true)
+                self.audioPlayer?.play() // 再生開始
+            } catch { print("❌ Playback Error:", error.localizedDescription) }
         }
     }
 
@@ -449,52 +464,46 @@ struct CompactAudioPlayerView: View {
     @State private var progress: Double = 0.0
     @State private var duration: TimeInterval = 0.0
     @State private var currentTime: TimeInterval = 0.0
+    @State private var isEditingSlider = false // ← 追加: Slider操作中フラグ
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     var onPlaybackFinished: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 12) {
-                // 再生/一時停止ボタン
-                Button { togglePlayPause() } label: {
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.playerText)
-                        .frame(width: 44, height: 44)
-                }
-                
-                VStack(spacing: 4) {
-                    // プログレスバー
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            Rectangle()
-                                .fill(Color.playerText.opacity(0.3))
-                                .frame(height: 4)
-                                .cornerRadius(2)
-                            
-                            Rectangle()
-                                .fill(Color.playerText)
-                                .frame(width: geometry.size.width * CGFloat(progress), height: 4)
-                                .cornerRadius(2)
-                        }
+        HStack(spacing: 15) { // ← 変更: VStackをHStackに
+            // 再生/一時停止ボタン
+            Button { togglePlayPause() } label: {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(Color.accent) // ← 変更: 色をAccentに
+                    .frame(width: 44, height: 44)
+            }
+            
+            // プログレスバーをSliderに変更
+            Slider(value: $progress, in: 0...1) { editing in
+                isEditingSlider = editing
+                if !editing {
+                    player?.currentTime = progress * duration
+                    // スライダー操作完了時に再生中だったら再生再開
+                    if isPlaying && !(player?.isPlaying ?? false) {
+                       player?.play()
                     }
-                    .frame(height: 4)
-                    
-                    // 時間表示
-                    HStack {
-                        Text(formatTime(currentTime))
-                            .font(.caption2)
-                            .foregroundColor(.playerText.opacity(0.8))
-                        Spacer()
-                        Text(formatTime(duration))
-                            .font(.caption2)
-                            .foregroundColor(.playerText.opacity(0.8))
+                } else {
+                    // スライダー操作開始時に再生中だったら一時停止
+                    if isPlaying {
+                        player?.pause()
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .tint(Color.accent) // ← 追加: Sliderの色
+
+            // 時間表示 (現在時刻のみ)
+            Text(formatTime(currentTime))
+                .font(.caption)
+                .foregroundColor(.textSecondary) // ← 変更: 色をSecondaryに
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.appBackground) // ← 変更: 背景色をAppBackgroundに
         .onReceive(timer) { _ in updateProgress() }
         .onChange(of: url) { resetPlayer(url: url) }
     }
@@ -518,12 +527,19 @@ struct CompactAudioPlayerView: View {
     }
     
     private func updateProgress() {
-        guard let player = player, player.isPlaying else { return }
+        // プレイヤーが存在し、かつユーザーがスライダーを操作していない場合のみ更新
+        guard let player = player, !isEditingSlider else { return }
+
         currentTime = player.currentTime
         duration = player.duration
         let wasPlaying = isPlaying
-        progress = duration > 0 ? currentTime / duration : 0
-        isPlaying = player.isPlaying
+        isPlaying = player.isPlaying // 実際の再生状態を反映
+
+        if player.isPlaying {
+            progress = duration > 0 ? currentTime / duration : 0
+        }
+
+        // 再生が終了したかチェック (0.1秒の許容誤差)
         if wasPlaying && !isPlaying && duration > 0 && currentTime >= duration - 0.1 {
             isPlaying = false
             progress = 1.0
@@ -535,7 +551,7 @@ struct CompactAudioPlayerView: View {
     }
     
     private func resetPlayer(url: URL?) {
-        player?.stop(); isPlaying = false; progress = 0.0; currentTime = 0.0; duration = 0.0
+        player?.stop(); isPlaying = false; progress = 0.0; currentTime = 0.0; duration = 0.0; isEditingSlider = false // ← 追加: isEditingSliderもリセット
         guard let urlToPlay = url else { self.player = nil; return }
         do {
             self.player = try AVAudioPlayer(contentsOf: urlToPlay)
@@ -552,13 +568,13 @@ struct MainContentView: View {
     @Binding var transcriptLines: [TranscriptLine]
     @Binding var audioPlayerURL: URL?
     @Binding var audioPlayer: AVAudioPlayer?
+    let onLineTapped: (URL) -> Void // ← 追加: タップ時のコールバック
     let playNextSegmentCallback: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            TranscriptView(lines: $transcriptLines) { tappedURL in
-                audioPlayerURL = tappedURL
-            }
+            // ← 変更: onLineTapped を TranscriptView に渡す
+            TranscriptView(lines: $transcriptLines, onLineTapped: onLineTapped)
             .padding(.top, 10)
             .padding(.horizontal, 10)
         }

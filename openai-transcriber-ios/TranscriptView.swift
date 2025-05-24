@@ -22,10 +22,10 @@ struct TranscriptView: View {
                     ForEach(lines) { line in
                         HStack(alignment: .top, spacing: 12) {
                             // 時刻表示
-                            Text(line.time, style: .time)
+                            Text(line.time.formatted(.dateTime.hour().minute().second()))
                                 .font(.caption)
                                 .foregroundColor(.textSecondary)
-                                .frame(width: 50, alignment: .leading)
+                                .frame(width: 65, alignment: .leading) // ← 幅を広げて秒を表示
                             
                             // テキスト内容
                             Text(line.text)
