@@ -114,7 +114,8 @@ struct ContentView: View {
                     showSidebar: $showSidebar,
                     activeMenuItem: $activeMenuItem,
                     showSettings: $showSettings,
-                    onLoadHistoryItem: self.loadHistoryItem // --- ▼▼▼ 追加 (ステップ6修正) ▼▼▼ ---
+                    onLoadHistoryItem: self.loadHistoryItem, // --- ▼▼▼ 追加 (ステップ6修正) ▼▼▼ ---
+                    onPrepareNewSession: self.prepareNewTranscriptionSession // --- ▼▼▼ 追加 (ステップ8) ▼▼▼ ---
                 )
                 .transition(.move(edge: .leading))
                 .zIndex(1)
@@ -257,6 +258,22 @@ struct ContentView: View {
         }
     }
     // --- ▲▲▲ 追加 ▲▲▲ ---
+    
+    // --- ▼▼▼ 追加 (ステップ8) ▼▼▼ ---
+    private func prepareNewTranscriptionSession() {
+        // 現在の文字起こし内容が空でなければ履歴に保存
+        if !transcriptLines.isEmpty {
+            // AudioEngineRecorderがセッション全体のURLを返せるように改修した場合、
+            // recorder.stop() の戻り値などを fullAudioURL として渡す
+            historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL) // currentPlayingURL は仮。実際にはセッション全体のURL
+        }
+        transcriptLines.removeAll()
+        currentPlayingURL = nil
+        audioPlayer?.stop()
+        audioPlayer = nil
+        // isCancelling = false // 必要に応じてリセット
+    }
+    // --- ▲▲▲ 追加 (ステップ8) ▲▲▲ ---
 
     // --- ▼▼▼ 追加 (ステップ6) ▼▼▼ ---
     private func loadHistoryItem(_ historyItem: HistoryItem) {
@@ -308,6 +325,7 @@ struct SidebarView: View {
     @Binding var activeMenuItem: SidebarMenuItemType?
     @Binding var showSettings: Bool
     var onLoadHistoryItem: (HistoryItem) -> Void // --- ▼▼▼ 追加 (ステップ6修正) ▼▼▼ ---
+    var onPrepareNewSession: () -> Void // --- ▼▼▼ 追加 (ステップ8) ▼▼▼ ---
     // --- ▼▼▼ 変更 ▼▼▼ ---
     @ObservedObject private var historyManager = HistoryManager.shared
     // --- ▲▲▲ 変更 ▲▲▲ ---
@@ -322,7 +340,15 @@ struct SidebarView: View {
                 .frame(height: 50) // Height adjustment
 
             VStack(alignment: .leading, spacing: 5) { // Spacing adjustment
-                SidebarMenuItem(icon: "mic", text: "文字起こし", type: .transcribe, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
+                // --- ▼▼▼ 変更 (ステップ8) ▼▼▼ ---
+                SidebarMenuItem(icon: "mic", text: "文字起こし", type: .transcribe, activeMenuItem: $activeMenuItem, action: {
+                    if activeMenuItem == .transcribe { // 既に文字起こし画面にいる場合
+                        onPrepareNewSession() // 新規セッション準備のコールバックを呼ぶ
+                    }
+                    activeMenuItem = .transcribe
+                    closeSidebar()
+                })
+                // --- ▲▲▲ 変更 (ステップ8) ▲▲▲ ---
                 SidebarMenuItem(icon: "text.badge.checkmark", text: "校正", type: .proofread, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
                 SidebarMenuItem(icon: "doc.on.doc", text: "コピー", type: .copy, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
                 SidebarMenuItem(icon: "arrow.down.circle", text: "音声DL", type: .audioDownload, activeMenuItem: $activeMenuItem, action: { closeSidebar() })
