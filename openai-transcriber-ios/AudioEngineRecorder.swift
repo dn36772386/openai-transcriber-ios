@@ -17,7 +17,7 @@ final class AudioEngineRecorder: ObservableObject {
     weak var delegate: AudioEngineRecorderDelegate?
 
     // MARK: ––––– Private –––––
-    private let silenceWindow   = 1.2
+    private let silenceWindow   = 0.5
     private let minSegmentBytes = 12_288
     private let silenceThreshold: Float = 0.01 // ◀︎◀︎ 無音と判定するRMS値の閾値（要調整）
 
