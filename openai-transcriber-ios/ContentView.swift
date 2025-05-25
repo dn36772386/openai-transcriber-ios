@@ -221,7 +221,7 @@ struct ContentView: View {
                     .foregroundColor(.secondary)
             }
             .padding(40)
-            .interactionDisabled(true)
+            .modifier(InteractionDisabler()) // ◀︎◀︎ 互換性のあるモディファイアを適用
         }
         .alert("フォーマットエラー", isPresented: $showFormatAlert) {
             Button("OK", role: .cancel) {}
@@ -313,13 +313,48 @@ struct ContentView: View {
     // MARK: - File Import Methods
     
     private func processImportedFileWithFormatSupport(_ url: URL) {
+        // 1. セキュリティスコープへのアクセスを開始 (必要な場合)
+        let shouldStopAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if shouldStopAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        // 2. 一時ディレクトリにコピー先のURLを作成
+        let tempDir = FileManager.default.temporaryDirectory
+        let localURL = tempDir.appendingPathComponent(url.lastPathComponent)
+
+        // 3. ファイルをコピー
+        do {
+            // 既存ファイルがあれば削除
+            if FileManager.default.fileExists(atPath: localURL.path) {
+                try FileManager.default.removeItem(at: localURL)
+            }
+            try FileManager.default.copyItem(at: url, to: localURL)
+            print("✅ Copied imported file to: \(localURL.path)")
+        } catch {
+            Task { @MainActor in
+                // 🔽 0.5秒の遅延を追加してアラート表示の競合を避ける
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showFormatError("ファイルのコピーに失敗しました: \(error.localizedDescription)")
+                }
+            }
+            return // コピーに失敗したら処理を中断
+        }
+
         Task {
-            let validation = await AudioFormatHandler.validateFormat(url: url)
+            // 4. コピーしたローカルURLを使って処理
+            let validation = await AudioFormatHandler.validateFormat(url: localURL)
             
             guard validation.isValid else {
                 await MainActor.run {
-                    showFormatError(validation.error ?? "不明なエラー")
+                    // 🔽 0.5秒の遅延を追加してアラート表示の競合を避ける
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showFormatError(validation.error ?? "不明なエラー")
+                    }
                 }
+                try? FileManager.default.removeItem(at: localURL) // 不要ならコピーを削除
                 return
             }
             
@@ -338,22 +373,26 @@ struct ContentView: View {
             }
             
             do {
-                let processedURL = try await AudioFormatHandler.extractAudio(from: url)
-                await performSilenceSplitting(processedURL, originalURL: url)
+                // 5. ローカルURLを使って処理
+                let processedURL = try await AudioFormatHandler.extractAudio(from: localURL)
+                await performSilenceSplitting(processedURL, originalURL: localURL)
             } catch {
                 await MainActor.run {
                     self.showProcessingProgress = false
-                    self.showFormatError(error.localizedDescription)
+                    // 🔽 0.5秒の遅延を追加してアラート表示の競合を避ける
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self.showFormatError(error.localizedDescription)
+                    }
                 }
+                try? FileManager.default.removeItem(at: localURL) // エラー時もコピーを削除
             }
         }
     }
     
+    @MainActor // ◀︎◀︎ @MainActor を追加
     private func performSilenceSplitting(_ url: URL, originalURL: URL) async {
         do {
-            await MainActor.run {
-                prepareNewTranscriptionSession(saveCurrentSession: true)
-            }
+            prepareNewTranscriptionSession(saveCurrentSession: true) // ◀︎◀︎ MainActor.run を削除
             
             let result = try await fileProcessor.processFile(at: url)
             let originalFileName = originalURL.lastPathComponent
@@ -361,20 +400,19 @@ struct ContentView: View {
             for (index, segment) in result.segments.enumerated() {
                 let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
                 
-                await MainActor.run {
-                    if index == 0 {
-                        self.currentPlayingURL = segment.url
-                    }
-                    
-                    let newLine = TranscriptLine(
-                        id: UUID(),
-                        time: startDate,
-                        text: "…文字起こし中… [\(originalFileName) - セグメント\(index + 1)]",
-                        audioURL: segment.url
-                    )
-                    self.transcriptLines.append(newLine)
-                    self.transcriptionTasks[segment.url] = newLine.id
+                // 🔽 MainActor.run を削除 (関数全体が @MainActor のため)
+                if index == 0 {
+                    self.currentPlayingURL = segment.url
                 }
+                
+                let newLine = TranscriptLine(
+                    id: UUID(),
+                    time: startDate,
+                    text: "…文字起こし中… [\(originalFileName) - セグメント\(index + 1)]",
+                    audioURL: segment.url
+                )
+                self.transcriptLines.append(newLine)
+                self.transcriptionTasks[segment.url] = newLine.id // ✅ OK
                 
                 try client.transcribeInBackground(
                     url: segment.url,
@@ -382,19 +420,17 @@ struct ContentView: View {
                 )
             }
             
-            await MainActor.run {
-                showProcessingProgress = false
-            }
+            showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除
             
             if url != originalURL {
                 try? FileManager.default.removeItem(at: url)
             }
             
         } catch {
-            await MainActor.run {
-                showProcessingProgress = false
-                showFormatError("処理エラー: \(error.localizedDescription)")
-            }
+            showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showFormatError("処理エラー: \(error.localizedDescription)")
+                }
         }
     }
     
@@ -1007,15 +1043,19 @@ struct SupportedFormatsView: View {
     }
 }
 
-// MARK: - File Import Configuration
-@available(iOS 16.0, *)
-struct FileImportConfiguration {
-    static let allowedContentTypes: [UTType] = AudioFormatHandler.supportedFormats
-    
-    static let importOptions: UIDocumentPickerViewController.Options = [
-        .shouldShowFileExtensions,
-        .treatPackagesAsDirectories
-    ]
+// MARK: - View Modifiers for Compatibility
+
+struct InteractionDisabler: ViewModifier {
+    func body(content: Content) -> some View {
+        // ⚠️ 注: 'interactionDisabled' でエラーが出る場合、
+        //    プロジェクトの iOS Deployment Target が 16.0 未満になっている
+        //    可能性が高いです。16.0 以上に設定すれば、元のコード
+        //    (if #available ... .interactionDisabled(true))
+        //    が動作するはずです。
+        //    ここではビルドエラーを回避するため、常に 'allowsHitTesting' を使用します。
+        content
+            .allowsHitTesting(false)
+    }
 }
 
 // MARK: - Preview (Optional)

@@ -133,21 +133,31 @@ final class AudioFormatHandler {
         // ファイルが実際に音声として読み込めるか確認
         do {
             let _ = try AVAudioFile(forReading: url)
+            print("✅ [validateFormat] AVAudioFile successfully read \(url.lastPathComponent)")
             return ValidationResult(isValid: true, formatInfo: formatInfo, error: nil)
         } catch {
+            print("⚠️ [validateFormat] AVAudioFile failed for \(url.lastPathComponent): \(error.localizedDescription)") // ◀︎◀︎ エラー内容を記録
             // AVAssetで再試行（動画ファイルの場合）
             let asset = AVAsset(url: url)
-            let audioTracks = await asset.loadTracks(withMediaType: .audio)
-            
-            if !audioTracks.isEmpty {
-                return ValidationResult(isValid: true, formatInfo: formatInfo, error: nil)
-            } else {
-                let videoTracks = await asset.loadTracks(withMediaType: .video)
-                if videoTracks.isEmpty {
-                    return ValidationResult(isValid: false, formatInfo: formatInfo, error: "音声トラックが見つかりません")
+            do { // 🔽 try を使うために do-catch を追加
+                let audioTracks = try await asset.loadTracks(withMediaType: .audio) // ◀︎◀︎ try を追加
+                
+                if !audioTracks.isEmpty {
+                    print("✅ [validateFormat] AVAsset found audio tracks for \(url.lastPathComponent)")
+                    return ValidationResult(isValid: true, formatInfo: formatInfo, error: nil)
                 } else {
-                    return ValidationResult(isValid: false, formatInfo: formatInfo, error: "ファイルを開けません: \(error.localizedDescription)")
+                    print("⚠️ [validateFormat] AVAsset found no audio tracks for \(url.lastPathComponent)")
+                    let videoTracks = try await asset.loadTracks(withMediaType: .video) // ◀︎◀︎ try を追加
+                    if videoTracks.isEmpty {
+                        return ValidationResult(isValid: false, formatInfo: formatInfo, error: "音声トラックもビデオトラックも見つかりません")
+                    } else {
+                        // 動画のみのファイルでも音声トラックがなければエラー（要件に応じて変更）
+                        return ValidationResult(isValid: false, formatInfo: formatInfo, error: "音声トラックが見つかりません (ビデオのみ)")
+                    }
                 }
+            } catch { // ◀︎◀︎ エラーハンドリングを追加
+                print("⚠️ [validateFormat] AVAsset failed for \(url.lastPathComponent): \(error.localizedDescription)") // ◀︎◀︎ エラー内容を記録
+                return ValidationResult(isValid: false, formatInfo: formatInfo, error: "ファイルを開けません (AVAsset): \(error.localizedDescription)")
             }
         }
     }
@@ -159,7 +169,7 @@ final class AudioFormatHandler {
         let asset = AVAsset(url: url)
         
         // 音声トラックの確認
-        let audioTracks = await asset.loadTracks(withMediaType: .audio)
+        let audioTracks = try await asset.loadTracks(withMediaType: .audio) // ◀︎◀︎ try を追加
         guard !audioTracks.isEmpty else {
             throw NSError(
                 domain: "AudioFormat",
@@ -169,7 +179,7 @@ final class AudioFormatHandler {
         }
         
         // 動画ファイルかどうかチェック
-        let videoTracks = await asset.loadTracks(withMediaType: .video)
+        let videoTracks = try await asset.loadTracks(withMediaType: .video) // ◀︎◀︎ try を追加
         let hasVideo = !videoTracks.isEmpty
         
         if hasVideo {
@@ -191,7 +201,7 @@ final class AudioFormatHandler {
     private static func extractAudioFromVideo(asset: AVAsset) async throws -> URL {
         let composition = AVMutableComposition()
         
-        let audioTracks = await asset.loadTracks(withMediaType: .audio)
+        let audioTracks = try await asset.loadTracks(withMediaType: .audio) // ◀︎◀︎ try を追加
         guard let audioTrack = audioTracks.first,
               let compositionAudioTrack = composition.addMutableTrack(
                 withMediaType: .audio,
@@ -298,18 +308,18 @@ final class AudioFormatHandler {
         let asset = AVAsset(url: url)
         
         // 基本情報
-        let duration = try? await asset.load(.duration)
+        let duration = try? await asset.load(.duration) // ◀︎◀︎ try? を追加
         let durationSeconds = duration.map { CMTimeGetSeconds($0) } ?? 0
-        let audioTracks = await asset.loadTracks(withMediaType: .audio)
+        let audioTracks = try? await asset.loadTracks(withMediaType: .audio) // ◀︎◀︎ try? を追加
         
-        guard let audioTrack = audioTracks.first else { return nil }
+        guard let audioTrack = audioTracks?.first else { return nil } // ◀︎◀︎ オプショナルチェーンに変更
         
         // フォーマット情報を取得
-        let formatDescriptions = try? await audioTrack.load(.formatDescriptions)
-        guard let formatDescription = formatDescriptions?.first else { return nil }
+        let formatDescriptions = try? await audioTrack.load(.formatDescriptions) // ◀︎◀︎ try? を追加
+        guard let formatDescription = formatDescriptions?.first else { return nil } // ◀︎◀︎ オプショナルチェーンに変更
         
         let audioStreamBasicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription)?.pointee
-        let estimatedDataRate = try? await audioTrack.load(.estimatedDataRate)
+        let estimatedDataRate = try? await audioTrack.load(.estimatedDataRate) // ◀︎◀︎ try? を追加
         
         return AudioMetadata(
             duration: durationSeconds,
