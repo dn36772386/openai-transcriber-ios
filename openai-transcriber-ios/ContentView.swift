@@ -326,13 +326,6 @@ struct ContentView: View {
         let shouldStopAccessing = url.startAccessingSecurityScopedResource()
         Debug.log("⚙️ セキュリティスコープアクセス開始結果: \(shouldStopAccessing)") // ログ追加
 
-        defer {
-            if shouldStopAccessing {
-                url.stopAccessingSecurityScopedResource()
-                Debug.log("⚙️ セキュリティスコープアクセス停止 (defer)") // ログ追加
-            }
-        }
-
         let tempDir = FileManager.default.temporaryDirectory
         let localURL = tempDir.appendingPathComponent(url.lastPathComponent)
         Debug.log("⚙️ コピー先Local URL: \(localURL.path)") // ログ追加
@@ -345,8 +338,17 @@ struct ContentView: View {
             }
             try FileManager.default.copyItem(at: url, to: localURL)
             Debug.log("⚙️ ファイルコピー成功") // ログ追加
+            // コピー完了後にセキュリティスコープを解放
+            if shouldStopAccessing {
+                url.stopAccessingSecurityScopedResource()
+                Debug.log("⚙️ セキュリティスコープアクセス停止 (コピー直後)") // ログ追加
+            }
         } catch {
             Debug.log("❌ ファイルコピー失敗: \(error.localizedDescription)") // ログ追加
+            if shouldStopAccessing {
+                url.stopAccessingSecurityScopedResource()
+                Debug.log("⚙️ セキュリティスコープアクセス停止 (エラー時)") // ログ追加
+            }
             Task { @MainActor in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showFormatError("ファイルのコピーに失敗しました: \(error.localizedDescription)")
@@ -354,12 +356,6 @@ struct ContentView: View {
             }
             return
         }
-
-        // 🔽 セキュリティスコープをコピー後に停止してみる（テスト）
-        // if shouldStopAccessing {
-        //     url.stopAccessingSecurityScopedResource()
-        //     Debug.log("⚙️ セキュリティスコープアクセス停止 (コピー直後)")
-        // }
 
         Debug.log("⚙️ Task開始") // ログ追加
         Task {
@@ -454,7 +450,17 @@ struct ContentView: View {
     }
     
     private func showFormatError(_ message: String) {
-        formatAlertMessage = message
+        let detailedMessage: String
+        if message.contains("コピーに失敗") {
+            detailedMessage = "ファイルへのアクセス権限がありません。別のファイルを選択してください。"
+        } else if message.contains("音声トラックが見つかりません") {
+            detailedMessage = "選択したファイルに音声データが含まれていません。音声ファイルを選択してください。"
+        } else if message.contains("サポートされていない") {
+            detailedMessage = "このファイル形式はサポートされていません。WAV、MP3、M4A、MP4などのファイルを選択してください。"
+        } else {
+            detailedMessage = message
+        }
+        formatAlertMessage = detailedMessage
         showFormatAlert = true
     }
 
