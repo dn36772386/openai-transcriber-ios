@@ -16,6 +16,9 @@
 		1806C1982DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */; };
 		180D01B52DE20EE2000C9E53 /* AudioFileProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180D01B42DE20EE2000C9E53 /* AudioFileProcessor.swift */; };
 		180D01B72DE210C5000C9E53 /* AudioFormatExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180D01B62DE210C5000C9E53 /* AudioFormatExtension.swift */; };
+		180D01BB2DE30CDD000C9E53 /* ContentTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180D01B82DE30CDD000C9E53 /* ContentTabView.swift */; };
+		180D01BC2DE30CDD000C9E53 /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180D01B92DE30CDD000C9E53 /* GeminiClient.swift */; };
+		180D01BD2DE30CDD000C9E53 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 180D01BA2DE30CDD000C9E53 /* SummaryView.swift */; };
 		1856C80C2DE1E86600D0868F /* BackgroundSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */; };
 		1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716D2DD8B02500D3461D /* AudioRecorder.swift */; };
 		186071702DD8B2BD00D3461D /* OpenAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716F2DD8B2BD00D3461D /* OpenAIClient.swift */; };
@@ -61,6 +64,9 @@
 		1806C1972DD373670066C50F /* openai_transcriber_iosUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = openai_transcriber_iosUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		180D01B42DE20EE2000C9E53 /* AudioFileProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFileProcessor.swift; sourceTree = "<group>"; };
 		180D01B62DE210C5000C9E53 /* AudioFormatExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioFormatExtension.swift; sourceTree = "<group>"; };
+		180D01B82DE30CDD000C9E53 /* ContentTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentTabView.swift; sourceTree = "<group>"; };
+		180D01B92DE30CDD000C9E53 /* GeminiClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
+		180D01BA2DE30CDD000C9E53 /* SummaryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		181594B92DD8959F00720E1C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundSessionManager.swift; sourceTree = "<group>"; };
 		1860716D2DD8B02500D3461D /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
@@ -127,6 +133,9 @@
 		1806C1792DD373640066C50F /* openai-transcriber-ios */ = {
 			isa = PBXGroup;
 			children = (
+				180D01B82DE30CDD000C9E53 /* ContentTabView.swift */,
+				180D01B92DE30CDD000C9E53 /* GeminiClient.swift */,
+				180D01BA2DE30CDD000C9E53 /* SummaryView.swift */,
 				1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */,
 				18E7CF5F2DE1D19A00002ABF /* AppDelegate.swift */,
 				18E7CF592DE1ADF800002ABF /* HistoryItem.swift */,
@@ -319,7 +328,9 @@
 				186071772DD8BF2700D3461D /* SettingsView.swift in Sources */,
 				186071822DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift in Sources */,
 				186071782DD8BF2700D3461D /* KeychainHelper.swift in Sources */,
+				180D01BC2DE30CDD000C9E53 /* GeminiClient.swift in Sources */,
 				186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */,
+				180D01BB2DE30CDD000C9E53 /* ContentTabView.swift in Sources */,
 				18E7CF602DE1D19A00002ABF /* AppDelegate.swift in Sources */,
 				180D01B52DE20EE2000C9E53 /* AudioFileProcessor.swift in Sources */,
 				1860717E2DD8D56000D3461D /* AudioEngineRecorder.swift in Sources */,
@@ -331,6 +342,7 @@
 				1860717D2DD8D55F00D3461D /* TranscriptView.swift in Sources */,
 				1856C80C2DE1E86600D0868F /* BackgroundSessionManager.swift in Sources */,
 				1806C17D2DD373640066C50F /* ContentView.swift in Sources */,
+				180D01BD2DE30CDD000C9E53 /* SummaryView.swift in Sources */,
 				1860717A2DD8C07100D3461D /* Debug.swift in Sources */,
 				1806C17B2DD373640066C50F /* openai_transcriber_iosApp.swift in Sources */,
 			);

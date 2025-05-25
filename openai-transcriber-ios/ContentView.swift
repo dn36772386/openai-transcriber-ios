@@ -39,6 +39,12 @@ extension Notification.Name {
     static let transcriptionDidFinish = Notification.Name("transcriptionDidFinishNotification")
 }
 
+// MARK: - Content Tab
+enum ContentTab {
+    case transcription
+    case summary
+}
+
 // MARK: - Sidebar Enum
 enum SidebarMenuItemType: CaseIterable {
     case transcribe, proofread, copy, audioDownload, settings
@@ -81,6 +87,7 @@ struct ContentView: View {
     @State private var showProcessingProgress = false
     @State private var showFormatAlert = false
     @State private var formatAlertMessage = ""
+    @State private var selectedTab: ContentTab = .transcription
 
     private let client = OpenAIClient()
     
@@ -88,19 +95,44 @@ struct ContentView: View {
         ZStack(alignment: .leading) {
             NavigationView {
                 VStack(spacing: 0) {
+                    // ⭐️ タブビューを追加
+                    ContentTabView(selectedTab: $selectedTab)
+                        .background(Color.white)
+                        .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
+                    // ⭐️ 既存のMainContentViewをswitch文で囲む
+                    switch selectedTab {
+                    case .transcription:
                     // メインコンテンツ
-                    MainContentView(
-                        modeIsManual: $modeIsManual,
-                        isRecording: $recorder.isRecording,
-                        transcriptLines: $transcriptLines,
-                        audioPlayerURL: $currentPlayingURL,
-                        audioPlayer: $audioPlayer,
-                        onLineTapped: self.playFrom,
-                        playNextSegmentCallback: self.playNextSegment
-                    )
-                    
+                        MainContentView(
+                            modeIsManual: $modeIsManual,
+                            isRecording: $recorder.isRecording,
+                            transcriptLines: $transcriptLines,
+                            audioPlayerURL: $currentPlayingURL,
+                            audioPlayer: $audioPlayer,
+                            onLineTapped: self.playFrom,
+                            onRetranscribe: { line in
+                                if let index = self.transcriptLines.firstIndex(where: { $0.id == line.id }),
+                                let audioURL = line.audioURL {
+                                    self.transcriptLines[index].text = "…再文字起こし中…"
+                                    self.transcriptionTasks[audioURL] = line.id
+                                    Task { @MainActor in
+                                        do {
+                                            try self.client.transcribeInBackground(url: audioURL, started: line.time)
+                                        } catch {
+                                            self.transcriptLines[index].text = "⚠️ 再文字起こしエラー: \(error.localizedDescription)"
+                                            self.transcriptionTasks.removeValue(forKey: audioURL)
+                                        }
+                                    }
+                                }
+                            },
+                            playNextSegmentCallback: self.playNextSegment
+                        )
+                    case .summary:
+                        SummaryView(transcriptLines: $transcriptLines)
+                    }
+
                     // 下部の再生バー
-                    if currentPlayingURL != nil || !transcriptLines.isEmpty {
+                    if selectedTab == .transcription && (currentPlayingURL != nil || !transcriptLines.isEmpty) {
                         CompactAudioPlayerView(
                             url: $currentPlayingURL,
                             player: $audioPlayer,
@@ -228,7 +260,8 @@ struct ContentView: View {
                     .foregroundColor(.secondary)
             }
             .padding(40)
-            .modifier(InteractionDisabler()) // ◀︎◀︎ 互換性のあるモディファイアを適用
+            .allowsHitTesting(false)  // タップを無効化
+            .disabled(true)           // インタラクションを無効化
         }
         .alert("フォーマットエラー", isPresented: $showFormatAlert) {
             Button("OK", role: .cancel) {}
@@ -940,42 +973,6 @@ struct CompactAudioPlayerView: View {
     }
 }
 
-// MARK: - Main Content View
-struct MainContentView: View {
-    @Binding var modeIsManual: Bool
-    @Binding var isRecording: Bool
-    @Binding var transcriptLines: [TranscriptLine]
-    @Binding var audioPlayerURL: URL?
-    @Binding var audioPlayer: AVAudioPlayer?
-    let onLineTapped: (URL) -> Void
-    let playNextSegmentCallback: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            TranscriptView(lines: $transcriptLines, onLineTapped: onLineTapped)
-                .padding(.top, 10)
-                .padding(.horizontal, 10)
-        }
-        .background(Color.appBackground.edgesIgnoringSafeArea(.all))
-    }
-}
-
-// MARK: - Audio Player Delegate Wrapper
-class AudioPlayerDelegateWrapper: NSObject, ObservableObject, AVAudioPlayerDelegate {
-    var onPlaybackFinished: (() -> Void)?
-    
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        Debug.log("🏁 AVAudioPlayerDelegate: Playback finished (success: \(flag))")
-        DispatchQueue.main.async {
-            self.onPlaybackFinished?()
-        }
-    }
-    
-    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        Debug.log("❌ AVAudioPlayerDelegate: Decode error: \(error?.localizedDescription ?? "Unknown")")
-    }
-}
-
 // MARK: - Enhanced File Picker View
 @available(iOS 16.0, *)
 struct EnhancedFilePickerButton: View {
@@ -1067,9 +1064,8 @@ struct SupportedFormatsView: View {
         }
     }
 }
-
+/**
 // MARK: - View Modifiers for Compatibility
-
 struct InteractionDisabler: ViewModifier {
     func body(content: Content) -> some View {
         // ⚠️ 注: 'interactionDisabled' でエラーが出る場合、
@@ -1080,6 +1076,50 @@ struct InteractionDisabler: ViewModifier {
         //    ここではビルドエラーを回避するため、常に 'allowsHitTesting' を使用します。
         content
             .allowsHitTesting(false)
+    }
+}
+*/
+
+
+// MARK: - Main Content View
+struct MainContentView: View {
+    @Binding var modeIsManual: Bool
+    @Binding var isRecording: Bool
+    @Binding var transcriptLines: [TranscriptLine]
+    @Binding var audioPlayerURL: URL?
+    @Binding var audioPlayer: AVAudioPlayer?
+    let onLineTapped: (URL) -> Void
+    let onRetranscribe: (TranscriptLine) -> Void
+    let playNextSegmentCallback: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TranscriptView(
+                lines: $transcriptLines,
+                currentPlayingURL: audioPlayerURL,
+                onLineTapped: onLineTapped,
+                onRetranscribe: onRetranscribe
+            )
+            .padding(.top, 10)
+            .padding(.horizontal, 10)
+        }
+        .background(Color.appBackground.edgesIgnoringSafeArea(.all))
+    }
+}
+
+// MARK: - Audio Player Delegate Wrapper
+class AudioPlayerDelegateWrapper: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    var onPlaybackFinished: (() -> Void)?
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Debug.log("🏁 AVAudioPlayerDelegate: Playback finished (success: \(flag))")
+        DispatchQueue.main.async {
+            self.onPlaybackFinished?()
+        }
+    }
+    
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        Debug.log("❌ AVAudioPlayerDelegate: Decode error: \(error?.localizedDescription ?? "Unknown")")
     }
 }
 
