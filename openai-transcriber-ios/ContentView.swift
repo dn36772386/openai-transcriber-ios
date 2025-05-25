@@ -197,15 +197,22 @@ struct ContentView: View {
             allowedContentTypes: AudioFormatHandler.supportedFormats,
             allowsMultipleSelection: false
         ) { result in
+            Debug.log("📄 --- fileImporter 開始 ---") // ログ追加
             switch result {
             case .success(let urls):
                 if let url = urls.first {
+                    Debug.log("📄 fileImporter 成功. URL: \(url.path), securityScoped: \(url.startAccessingSecurityScopedResource())") // ログ追加 (セキュリティスコープ開始も試す)
+                    url.stopAccessingSecurityScopedResource() // すぐに停止してみる（テスト）
                     processImportedFileWithFormatSupport(url)
+                } else {
+                    Debug.log("📄 fileImporter 成功 (URLなし)") // ログ追加
                 }
             case .failure(let error):
+                Debug.log("📄 fileImporter 失敗: \(error.localizedDescription)") // ログ追加
                 formatAlertMessage = "ファイル選択エラー: \(error.localizedDescription)"
                 showFormatAlert = true
             }
+            Debug.log("📄 --- fileImporter 終了 ---") // ログ追加
         }
         .sheet(isPresented: $showProcessingProgress) {
             VStack(spacing: 20) {
@@ -313,80 +320,92 @@ struct ContentView: View {
     // MARK: - File Import Methods
     
     private func processImportedFileWithFormatSupport(_ url: URL) {
-        // 1. セキュリティスコープへのアクセスを開始 (必要な場合)
+        Debug.log("⚙️ --- processImportedFileWithFormatSupport 開始: \(url.lastPathComponent) ---") // ログ追加
+
+        Debug.log("⚙️ セキュリティスコープアクセス開始試行") // ログ追加
         let shouldStopAccessing = url.startAccessingSecurityScopedResource()
+        Debug.log("⚙️ セキュリティスコープアクセス開始結果: \(shouldStopAccessing)") // ログ追加
+
         defer {
             if shouldStopAccessing {
                 url.stopAccessingSecurityScopedResource()
+                Debug.log("⚙️ セキュリティスコープアクセス停止 (defer)") // ログ追加
             }
         }
 
-        // 2. 一時ディレクトリにコピー先のURLを作成
         let tempDir = FileManager.default.temporaryDirectory
         let localURL = tempDir.appendingPathComponent(url.lastPathComponent)
+        Debug.log("⚙️ コピー先Local URL: \(localURL.path)") // ログ追加
 
-        // 3. ファイルをコピー
         do {
-            // 既存ファイルがあれば削除
+            Debug.log("⚙️ ファイルコピー開始") // ログ追加
             if FileManager.default.fileExists(atPath: localURL.path) {
                 try FileManager.default.removeItem(at: localURL)
+                Debug.log("⚙️ 既存ファイルを削除") // ログ追加
             }
             try FileManager.default.copyItem(at: url, to: localURL)
-            print("✅ Copied imported file to: \(localURL.path)")
+            Debug.log("⚙️ ファイルコピー成功") // ログ追加
         } catch {
+            Debug.log("❌ ファイルコピー失敗: \(error.localizedDescription)") // ログ追加
             Task { @MainActor in
-                // 🔽 0.5秒の遅延を追加してアラート表示の競合を避ける
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showFormatError("ファイルのコピーに失敗しました: \(error.localizedDescription)")
                 }
             }
-            return // コピーに失敗したら処理を中断
+            return
         }
 
+        // 🔽 セキュリティスコープをコピー後に停止してみる（テスト）
+        // if shouldStopAccessing {
+        //     url.stopAccessingSecurityScopedResource()
+        //     Debug.log("⚙️ セキュリティスコープアクセス停止 (コピー直後)")
+        // }
+
+        Debug.log("⚙️ Task開始") // ログ追加
         Task {
-            // 4. コピーしたローカルURLを使って処理
+            Debug.log("⚙️ Task内: validateFormat 呼び出し開始") // ログ追加
             let validation = await AudioFormatHandler.validateFormat(url: localURL)
-            
+            Debug.log("⚙️ Task内: validateFormat 終了. isValid: \(validation.isValid)") // ログ追加
+
             guard validation.isValid else {
+                Debug.log("❌ Task内: フォーマット無効. Error: \(validation.error ?? "N/A")") // ログ追加
                 await MainActor.run {
-                    // 🔽 0.5秒の遅延を追加してアラート表示の競合を避ける
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         showFormatError(validation.error ?? "不明なエラー")
                     }
                 }
-                try? FileManager.default.removeItem(at: localURL) // 不要ならコピーを削除
+                try? FileManager.default.removeItem(at: localURL)
                 return
             }
             
+            Debug.log("⚙️ Task内: メタデータ取得試行") // ログ追加
             if let metadata = await AudioFormatHandler.getAudioMetadata(from: url) {
-                print("📊 Audio Metadata:")
-                print("  Duration: \(metadata.formattedDuration)")
-                print("  Sample Rate: \(metadata.sampleRate) Hz")
-                print("  Channels: \(metadata.channelCount)")
-                print("  Bit Rate: \(metadata.formattedBitRate)")
-                print("  File Size: \(metadata.formattedFileSize)")
-                print("  Codec: \(metadata.codec)")
+                Debug.log("📊 Audio Metadata: \(metadata.formattedDuration)") // ログ追加
             }
-            
+
             await MainActor.run {
+                Debug.log("⚙️ Task内: プログレス表示") // ログ追加
                 showProcessingProgress = true
             }
-            
+
             do {
-                // 5. ローカルURLを使って処理
+                Debug.log("⚙️ Task内: extractAudio/performSilenceSplitting 呼び出し開始") // ログ追加
                 let processedURL = try await AudioFormatHandler.extractAudio(from: localURL)
                 await performSilenceSplitting(processedURL, originalURL: localURL)
+                Debug.log("⚙️ Task内: extractAudio/performSilenceSplitting 終了") // ログ追加
             } catch {
+                Debug.log("❌ Task内: extractAudio/performSilenceSplitting 失敗: \(error.localizedDescription)") // ログ追加
                 await MainActor.run {
                     self.showProcessingProgress = false
-                    // 🔽 0.5秒の遅延を追加してアラート表示の競合を避ける
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         self.showFormatError(error.localizedDescription)
                     }
                 }
-                try? FileManager.default.removeItem(at: localURL) // エラー時もコピーを削除
+                try? FileManager.default.removeItem(at: localURL)
             }
+            Debug.log("⚙️ --- Task 終了 ---") // ログ追加
         }
+        Debug.log("⚙️ --- processImportedFileWithFormatSupport 終了 ---") // ログ追加
     }
     
     @MainActor // ◀︎◀︎ @MainActor を追加
@@ -428,7 +447,7 @@ struct ContentView: View {
             
         } catch {
             showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     showFormatError("処理エラー: \(error.localizedDescription)")
                 }
         }
@@ -854,7 +873,7 @@ struct CompactAudioPlayerView: View {
                 currentTime = duration
                 isPlaying = false
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     self.onPlaybackFinished?()
                 }
             }
