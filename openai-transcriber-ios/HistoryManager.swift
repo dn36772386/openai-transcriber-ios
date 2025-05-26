@@ -6,6 +6,7 @@ class HistoryManager: ObservableObject {
     private let maxHistoryItems = 10
 
     @Published var historyItems: [HistoryItem] = []
+    @Published var currentHistoryId: UUID? = nil  // 現在編集中の履歴ID
 
     var documentsDirectory: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -44,7 +45,7 @@ class HistoryManager: ObservableObject {
         }
     }
 
-    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?) {
+    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?, summary: String? = nil) {
         // 空のセッションは保存しない
         guard !lines.isEmpty else {
             print("ℹ️ No transcript lines to save")
@@ -52,9 +53,12 @@ class HistoryManager: ObservableObject {
         }
         
         let newItem = HistoryItem(
+            id: UUID(),
+            date: Date(),
             lines: lines,
             fullAudioURL: fullAudioURL,
-            documentsDirectory: self.documentsDirectory
+            documentsDirectory: self.documentsDirectory,
+            summary: summary
         )
 
         historyItems.insert(newItem, at: 0)
@@ -66,11 +70,39 @@ class HistoryManager: ObservableObject {
             deleteAssociatedFiles(for: oldItem)
         }
         
+        currentHistoryId = nil  // 新規作成時はIDをリセット
+        
         // 一時ファイルの削除は行わない（現在のセッション中は保持する必要があるため）
         // cleanupTemporaryFiles メソッドを別途呼び出すこと
 
         saveHistoryItemsToUserDefaults()
         objectWillChange.send()
+    }
+
+    // 履歴を更新するメソッド（重複を防ぐ）
+    func updateHistoryItem(id: UUID, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?) {
+        guard let index = historyItems.firstIndex(where: { $0.id == id }) else { return }
+        
+        let existingItem = historyItems[index]
+        
+        // 既存のファイルを削除
+        deleteAssociatedFiles(for: existingItem)
+        
+        // 新しいHistoryItemを作成（既存のID、日付で初期化）
+        let updatedItem = HistoryItem(
+            id: id,
+            date: existingItem.date,
+            lines: lines,
+            fullAudioURL: fullAudioURL,
+            documentsDirectory: self.documentsDirectory,
+            summary: summary
+        )
+        
+        historyItems[index] = updatedItem
+        saveHistoryItemsToUserDefaults()
+        objectWillChange.send()
+        
+        print("📝 Updated history item: ID \(id)")
     }
 
     // 一時ファイルをクリーンアップする専用メソッド
@@ -124,6 +156,10 @@ class HistoryManager: ObservableObject {
         }
         for item in itemsToDelete {
             deleteAssociatedFiles(for: item)
+            // 削除する履歴が現在表示中の場合はリセット
+            if currentHistoryId == item.id {
+                currentHistoryId = nil
+            }
         }
         historyItems.remove(atOffsets: offsets)
         saveHistoryItemsToUserDefaults()
@@ -134,6 +170,10 @@ class HistoryManager: ObservableObject {
         if let index = historyItems.firstIndex(where: { $0.id == id }) {
             let itemToDelete = historyItems.remove(at: index)
             deleteAssociatedFiles(for: itemToDelete)
+            // 削除する履歴が現在表示中の場合はリセット
+            if currentHistoryId == id {
+                currentHistoryId = nil
+            }
             saveHistoryItemsToUserDefaults()
             print("🗑️ Deleted history item with ID: \(id)")
         }
@@ -144,6 +184,7 @@ class HistoryManager: ObservableObject {
             deleteAssociatedFiles(for: item)
         }
         historyItems.removeAll()
+        currentHistoryId = nil
         saveHistoryItemsToUserDefaults()
         print("🗑️ Cleared all history items and associated files.")
     }

@@ -2,6 +2,9 @@ import SwiftUI
 
 struct SummaryView: View {
     @Binding var transcriptLines: [TranscriptLine]
+    @Binding var currentSummary: String?
+    var onSummaryGenerated: ((String) -> Void)?
+    
     @State private var summaryText = "" 
     @State private var isLoading = false
     @State private var showError = false
@@ -55,6 +58,17 @@ struct SummaryView: View {
         } message: {
             Text(errorMessage)
         }
+        .onAppear {
+            // 既存の要約があれば表示
+            if let summary = currentSummary {
+                summaryText = summary
+            }
+        }
+        .onChange(of: currentSummary) { _, newValue in
+            if let summary = newValue {
+                summaryText = summary
+            }
+        }
     }
     
     private func generateSummary() {
@@ -79,6 +93,8 @@ struct SummaryView: View {
         do {
             let summary = try await GeminiClient.shared.summarize(text: fullText, prompt: prompt)
             summaryText = summary
+            currentSummary = summary  // Bindingを更新
+            onSummaryGenerated?(summary)  // コールバックを呼び出し
         } catch {
             errorMessage = error.localizedDescription
             showError = true

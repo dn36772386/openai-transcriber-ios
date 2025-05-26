@@ -88,6 +88,7 @@ struct ContentView: View {
     @State private var showFormatAlert = false
     @State private var formatAlertMessage = ""
     @State private var selectedTab: ContentTab = .transcription
+    @State private var currentSummary: String? = nil
 
     private let client = OpenAIClient()
     
@@ -128,7 +129,22 @@ struct ContentView: View {
                             playNextSegmentCallback: self.playNextSegment
                         )
                     case .summary:
-                        SummaryView(transcriptLines: $transcriptLines)
+                        //SummaryView(transcriptLines: $transcriptLines)
+                        SummaryView(
+                            transcriptLines: $transcriptLines,
+                            currentSummary: $currentSummary,
+                            onSummaryGenerated: { summary in
+                                self.currentSummary = summary
+                                if let currentId = historyManager.currentHistoryId {
+                                    historyManager.updateHistoryItem(
+                                        id: currentId,
+                                        lines: transcriptLines,
+                                        fullAudioURL: currentPlayingURL,
+                                        summary: summary
+                                    )
+                                }
+                            }
+                        )
                     }
 
                     // 下部の再生バー
@@ -312,7 +328,24 @@ struct ContentView: View {
         Debug.log("✅ finish tapped")
         isCancelling = false
         recorder.stop()
-        historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+        //historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+
+        if let currentId = historyManager.currentHistoryId {
+            // 既存の履歴を更新
+            historyManager.updateHistoryItem(
+                id: currentId,
+                lines: transcriptLines,
+                fullAudioURL: currentPlayingURL,
+                summary: currentSummary
+            )
+        } else {
+            // 新規履歴として保存
+            historyManager.addHistoryItem(
+                lines: transcriptLines,
+                fullAudioURL: currentPlayingURL,
+                summary: currentSummary
+            )
+        }
     }
 
     private func cancelRecording() {
@@ -626,7 +659,23 @@ struct ContentView: View {
     
     private func prepareNewTranscriptionSession(saveCurrentSession: Bool = true) {
         if saveCurrentSession && (!transcriptLines.isEmpty || currentPlayingURL != nil) {
-            historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+            //historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+            if let currentId = historyManager.currentHistoryId {
+                // 既存の履歴を更新
+                historyManager.updateHistoryItem(
+                    id: currentId,
+                    lines: transcriptLines,
+                    fullAudioURL: currentPlayingURL,
+                    summary: currentSummary
+                )
+            } else {
+                // 新規履歴として保存
+                historyManager.addHistoryItem(
+                    lines: transcriptLines,
+                    fullAudioURL: currentPlayingURL,
+                    summary: currentSummary
+                )
+            }
         }
         
         transcriptLines.removeAll()
@@ -634,11 +683,30 @@ struct ContentView: View {
         audioPlayer?.stop()
         audioPlayer = nil
         isCancelling = false
+
+        currentSummary = nil
+        historyManager.currentHistoryId = nil  // 新規セッション開始時はIDをリセット
+
     }
 
     private func loadHistoryItem(_ historyItem: HistoryItem) {
-        if !transcriptLines.isEmpty || currentPlayingURL != nil {
-            historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
+        if historyManager.currentHistoryId != historyItem.id {
+            if !transcriptLines.isEmpty || currentPlayingURL != nil {
+                if let currentId = historyManager.currentHistoryId {
+                    historyManager.updateHistoryItem(
+                        id: currentId,
+                        lines: transcriptLines,
+                        fullAudioURL: currentPlayingURL,
+                        summary: currentSummary
+                    )
+                } else {
+                    historyManager.addHistoryItem(
+                        lines: transcriptLines,
+                        fullAudioURL: currentPlayingURL,
+                        summary: currentSummary
+                    )
+                }
+            }
         }
         
         transcriptLines.removeAll()
@@ -646,6 +714,8 @@ struct ContentView: View {
         audioPlayer?.stop()
         audioPlayer = nil
         isCancelling = false
+
+        currentSummary = historyItem.summary  // 要約を読み込む
         
         self.transcriptLines = historyItem.getTranscriptLines(documentsDirectory: historyManager.documentsDirectory)
 
@@ -667,6 +737,9 @@ struct ContentView: View {
             }
         }
         
+        historyManager.currentHistoryId = historyItem.id  // 現在の履歴IDを設定
+        selectedTab = .transcription  // タブを文字起こしタブに切り替え
+
         if UIDevice.current.userInterfaceIdiom == .phone {
             withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
         }
