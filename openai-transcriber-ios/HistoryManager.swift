@@ -69,6 +69,29 @@ class HistoryManager: ObservableObject {
         return newId
     }
 
+    // addHistoryItemを修正（空でも保存）
+    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?, summary: String? = nil) {
+        // guard削除 - 空でも保存する
+        let newItem = HistoryItem(
+            id: UUID(),
+            date: Date(),
+            lines: lines,
+            fullAudioURL: fullAudioURL,
+            documentsDirectory: self.documentsDirectory,
+            summary: summary
+        )
+        historyItems.insert(newItem, at: 0)
+        print("➕ Added new history item: ID \(newItem.id), Date: \(newItem.date)")
+        while historyItems.count > maxHistoryItems {
+            let oldItem = historyItems.removeLast()
+            print("🗑️ Deleting old history item: \(oldItem.id)")
+            deleteAssociatedFiles(for: oldItem)
+        }
+        currentHistoryId = nil  // 新規作成時はIDをリセット
+        saveHistoryItemsToUserDefaults()
+        objectWillChange.send()
+    }
+
     // 履歴を更新するメソッド（重複を防ぐ）
     func updateHistoryItem(id: UUID, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?) {
         guard let index = historyItems.firstIndex(where: { $0.id == id }) else {

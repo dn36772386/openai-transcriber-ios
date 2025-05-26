@@ -225,7 +225,11 @@ struct ContentView: View {
                     activeMenuItem: $activeMenuItem,
                     showSettings: $showSettings,
                     onLoadHistoryItem: self.loadHistoryItem,
-                    onPrepareNewSession: { self.prepareNewTranscriptionSession(saveCurrentSession: true) }
+                    onPrepareNewSession: { 
+                        self.prepareNewTranscriptionSession(saveCurrentSession: true)
+                        // 明示的に新規セッションのためIDをリセット
+                        self.historyManager.currentHistoryId = nil
+                    }
                 )
                 .transition(.move(edge: .leading))
                 .zIndex(1)
@@ -318,7 +322,7 @@ struct ContentView: View {
     }
 
     // MARK: - Recording Methods
-    
+
     private func startRecording() {
         guard !recorder.isRecording else { return }
         requestMicrophonePermission()
@@ -328,27 +332,25 @@ struct ContentView: View {
         DispatchQueue.main.async {
             if granted {
                 do {
-                    isCancelling = false
+                    self.isCancelling = false
                     
                     // 新規セッションの場合のみ準備（既存セッションは保持）
-                    if historyManager.currentHistoryId == nil {
+                    if self.historyManager.currentHistoryId == nil {
                         self.prepareNewTranscriptionSession(saveCurrentSession: true)
+                        
+                        // 録音開始時に即座に履歴を作成（空でも作成）
+                        let newHistoryId = self.historyManager.createEmptyHistoryItem()
+                        self.historyManager.currentHistoryId = newHistoryId
                     }
                     
-                    // 録音開始時に即座に履歴を作成（空でも作成）
-                    if historyManager.currentHistoryId == nil {
-                        let newHistoryId = historyManager.createEmptyHistoryItem()
-                        historyManager.currentHistoryId = newHistoryId
-                    }
-                    
-                    transcriptionTasks.removeAll()
-                    print("Starting recorder with isManual: \(self.modeIsManual)")
-                    try recorder.start(isManual: self.modeIsManual)
+                    self.transcriptionTasks.removeAll()
+                    print("Starting recorder with isManual: \\(self.modeIsManual)")
+                    try self.recorder.start(isManual: self.modeIsManual)
                 } catch {
                     print("[Recorder] start failed:", error.localizedDescription)
                 }
             } else {
-                showPermissionAlert = true
+                self.showPermissionAlert = true
             }
         }
     }
@@ -366,48 +368,38 @@ struct ContentView: View {
                 fullAudioURL: currentPlayingURL,
                 summary: currentSummary
             )
-        }
-        // currentHistoryIdがない場合のみ新規作成（通常はあり得ない）
-        else {
-            let newId = historyManager.addHistoryItem(
+        } else {
+            // currentHistoryIdがない場合のみ新規作成（通常はあり得ない）
+            historyManager.addHistoryItem(
                 lines: transcriptLines,
                 fullAudioURL: currentPlayingURL,
                 summary: currentSummary
             )
-            historyManager.currentHistoryId = newId
         }
     }
 
-    private func prepareNewTranscriptionSession(saveCurrentSession: Bool = true) {
-        if saveCurrentSession && historyManager.currentHistoryId != nil {
-            // 既存セッションがある場合は更新
-            if let currentId = historyManager.currentHistoryId {
-                historyManager.updateHistoryItem(
-                    id: currentId,
-                    lines: transcriptLines,
-                    fullAudioURL: currentPlayingURL,
-                    summary: currentSummary
-                )
-            }
-        }
-        
-        // 新規セッションの準備
+    private func cancelRecording() {
+        Debug.log("❌ cancel tapped")
+        isCancelling = true
+        recorder.cancel()
         transcriptLines.removeAll()
         currentPlayingURL = nil
         audioPlayer?.stop()
         audioPlayer = nil
-        isCancelling = false
-        currentSummary = nil
-        
-        // 明示的に新規セッションを開始する場合のみIDをリセット
-        // （サイドバーから「文字起こし」を選択した場合など）
+        transcriptionTasks.removeAll()
+    }
+
+    // 新規セッションを明示的に開始する場合のメソッドを追加
+    private func startNewSession() {
+        prepareNewTranscriptionSession(saveCurrentSession: true)
+        historyManager.currentHistoryId = nil
     }
 
     // サイドバーから新規セッションを明示的に開始する場合
-    private func startNewTranscriptionSession() {
-        prepareNewTranscriptionSession(saveCurrentSession: true)
-        historyManager.currentHistoryId = nil  // 明示的にリセット
-    }
+    // private func startNewTranscriptionSession() {
+    //     prepareNewTranscriptionSession(saveCurrentSession: true)
+    //     historyManager.currentHistoryId = nil  // 明示的にリセット
+    // }
 
     private func requestMicrophonePermission() {
         AVAudioApplication.requestRecordPermission { granted in
@@ -691,9 +683,7 @@ struct ContentView: View {
     
     private func prepareNewTranscriptionSession(saveCurrentSession: Bool = true) {
         if saveCurrentSession && (!transcriptLines.isEmpty || currentPlayingURL != nil) {
-            //historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
             if let currentId = historyManager.currentHistoryId {
-                // 既存の履歴を更新
                 historyManager.updateHistoryItem(
                     id: currentId,
                     lines: transcriptLines,
@@ -701,7 +691,6 @@ struct ContentView: View {
                     summary: currentSummary
                 )
             } else {
-                // 新規履歴として保存
                 historyManager.addHistoryItem(
                     lines: transcriptLines,
                     fullAudioURL: currentPlayingURL,
@@ -715,13 +704,12 @@ struct ContentView: View {
         audioPlayer?.stop()
         audioPlayer = nil
         isCancelling = false
-
         currentSummary = nil
-        historyManager.currentHistoryId = nil  // 新規セッション開始時はIDをリセット
-
+        // historyManager.currentHistoryId = nil は削除（IDは保持する）
     }
 
     private func loadHistoryItem(_ historyItem: HistoryItem) {
+        // 現在のセッションを保存（ただし、同じ履歴を読み込む場合は保存しない）
         if historyManager.currentHistoryId != historyItem.id {
             if !transcriptLines.isEmpty || currentPlayingURL != nil {
                 if let currentId = historyManager.currentHistoryId {
@@ -741,16 +729,16 @@ struct ContentView: View {
             }
         }
         
+        // 履歴データを読み込み
         transcriptLines.removeAll()
         currentPlayingURL = nil
         audioPlayer?.stop()
         audioPlayer = nil
         isCancelling = false
-
-        currentSummary = historyItem.summary  // 要約を読み込む
+        currentSummary = historyItem.summary
         
         self.transcriptLines = historyItem.getTranscriptLines(documentsDirectory: historyManager.documentsDirectory)
-
+        
         if let fullAudio = historyItem.getFullAudioURL(documentsDirectory: historyManager.documentsDirectory) {
             self.currentPlayingURL = fullAudio
         } else if let firstSegment = self.transcriptLines.first?.audioURL {
@@ -769,9 +757,10 @@ struct ContentView: View {
             }
         }
         
-        historyManager.currentHistoryId = historyItem.id  // 現在の履歴IDを設定
-        selectedTab = .transcription  // タブを文字起こしタブに切り替え
-
+        // 現在の履歴IDを設定
+        historyManager.currentHistoryId = historyItem.id
+        selectedTab = .transcription
+        
         if UIDevice.current.userInterfaceIdiom == .phone {
             withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
         }
@@ -811,7 +800,10 @@ struct SidebarView: View {
             VStack(alignment: .leading, spacing: 5) {
                 SidebarMenuItem(icon: "mic", text: "文字起こし", type: .transcribe, activeMenuItem: $activeMenuItem, action: {
                     if activeMenuItem == .transcribe {
+                        // 既に文字起こしタブの場合は新規セッションを開始
                         onPrepareNewSession()
+                        // 明示的に新規セッションのためIDをリセット
+                        historyManager.currentHistoryId = nil
                     }
                     activeMenuItem = .transcribe
                     closeSidebar()
