@@ -324,53 +324,23 @@ struct ContentView: View {
         requestMicrophonePermission()
     }
 
-    private func finishRecording() {
-        Debug.log("✅ finish tapped")
-        isCancelling = false
-        recorder.stop()
-        //historyManager.addHistoryItem(lines: transcriptLines, fullAudioURL: currentPlayingURL)
-
-        if let currentId = historyManager.currentHistoryId {
-            // 既存の履歴を更新
-            historyManager.updateHistoryItem(
-                id: currentId,
-                lines: transcriptLines,
-                fullAudioURL: currentPlayingURL,
-                summary: currentSummary
-            )
-        } else {
-            // 新規履歴として保存
-            historyManager.addHistoryItem(
-                lines: transcriptLines,
-                fullAudioURL: currentPlayingURL,
-                summary: currentSummary
-            )
-        }
-    }
-
-    private func cancelRecording() {
-        Debug.log("❌ cancel tapped")
-        isCancelling = true
-        recorder.cancel()
-        transcriptLines.removeAll()
-        currentPlayingURL = nil
-        audioPlayer?.stop()
-        audioPlayer = nil
-        transcriptionTasks.removeAll()
-    }
-
-    private func requestMicrophonePermission() {
-        AVAudioApplication.requestRecordPermission { granted in
-            handlePermissionResult(granted)
-        }
-    }
-
     private func handlePermissionResult(_ granted: Bool) {
         DispatchQueue.main.async {
             if granted {
                 do {
                     isCancelling = false
-                    self.prepareNewTranscriptionSession(saveCurrentSession: false)
+                    
+                    // 新規セッションの場合のみ準備（既存セッションは保持）
+                    if historyManager.currentHistoryId == nil {
+                        self.prepareNewTranscriptionSession(saveCurrentSession: true)
+                    }
+                    
+                    // 録音開始時に即座に履歴を作成（空でも作成）
+                    if historyManager.currentHistoryId == nil {
+                        let newHistoryId = historyManager.createEmptyHistoryItem()
+                        historyManager.currentHistoryId = newHistoryId
+                    }
+                    
                     transcriptionTasks.removeAll()
                     print("Starting recorder with isManual: \(self.modeIsManual)")
                     try recorder.start(isManual: self.modeIsManual)
@@ -380,6 +350,68 @@ struct ContentView: View {
             } else {
                 showPermissionAlert = true
             }
+        }
+    }
+
+    private func finishRecording() {
+        Debug.log("✅ finish tapped")
+        isCancelling = false
+        recorder.stop()
+        
+        // 常に現在のセッションを更新（新規作成はしない）
+        if let currentId = historyManager.currentHistoryId {
+            historyManager.updateHistoryItem(
+                id: currentId,
+                lines: transcriptLines,
+                fullAudioURL: currentPlayingURL,
+                summary: currentSummary
+            )
+        }
+        // currentHistoryIdがない場合のみ新規作成（通常はあり得ない）
+        else {
+            let newId = historyManager.addHistoryItem(
+                lines: transcriptLines,
+                fullAudioURL: currentPlayingURL,
+                summary: currentSummary
+            )
+            historyManager.currentHistoryId = newId
+        }
+    }
+
+    private func prepareNewTranscriptionSession(saveCurrentSession: Bool = true) {
+        if saveCurrentSession && historyManager.currentHistoryId != nil {
+            // 既存セッションがある場合は更新
+            if let currentId = historyManager.currentHistoryId {
+                historyManager.updateHistoryItem(
+                    id: currentId,
+                    lines: transcriptLines,
+                    fullAudioURL: currentPlayingURL,
+                    summary: currentSummary
+                )
+            }
+        }
+        
+        // 新規セッションの準備
+        transcriptLines.removeAll()
+        currentPlayingURL = nil
+        audioPlayer?.stop()
+        audioPlayer = nil
+        isCancelling = false
+        currentSummary = nil
+        
+        // 明示的に新規セッションを開始する場合のみIDをリセット
+        // （サイドバーから「文字起こし」を選択した場合など）
+    }
+
+    // サイドバーから新規セッションを明示的に開始する場合
+    private func startNewTranscriptionSession() {
+        prepareNewTranscriptionSession(saveCurrentSession: true)
+        historyManager.currentHistoryId = nil  // 明示的にリセット
+    }
+
+    private func requestMicrophonePermission() {
+        AVAudioApplication.requestRecordPermission { granted in
+            handlePermissionResult(granted)
         }
     }
 

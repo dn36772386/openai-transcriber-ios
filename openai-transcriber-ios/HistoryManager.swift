@@ -45,44 +45,38 @@ class HistoryManager: ObservableObject {
         }
     }
 
-    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?, summary: String? = nil) {
-        // 空のセッションは保存しない
-        guard !lines.isEmpty else {
-            print("ℹ️ No transcript lines to save")
-            return
-        }
-        
-        let newItem = HistoryItem(
-            id: UUID(),
+    // 空の履歴アイテムを作成して即座にIDを返す
+    func createEmptyHistoryItem() -> UUID {
+        let newId = UUID()
+        let emptyItem = HistoryItem(
+            id: newId,
             date: Date(),
-            lines: lines,
-            fullAudioURL: fullAudioURL,
+            lines: [],
+            fullAudioURL: nil,
             documentsDirectory: self.documentsDirectory,
-            summary: summary
+            summary: nil
         )
-
-        historyItems.insert(newItem, at: 0)
-        print("➕ Added new history item: ID \(newItem.id), Date: \(newItem.date)")
-
+        historyItems.insert(emptyItem, at: 0)
+        // 最大数制限のチェック
         while historyItems.count > maxHistoryItems {
             let oldItem = historyItems.removeLast()
             print("🗑️ Deleting old history item: \(oldItem.id)")
             deleteAssociatedFiles(for: oldItem)
         }
-        
-        currentHistoryId = nil  // 新規作成時はIDをリセット
-        
-        // 一時ファイルの削除は行わない（現在のセッション中は保持する必要があるため）
-        // cleanupTemporaryFiles メソッドを別途呼び出すこと
-
         saveHistoryItemsToUserDefaults()
         objectWillChange.send()
+        print("📝 Created empty history item: ID \(newId)")
+        return newId
     }
 
     // 履歴を更新するメソッド（重複を防ぐ）
     func updateHistoryItem(id: UUID, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?) {
-        guard let index = historyItems.firstIndex(where: { $0.id == id }) else { return }
-        
+        guard let index = historyItems.firstIndex(where: { $0.id == id }) else {
+            // 存在しない場合は新規作成（通常はあり得ない）
+            print("⚠️ History item not found, creating new: \(id)")
+            let _ = addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+            return
+        }
         let existingItem = historyItems[index]
         
         // 既存のファイルを削除
