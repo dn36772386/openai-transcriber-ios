@@ -963,9 +963,11 @@ struct CompactAudioPlayerView: View {
         .onChange(of: url) { _, newURL in
             resetPlayer(url: newURL) 
         }
-        .onChange(of: player?.isPlaying) { _, newValue in
+        .onChange(of: player?.isPlaying) { oldValue, newValue in
+             print("DEBUG: player.isPlaying changed from \\(oldValue?.description ?? "nil") to \\(newValue?.description ?? "nil"). isEditingSlider: \\(isEditingSlider)")
              if !isEditingSlider {
                 isPlaying = newValue ?? false
+                print("DEBUG: isPlaying set to \\(isPlaying)")
              }
         }
     }
