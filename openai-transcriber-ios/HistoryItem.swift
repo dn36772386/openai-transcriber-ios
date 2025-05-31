@@ -13,12 +13,12 @@ struct TranscriptLine: Identifiable, Equatable {
     }
 
     // HistoryItem.TranscriptLineDataへの変換メソッド (オプション)
-    func toTranscriptLineData(documentsDirectory: URL, historyItemId: UUID) -> HistoryItem.TranscriptLineData {
+    func toTranscriptLineData(audioStorageDirectory: URL, historyItemId: UUID) -> HistoryItem.TranscriptLineData {
         var segmentFileName: String? = nil
         if let sourceURL = self.audioURL {
             // セグメントごとにユニークなファイル名を生成 (履歴アイテムIDとセグメントIDを使用)
             let fileName = "segment_\(historyItemId.uuidString)_\(self.id.uuidString).\(sourceURL.pathExtension.isEmpty ? "wav" : sourceURL.pathExtension)"
-            let destinationURL = documentsDirectory.appendingPathComponent(fileName)
+            let destinationURL = audioStorageDirectory.appendingPathComponent(fileName)
             do {
                 // コピー先に同名ファイルが存在する場合は上書きを試みる (またはエラー処理)
                 if FileManager.default.fileExists(atPath: destinationURL.path) {
@@ -51,7 +51,7 @@ struct HistoryItem: Identifiable, Codable {
         var audioSegmentFileName: String? // 個別セグメントのファイル名 (Documents内)
     }
 
-    init(id: UUID = UUID(), date: Date = Date(), lines: [TranscriptLine], fullAudioURL: URL?, documentsDirectory: URL, summary: String? = nil, subtitle: String? = nil) {
+    init(id: UUID = UUID(), date: Date = Date(), lines: [TranscriptLine], fullAudioURL: URL?, audioStorageDirectory: URL, summary: String? = nil, subtitle: String? = nil) {
         self.id = id
         self.date = date
         self.summary = summary
@@ -62,7 +62,7 @@ struct HistoryItem: Identifiable, Codable {
         var tempFullAudioFileName: String? = nil
         if let sourceFullAudioURL = fullAudioURL {
             let uniqueFullAudioFileName = "full_session_\(self.id.uuidString).\(sourceFullAudioURL.pathExtension.isEmpty ? "wav" : sourceFullAudioURL.pathExtension)"
-            let destinationFullAudioURL = documentsDirectory.appendingPathComponent(uniqueFullAudioFileName)
+            let destinationFullAudioURL = audioStorageDirectory.appendingPathComponent(uniqueFullAudioFileName)
             do {
                 if FileManager.default.fileExists(atPath: destinationFullAudioURL.path) {
                     try FileManager.default.removeItem(at: destinationFullAudioURL)
@@ -81,16 +81,16 @@ struct HistoryItem: Identifiable, Codable {
         self.transcriptLines = lines.map { line in
             // lineからTranscriptLineDataを生成し、その際に音声ファイルもコピーする
             
-            line.toTranscriptLineData(documentsDirectory: documentsDirectory, historyItemId: id) // self.id を id に変更
+            line.toTranscriptLineData(audioStorageDirectory: audioStorageDirectory, historyItemId: id) // self.id を id に変更
         }
     }
 
     // 履歴読み込み時に TranscriptLineData配列をTranscriptLine配列に変換する
-    func getTranscriptLines(documentsDirectory: URL) -> [TranscriptLine] {
+    func getTranscriptLines(audioStorageDirectory: URL) -> [TranscriptLine] {
         return self.transcriptLines.map { data in
             var url: URL? = nil
             if let fileName = data.audioSegmentFileName {
-                let potentialURL = documentsDirectory.appendingPathComponent(fileName)
+                let potentialURL = audioStorageDirectory.appendingPathComponent(fileName)
                 if FileManager.default.fileExists(atPath: potentialURL.path) {
                     url = potentialURL
                 } else {
@@ -103,9 +103,9 @@ struct HistoryItem: Identifiable, Codable {
     }
     
     // 履歴読み込み時に全体音声のURLを取得する
-    func getFullAudioURL(documentsDirectory: URL) -> URL? {
+    func getFullAudioURL(audioStorageDirectory: URL) -> URL? {
         guard let fileName = self.fullAudioFileName else { return nil }
-        let url = documentsDirectory.appendingPathComponent(fileName)
+        let url = audioStorageDirectory.appendingPathComponent(fileName)
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 }

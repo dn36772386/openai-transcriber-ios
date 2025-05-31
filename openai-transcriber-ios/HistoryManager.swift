@@ -11,6 +11,13 @@ class HistoryManager: ObservableObject {
     var documentsDirectory: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     }
+    
+    // 音声ファイル専用ディレクトリ
+    var audioStorageDirectory: URL {
+        let audioDir = documentsDirectory.appendingPathComponent("AudioFiles", isDirectory: true)
+        try? FileManager.default.createDirectory(at: audioDir, withIntermediateDirectories: true)
+        return audioDir
+    }
 
     private init() {
         loadHistory()
@@ -54,7 +61,7 @@ class HistoryManager: ObservableObject {
         let newItem = HistoryItem(
             lines: lines,
             fullAudioURL: fullAudioURL,
-            documentsDirectory: self.documentsDirectory,
+            audioStorageDirectory: self.audioStorageDirectory,
             summary: summary,
             subtitle: subtitle
         )
@@ -81,7 +88,7 @@ class HistoryManager: ObservableObject {
             date: Date(),
             lines: [],
             fullAudioURL: nil,
-            documentsDirectory: self.documentsDirectory,
+            audioStorageDirectory: self.audioStorageDirectory,
             summary: nil,
             subtitle: nil
         )
@@ -121,7 +128,7 @@ class HistoryManager: ObservableObject {
             date: existingItem.date,
             lines: lines,
             fullAudioURL: fullAudioURL,
-            documentsDirectory: self.documentsDirectory,
+            audioStorageDirectory: self.audioStorageDirectory,
             summary: summary,
             subtitle: subtitle
         )
@@ -129,6 +136,7 @@ class HistoryManager: ObservableObject {
         historyItems[index] = updatedItem
         saveHistoryItemsToUserDefaults()
         objectWillChange.send()
+        cleanupOrphanedAudioFiles()  // 孤立したファイルをクリーンアップ
         
         print("📝 Updated history item: ID \\(id)")
     }
@@ -164,7 +172,7 @@ class HistoryManager: ObservableObject {
 
     private func deleteAssociatedFiles(for item: HistoryItem) {
         if let fileName = item.fullAudioFileName {
-            let fileURL = documentsDirectory.appendingPathComponent(fileName)
+            let fileURL = audioStorageDirectory.appendingPathComponent(fileName)
             if FileManager.default.fileExists(atPath: fileURL.path) {
                 do {
                     try FileManager.default.removeItem(at: fileURL)
@@ -176,7 +184,7 @@ class HistoryManager: ObservableObject {
         }
         item.transcriptLines.forEach { lineData in
             if let segName = lineData.audioSegmentFileName {
-                let segURL = documentsDirectory.appendingPathComponent(segName)
+                let segURL = audioStorageDirectory.appendingPathComponent(segName)
                 if FileManager.default.fileExists(atPath: segURL.path) {
                     do {
                         try FileManager.default.removeItem(at: segURL)
@@ -227,5 +235,36 @@ class HistoryManager: ObservableObject {
         currentHistoryId = nil
         saveHistoryItemsToUserDefaults()
         print("🗑️ Cleared all history items and associated files.")
+    }
+    
+    // 孤立した音声ファイルをクリーンアップ
+    private func cleanupOrphanedAudioFiles() {
+        do {
+            let allFiles = try FileManager.default.contentsOfDirectory(at: audioStorageDirectory, includingPropertiesForKeys: nil)
+            var validFileNames = Set<String>()
+            
+            // 履歴に含まれるファイル名を収集
+            for item in historyItems {
+                if let fullAudio = item.fullAudioFileName {
+                    validFileNames.insert(fullAudio)
+                }
+                for line in item.transcriptLines {
+                    if let segmentFile = line.audioSegmentFileName {
+                        validFileNames.insert(segmentFile)
+                    }
+                }
+            }
+            
+            // 履歴に含まれないファイルを削除
+            for fileURL in allFiles {
+                let fileName = fileURL.lastPathComponent
+                if !validFileNames.contains(fileName) {
+                    try FileManager.default.removeItem(at: fileURL)
+                    print("🗑️ Cleaned up orphaned file: \(fileName)")
+                }
+            }
+        } catch {
+            print("⚠️ Error cleaning up orphaned files: \(error)")
+        }
     }
 }

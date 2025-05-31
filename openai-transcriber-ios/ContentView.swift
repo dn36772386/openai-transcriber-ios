@@ -793,9 +793,9 @@ struct ContentView: View {
         currentSummary = historyItem.summary
         currentSubtitle = historyItem.subtitle
         
-        self.transcriptLines = historyItem.getTranscriptLines(documentsDirectory: historyManager.documentsDirectory)
+        self.transcriptLines = historyItem.getTranscriptLines(audioStorageDirectory: historyManager.audioStorageDirectory)
 
-        if let fullAudio = historyItem.getFullAudioURL(documentsDirectory: historyManager.documentsDirectory) {
+        if let fullAudio = historyItem.getFullAudioURL(audioStorageDirectory: historyManager.audioStorageDirectory) {
             self.currentPlayingURL = fullAudio
         } else if let firstSegment = self.transcriptLines.first?.audioURL {
             self.currentPlayingURL = firstSegment
@@ -932,7 +932,7 @@ struct SidebarView: View {
                             )
                             .onLongPressGesture {
                                 longPressedItem = item
-                                if let audioURL = item.getFullAudioURL(documentsDirectory: historyManager.documentsDirectory) {
+                                if let audioURL = item.getFullAudioURL(audioStorageDirectory: historyManager.audioStorageDirectory) {
                                     shareAudioFile(audioURL)
                                 }
                             }
