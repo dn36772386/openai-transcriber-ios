@@ -227,32 +227,22 @@ struct SummaryView: View {
         // Gemini 2.5の思考トークンを考慮（3倍）
         let totalTokens = outputTokens * 3
         
-        // 文字数に応じた動的な最小トークン数
-        let dynamicMinTokens: Int
-        if charCount <= 1000 {
-            // 1000文字以下：最小3000トークン（思考トークン対策）
-            dynamicMinTokens = 3000
-        } else if charCount <= 5000 {
-            // 5000文字以下：最小5000トークン
-            dynamicMinTokens = 5000
-        } else {
-            // それ以上：設定値を使用
-            dynamicMinTokens = UserDefaults.standard.integer(forKey: "minTokenLimit") > 0
-                ? UserDefaults.standard.integer(forKey: "minTokenLimit")
-                : 6000
-        }
+        // 最小6000トークンを保証（思考トークン対策）
+        let minTokens = UserDefaults.standard.integer(forKey: "minTokenLimit") > 0
+            ? UserDefaults.standard.integer(forKey: "minTokenLimit")
+            : 6000
         
         let maxTokens = UserDefaults.standard.integer(forKey: "maxTokenLimit") > 0
             ? UserDefaults.standard.integer(forKey: "maxTokenLimit")
             : 30000
         
-        let finalTokens = min(maxTokens, max(dynamicMinTokens, totalTokens))
+        let finalTokens = min(maxTokens, max(minTokens, totalTokens))
         
         print("📊 Token calculation:")
         print("  - Original: \(charCount)文字")
         print("  - Compressed (\(Int(compressionRatio * 100))%): \(compressedCharCount)文字")
         print("  - Output tokens: \(outputTokens)")
-        print("  - Dynamic min tokens: \(dynamicMinTokens)")
+        print("  - Min tokens: \(minTokens)")
         print("  - Total allocated: \(finalTokens)")
         
         return finalTokens
