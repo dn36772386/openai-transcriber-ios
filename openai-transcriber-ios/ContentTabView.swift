@@ -7,48 +7,45 @@ struct ContentTabView: View {
         HStack(spacing: 0) {
             TabButton(
                 title: "文字起こし",
-                icon: "mic.fill",
                 isSelected: selectedTab == .transcription,
                 action: { selectedTab = .transcription }
             )
             
             TabButton(
                 title: "要約",
-                icon: "doc.text.fill",
                 isSelected: selectedTab == .summary,
                 action: { selectedTab = .summary }
             )
         }
-        .frame(height: 50)
+        .frame(height: 44)
         .background(Color.white)
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundColor(Color.border),
+            alignment: .top
+        )
     }
 }
 
 struct TabButton: View {
     let title: String
-    let icon: String
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
+            VStack(spacing: 0) {
                 Text(title)
-                    .font(.system(size: 12))
+                    .font(.system(size: 14, weight: isSelected ? .medium : .regular))
+                    .foregroundColor(isSelected ? Color.textPrimary : Color.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                
+                Rectangle()
+                    .frame(height: 2)
+                    .foregroundColor(isSelected ? Color.textPrimary : Color.clear)
             }
-            .foregroundColor(isSelected ? Color.accent : Color.gray)
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(
-                VStack {
-                    Spacer()
-                    Rectangle()
-                        .frame(height: 2)
-                        .foregroundColor(isSelected ? Color.accent : Color.clear)
-                }
-            )
         }
         .buttonStyle(PlainButtonStyle())
     }

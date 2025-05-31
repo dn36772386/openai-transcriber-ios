@@ -95,6 +95,8 @@ struct ContentView: View {
     @State private var editingSubtitleText = ""
     @State private var isGeneratingSummary = false
     
+    @State private var hasShownWelcomeGuide = UserDefaults.standard.bool(forKey: "hasShownWelcomeGuide")
+    
     // タイトルタップ用の状態
     @State private var showTitleMenu = false
     @State private var titleText = "Transcriber"
@@ -235,8 +237,8 @@ struct ContentView: View {
                             }
                             if !transcriptLines.isEmpty {
                                 showTitleMenu = true
-                                // 超軽い振動
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
+                                // より軽い振動に変更
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                                 impactFeedback.impactOccurred()
                             }
                         }) {
@@ -400,9 +402,9 @@ struct ContentView: View {
             updateTitleText()
         }
         .onChange(of: selectedTab) { _, _ in
-            // タブ切り替え時の振動
-            let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
-            impactFeedback.impactOccurred()
+            // タブ切り替え時の振動を削除（よりシックに）
+            // let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
+            // impactFeedback.impactOccurred()
         }
     }
 
@@ -1323,6 +1325,12 @@ struct MainContentView: View {
             )
                 .padding(.top, 10)
                 .padding(.horizontal, 10)
+            
+            // 初回利用ガイド
+            if transcriptLines.isEmpty && !UserDefaults.standard.bool(forKey: "hasShownWelcomeGuide") {
+                WelcomeGuideView()
+                    .transition(.opacity)
+            }
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
     }

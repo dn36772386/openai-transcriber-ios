@@ -68,19 +68,23 @@ struct SummaryView: View {
             // 要約生成ボタン
             if !transcriptLines.isEmpty {
                 Button(action: { showSummaryOptions = true }) {
-                    HStack {
-                        Image(systemName: "doc.text.magnifyingglass")
-                        Text(isLoading ? "要約生成中..." : "要約を生成")
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 14, weight: .regular))
+                        Text(isLoading ? "生成中..." : "要約を生成")
+                            .font(.system(size: 14, weight: .regular))
                     }
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color.accent)
-                    .cornerRadius(25)
+                    .foregroundColor(isLoading ? Color.textSecondary : Color.textPrimary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.border, lineWidth: 1)
+                    )
                 }
                 .disabled(isLoading)
-                .padding()
+                .padding(.horizontal)
+                .padding(.bottom, 16)
             }
         }
         .background(Color.appBackground)
