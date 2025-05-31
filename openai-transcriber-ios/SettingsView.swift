@@ -18,7 +18,7 @@ struct SettingsView: View {
     @State private var lightCompressionRatio: Int = UserDefaults.standard.integer(forKey: "lightCompressionRatio") == 0 ? 30 : UserDefaults.standard.integer(forKey: "lightCompressionRatio")
     
     // トークン制限
-    @State private var minTokenLimit: Int = UserDefaults.standard.integer(forKey: "minTokenLimit") == 0 ? 4000 : UserDefaults.standard.integer(forKey: "minTokenLimit")
+    @State private var minTokenLimit: Int = UserDefaults.standard.integer(forKey: "minTokenLimit") == 0 ? 6000 : UserDefaults.standard.integer(forKey: "minTokenLimit")
     @State private var maxTokenLimit: Int = UserDefaults.standard.integer(forKey: "maxTokenLimit") == 0 ? 30000 : UserDefaults.standard.integer(forKey: "maxTokenLimit")
 
     var body: some View {

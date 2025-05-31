@@ -1,56 +1,121 @@
 ✅ App: init() - App instance created!
 ✅ AppDelegate: init() - AppDelegate instance created!
-✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x30152c110>
+✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x302410150>
 ✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegateが初期化されました！
 ✅ BackgroundSessionManager initialized
-✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x30027c600>
+✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x303341fc0>
 ✅ Loaded 10 history items from UserDefaults.
-🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/Documents
+🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/Documents
 ✅ App: ContentView appeared
-✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x3019430f0>)
+✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x302847630>)
 
-➕ Started new history item: ID 6CECBE20-FA5B-4D79-A13B-CA1C50633C89
-🗑️ Deleting old history item (due to new session): F45F1C73-4089-4E17-9E2F-50EA1DB22362
+<0x11c195540> Gesture: System gesture gate timed out.
+➕ Started new history item: ID 700BEF6A-645C-4BDA-914A-028BB56F9B2C
+🗑️ Deleting old history item (due to new session): 1DA3DE96-9ACD-4F01-AD53-D7942CA13685
 ✅ Saved 10 history items to UserDefaults.
 Starting recorder
-
 🎙️ Recording started in auto mode
-🎙️ Input format: <AVAudioFormat 0x30344c550:  1 ch,  48000 Hz, Float32>
-🎙️ Output format: Optional(<AVAudioFormat 0x303415900:  1 ch,  16000 Hz, Int16>)
-📝 Debug log file will be written to: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/debug_log.txt
-🛠 🎛️ Audio Settings - Threshold: 0.010000001, Window: 0.5s, MinDuration: 0.5s
-📝 Created new audio file: A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
-📝 Format: <AVAudioFormat 0x303415900:  1 ch,  16000 Hz, Int16>
+🎙️ Input format: <AVAudioFormat 0x300572440:  1 ch,  48000 Hz, Float32>
+🎙️ Output format: Optional(<AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>)
+📝 Debug log file will be written to: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/debug_log.txt
+🛠 🎛️ Audio Settings - Threshold: 0.01, Window: 0.5s, MinDuration: 0.5s
+
+📝 Created new audio file: 109AD082-08BF-4C38-8C86-BA6A20A8C071.wav
+📝 Format: <AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>
+
+📊 Segment finalized: 109AD082-08BF-4C38-8C86-BA6A20A8C071.wav, size: 884096 bytes, duration: 30.52s
+✅ Audio file valid: duration=27.5s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/109AD082-08BF-4C38-8C86-BA6A20A8C071.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 109AD082-08BF-4C38-8C86-BA6A20A8C071.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_23A5C231-80F2-4996-8B2C-CC90D28F2A9F.formdata
+🔵 [1] Registering task metadata.
+🛠 🔵 [1] Starting background upload task for 109AD082-08BF-4C38-8C86-BA6A20A8C071.wav
+📝 Created new audio file: DD2BB12E-B5A8-47D3-B46A-7EEEF05FFD31.wav
+📝 Format: <AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>
+
+🔵 [1] Received data chunk: 92 bytes
+🔵 [1] Task Completed.
+✅ [1] Success: 動画の内容が良ければいいねとチャンネル登録お願いします
+🗑️ [1] Deleting temp file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_23A5C231-80F2-4996-8B2C-CC90D28F2A9F.formdata
+
+📊 Segment finalized: DD2BB12E-B5A8-47D3-B46A-7EEEF05FFD31.wav, size: 2295296 bytes, duration: 73.29s
+✅ Audio file valid: duration=71.6s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/DD2BB12E-B5A8-47D3-B46A-7EEEF05FFD31.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: DD2BB12E-B5A8-47D3-B46A-7EEEF05FFD31.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_9D9A0765-9901-4EC0-A743-675480514A36.formdata
+🔵 [2] Registering task metadata.
+🛠 🔵 [2] Starting background upload task for DD2BB12E-B5A8-47D3-B46A-7EEEF05FFD31.wav
+📝 Created new audio file: 6994B63B-98FC-46FF-8E64-ADA2F8B5118E.wav
+📝 Format: <AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>
+
+🔵 [2] Received data chunk: 1534 bytes
+🔵 [2] Task Completed.
+✅ [2] Success: 5月末にやりますね! 店員さん:「5月末にやりますね!」 店長:「それは1人種だ!」 店長:「それは何人も一人やってるんですよ!」 店長:「あ、ほんとですか!?」 店長:「5月29日から31日、1日間4公演の大塚初リクイストというとこで、」 店長:「あれはずっと確認できて、確認日告が終わった人の答えを皆様で見に来て下さーい!」 店員さん:「ガッツリ…wガッツリ宣伝が…w」 店長:「wwwww」 店長:「どうぞーっす!よろしくお願いしまーす!」 店長:「どうぞーっす!よろしくお願いしまーす!」 店長:「はぁっ!」 店長:「うわっ、楽になった…!」 店長:「うわっ…うん…!」 店長:「これはだいぶ耐えられるの…!」 店長:「あと多分ね、あと6分くらいだけど…!」 店長:「もうじゃあ、あげますか!?」 店員さん:「あげましょうあげましょう!」 店長:「ちょっと待ってください、5分前…!」 店長:「どうも、みなさんチームワークに…」 店長:「利用いただいて、ちょっと落ち着いてやりたいと思います…!」 店長:「あっ、上に上がった方がいいね!」 店長:「オッケーオッケー!」 店員さん:「じゃあ、あげましょう!」 店長:「あげた方がいいって…!」 店長:「西村さん、よろしくお願いします!」 店員さん:「よろしくお願いします!」 店長:「はいっ!」
+🗑️ [2] Deleting temp file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_9D9A0765-9901-4EC0-A743-675480514A36.formdata
+
+📊 Segment finalized: 6994B63B-98FC-46FF-8E64-ADA2F8B5118E.wav, size: 698496 bytes, duration: 22.60s
+✅ Audio file valid: duration=21.7s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/6994B63B-98FC-46FF-8E64-ADA2F8B5118E.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 6994B63B-98FC-46FF-8E64-ADA2F8B5118E.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_0EE57F58-B808-4114-A7F0-055423C9090B.formdata
+🔵 [3] Registering task metadata.
+🛠 🔵 [3] Starting background upload task for 6994B63B-98FC-46FF-8E64-ADA2F8B5118E.wav
+
+📝 Created new audio file: 5F9A638D-D8EE-49CF-8296-B164ADAA3F40.wav
+📝 Format: <AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>
+
+🔵 [3] Received data chunk: 14 bytes
+🔵 [3] Task Completed.
+✅ [3] Success: BGM
+🗑️ [3] Deleting temp file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_0EE57F58-B808-4114-A7F0-055423C9090B.formdata
+
+📊 Segment finalized: 5F9A638D-D8EE-49CF-8296-B164ADAA3F40.wav, size: 375296 bytes, duration: 12.50s
+✅ Audio file valid: duration=11.6s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/5F9A638D-D8EE-49CF-8296-B164ADAA3F40.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 5F9A638D-D8EE-49CF-8296-B164ADAA3F40.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_D1065163-D7F9-429E-88BA-6A3B94063C2B.formdata
+🔵 [4] Registering task metadata.
+🛠 🔵 [4] Starting background upload task for 5F9A638D-D8EE-49CF-8296-B164ADAA3F40.wav
+📝 Created new audio file: 8B0B74DB-459A-4DE0-AEC0-B6E2713B7FCD.wav
+📝 Format: <AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: 8B0B74DB-459A-4DE0-AEC0-B6E2713B7FCD.wav, size: 7296 bytes, duration: 0.60s
+🗑️ Segment too small/short, deleted: 8B0B74DB-459A-4DE0-AEC0-B6E2713B7FCD.wav
+📝 Created new audio file: C039E609-3CFF-4A0D-8981-5C9075284066.wav
+📝 Format: <AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>
+🔵 [4] Received data chunk: 129 bytes
+🔵 [4] Task Completed.
+✅ [4] Success: もう上がってきますよ 最初の感じですかね 最初ですよ 本当に最初だよね お願いします
+🗑️ [4] Deleting temp file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_D1065163-D7F9-429E-88BA-6A3B94063C2B.formdata
+📊 Segment finalized: C039E609-3CFF-4A0D-8981-5C9075284066.wav, size: 7296 bytes, duration: 0.59s
+🗑️ Segment too small/short, deleted: C039E609-3CFF-4A0D-8981-5C9075284066.wav
+📝 Created new audio file: 35B98BF2-B8B0-4857-9050-A6F79164A817.wav
+📝 Format: <AVAudioFormat 0x300524410:  1 ch,  16000 Hz, Int16>
 
 🛠 ✅ finish tapped
-📊 Segment finalized: A0F080B6-E3FA-4C20-B907-4C234854B95C.wav, size: 519296 bytes, duration: 16.46s
-✅ Audio file valid: duration=16.1s
-⚠️ Update skipped: No data to save for ID 6CECBE20-FA5B-4D79-A13B-CA1C50633C89
-🎧 Segment file path: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
-🛠 WhisperQueue ▶︎ Enqueuing background task for: A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
-🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/upload_9718E201-1C40-43C5-B0CE-0B402DD7AE62.formdata
-🔵 [1] Registering task metadata.
-🛠 🔵 [1] Starting background upload task for A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
-
-🔵 [1] Received data chunk: 194 bytes
-🔵 [1] Task Completed.
-✅ [1] Success: このままの状態で、コメントが大荒れしたこともある えー! ほんとに、500人くらいの人がずーっと言い合いをする えー! こともあるほど
-🗑️ [1] Deleting temp file: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/upload_9718E201-1C40-43C5-B0CE-0B402DD7AE62.formdata
-
+📊 Segment finalized: 35B98BF2-B8B0-4857-9050-A6F79164A817.wav, size: 125696 bytes, duration: 4.80s
+✅ Audio file valid: duration=3.8s
 ✅ Saved full audio to: \(destinationFullAudioURL.path)
 ✅ Saved 10 history items to UserDefaults.
-📝 Updated history item: ID 6CECBE20-FA5B-4D79-A13B-CA1C50633C89
-⚠️ Segment file not found in Documents: segment_D06ED6FF-AA9A-4C95-9C67-C95764986C46_630974A3-276E-4E22-A9CA-76DBA43881F5.wav
-🛠 🔄 resetPlayer called with URL: nil
-🛠 🗑️ No URL provided, clearing player
+📝 Updated history item: ID 700BEF6A-645C-4BDA-914A-028BB56F9B2C
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/35B98BF2-B8B0-4857-9050-A6F79164A817.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 35B98BF2-B8B0-4857-9050-A6F79164A817.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_0E6B0BD2-7BE6-45EB-895C-7F8C0408118A.formdata
+🔵 [5] Registering task metadata.
+🛠 🔵 [5] Starting background upload task for 35B98BF2-B8B0-4857-9050-A6F79164A817.wav
+
+🔵 [5] Received data chunk: 26 bytes
+🔵 [5] Task Completed.
+✅ [5] Success: さようなら
+🗑️ [5] Deleting temp file: /private/var/mobile/Containers/Data/Application/E4C2E71B-2AB4-45AA-9AB3-F7F4383E1194/tmp/upload_0E6B0BD2-7BE6-45EB-895C-7F8C0408118A.formdata
 
 📊 Token calculation:
-  - Original: 204文字
-  - Compressed (70%): 142文字
-  - Output tokens: 71
-  - Total allocated: 4000
+  - Original: 706文字
+  - Compressed (40%): 282文字
+  - Output tokens: 141
+  - Dynamic min tokens: 1500
+  - Total allocated: 1500
 
-📝 Gemini API Request - Max Output Tokens: 4000
+📝 Gemini API Request - Max Output Tokens: 1500
 
 📝 Gemini API Response: {
   "candidates": [
@@ -63,31 +128,32 @@ Starting recorder
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 641,
-    "totalTokenCount": 4640,
+    "promptTokenCount": 991,
+    "totalTokenCount": 2490,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 641
+        "tokenCount": 991
       }
     ],
-    "thoughtsTokenCount": 3999
+    "thoughtsTokenCount": 1499
   },
   "modelVersion": "models/gemini-2.5-pro-preview-05-06",
-  "responseId": "D_46aLD5Kvutz7IP-4-MEQ"
+  "responseId": "yBI7aMDWKd_lqtsP9IzysA0"
 }
 ...
-📊 Token Usage - Prompt: 641, Total: 4640, Thoughts: 3999
+📊 Token Usage - Prompt: 991, Total: 2490, Thoughts: 1499
 ❌ Decoding error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
 ❌ Summary generation error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
 
 📊 Token calculation:
-  - Original: 204文字
-  - Compressed (30%): 61文字
-  - Output tokens: 30
-  - Total allocated: 6000
+  - Original: 706文字
+  - Compressed (80%): 564文字
+  - Output tokens: 282
+  - Dynamic min tokens: 1500
+  - Total allocated: 1500
 
-📝 Gemini API Request - Max Output Tokens: 6000
+📝 Gemini API Request - Max Output Tokens: 1500
 
 📝 Gemini API Response: {
   "candidates": [
@@ -100,59 +166,26 @@ Starting recorder
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 641,
-    "totalTokenCount": 6640,
+    "promptTokenCount": 991,
+    "totalTokenCount": 2490,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 641
+        "tokenCount": 991
       }
     ],
-    "thoughtsTokenCount": 5999
+    "thoughtsTokenCount": 1499
   },
   "modelVersion": "models/gemini-2.5-pro-preview-05-06",
-  "responseId": "hv46aI_dJMGez7IP_ua62AI"
+  "responseId": "5hI7aLODOLeVmtkPuNm00A0"
 }
 ...
-📊 Token Usage - Prompt: 641, Total: 6640, Thoughts: 5999
+📊 Token Usage - Prompt: 991, Total: 2490, Thoughts: 1499
 ❌ Decoding error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
 ❌ Summary generation error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
 
-📊 Token calculation:
-  - Original: 204文字
-  - Compressed (20%): 40文字
-  - Output tokens: 20
-  - Total allocated: 6000
-
-📝 Gemini API Request - Max Output Tokens: 6000
-
-📝 Gemini API Response: {
-  "candidates": [
-    {
-      "content": {
-        "role": "model"
-      },
-      "finishReason": "MAX_TOKENS",
-      "index": 0
-    }
-  ],
-  "usageMetadata": {
-    "promptTokenCount": 641,
-    "totalTokenCount": 6640,
-    "promptTokensDetails": [
-      {
-        "modality": "TEXT",
-        "tokenCount": 641
-      }
-    ],
-    "thoughtsTokenCount": 5999
-  },
-  "modelVersion": "models/gemini-2.5-pro-preview-05-06",
-  "responseId": "C_86aMCuH-XzqtsP-Yns6AQ"
-}
-...
-📊 Token Usage - Prompt: 641, Total: 6640, Thoughts: 5999
-❌ Decoding error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
-❌ Summary generation error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
-
-#FactoryInstall Unable to query results, error: 5
+🗑️ Deleted full audio file from Documents: full_session_700BEF6A-645C-4BDA-914A-028BB56F9B2C.wav
+✅ Saved full audio to: \(destinationFullAudioURL.path)
+✅ Saved 10 history items to UserDefaults.
+📝 Updated history item: ID 700BEF6A-645C-4BDA-914A-028BB56F9B2C
+Message from debugger: Terminated due to signal 9

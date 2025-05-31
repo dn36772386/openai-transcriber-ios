@@ -193,6 +193,7 @@ struct ContentView: View {
                                 onPlaybackFinished: self.playNextSegment,
                                 playerDelegate: audioPlayerDelegate
                             )
+                            .padding(.horizontal, 16)
                             .padding(.bottom, 16)
                         } else {
                             // 要約タブ：要約生成ボタン
@@ -614,6 +615,9 @@ struct ContentView: View {
             
             Debug.log("✅ Processing completed: \(result.segments.count) segments found")
             
+            let batchSize = 5  // 5セグメントずつ処理
+            var processedCount = 0
+
             for (index, segment) in result.segments.enumerated() {
                 let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
                 
@@ -635,6 +639,13 @@ struct ContentView: View {
                     url: segment.url,
                     started: startDate
                 )
+                
+                processedCount += 1
+                // バッチごとに長めの遅延
+                if processedCount % batchSize == 0 {
+                    print("⏸ Pausing after batch of \(batchSize) segments...")
+                    try await Task.sleep(nanoseconds: 2_000_000_000) // 2秒の遅延
+                }
             }
             
             showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除
@@ -1198,13 +1209,16 @@ struct CompactAudioPlayerView: View {
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        HStack(spacing: 15) {
+        HStack(spacing: 12) {
             Button { togglePlayPause() } label: {
                 Image(systemName: isPlaying ? "pause.circle" : "play.circle")
-                    .font(.system(size: 24, weight: .light))
-                    .foregroundColor(Color.accent)
-                    .frame(width: 44, height: 44)
+                    .font(.system(size: 14, weight: .regular))
             }
+            
+            Text(formatTime(currentTime))
+                .font(.system(size: 14))
+                .foregroundColor(.textSecondary)
+                .frame(width: 45, alignment: .trailing)
             
             Slider(value: $progress, in: 0...1) { editing in
                 isEditingSlider = editing
@@ -1217,15 +1231,22 @@ struct CompactAudioPlayerView: View {
                     player?.pause()
                 }
             }
-            .tint(Color.accent)
+            .tint(Color.textPrimary)
+            .frame(height: 20)
 
-            Text(formatTime(currentTime))
-                .font(.caption)
+            Text(formatTime(duration))
+                .font(.system(size: 14))
                 .foregroundColor(.textSecondary)
+                .frame(width: 45, alignment: .leading)
         }
+        .foregroundColor(Color.textPrimary)
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.appBackground)
+        .padding(.vertical, 8)
+        //.overlay(
+        //    RoundedRectangle(cornerRadius: 4)
+        //        .stroke(Color.border, lineWidth: 1)
+        //)
+        //.background(Color.white)
         .onReceive(timer) { _ in updateProgress() }
         .onChange(of: url) { _, newURL in
             resetPlayer(url: newURL) 
