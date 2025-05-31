@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import UserNotifications
 
 // バックグラウンドアップロードを管理するシングルトンクラス
 class BackgroundSessionManager: NSObject {
@@ -130,6 +131,11 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
             ]
         )
         
+        // Send background notification if needed
+        if UIApplication.shared.applicationState != .active {
+            sendBackgroundNotification(success: taskError == nil, taskId: taskId)
+        }
+        
         // 完了したタスクのデータをクリーンアップ
         self.cleanupTask(taskId)
         self.retryCountStore.removeValue(forKey: taskId)
@@ -148,4 +154,28 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
 // WhisperResponse構造体
 struct WhisperResp: Decodable {
     let text: String
+}
+
+// MARK: - Notification Methods
+
+extension BackgroundSessionManager {
+    
+    private func sendBackgroundNotification(success: Bool, taskId: Int) {
+        let content = UNMutableNotificationContent()
+        content.title = success ? "文字起こし成功" : "文字起こしエラー"
+        content.body = success ? "音声セグメントの文字起こしが完了しました" : "音声セグメントの文字起こしに失敗しました"
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: "transcription-\(taskId)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("⚠️ Failed to send background notification: \(error)")
+            }
+        }
+    }
 }

@@ -8,10 +8,12 @@ import UIKit
 /// * 1 クラス = 1 エンドポイントのシンプル実装
 final class OpenAIClient {
 
-    // レート制限管理（シンプルなアプローチ）
+    // レート制限管理（指数バックオフ対応）
     private static var lastRequestTime: Date = Date.distantPast
     private static let minRequestInterval: TimeInterval = 0.12 // 120ms = 8.3 req/s
     private static let requestLock = NSLock()
+    private static var retryAttempts: [String: Int] = [:]
+    private static let maxRetryAttempts = 5
     
     // MARK: - Public API
     /// バックグラウンドセッションを使ってアップロードを開始 (戻り値なし)
@@ -30,11 +32,26 @@ final class OpenAIClient {
         
         if timeSinceLastRequest < Self.minRequestInterval {
             let waitTime = Self.minRequestInterval - timeSinceLastRequest
-            throw NSError(
-                domain: "OpenAIClient",
-                code: 429,
-                userInfo: [NSLocalizedDescriptionKey: "レート制限: \(Int(waitTime * 1000))ms後に再試行してください"]
-            )
+            
+            // Check if we should apply exponential backoff
+            let (shouldRetry, backoffDelay) = Self.shouldRetryWithBackoff(url: url)
+            if shouldRetry {
+                let totalDelay = max(waitTime, backoffDelay)
+                throw NSError(
+                    domain: "OpenAIClient",
+                    code: 429,
+                    userInfo: [NSLocalizedDescriptionKey: "レート制限: \(Int(totalDelay * 1000))ms後に再試行してください（指数バックオフ適用）"]
+                )
+            } else {
+                throw NSError(
+                    domain: "OpenAIClient",
+                    code: 429,
+                    userInfo: [NSLocalizedDescriptionKey: "最大リトライ回数に達しました"]
+                )
+            }
+        } else {
+            // Reset retry count on successful timing
+            Self.resetRetryCount(for: url)
         }
         
         Self.lastRequestTime = now
@@ -148,5 +165,35 @@ private struct MultipartFormData {
 
     var contentTypeHeader: String {
         "multipart/form-data; boundary=\(boundary)"
+    }
+}
+
+// MARK: - Rate Limiting with Exponential Backoff
+    
+private extension OpenAIClient {
+    static func calculateBackoffDelay(attempt: Int) -> TimeInterval {
+        let baseDelay: TimeInterval = 1.0
+        let maxDelay: TimeInterval = 60.0
+        let delay = baseDelay * pow(2.0, Double(attempt))
+        return min(delay, maxDelay)
+    }
+    
+    static func shouldRetryWithBackoff(url: URL) -> (shouldRetry: Bool, delay: TimeInterval) {
+        let urlKey = url.lastPathComponent
+        let attempts = retryAttempts[urlKey, default: 0]
+        
+        guard attempts < maxRetryAttempts else {
+            retryAttempts.removeValue(forKey: urlKey)
+            return (false, 0)
+        }
+        
+        retryAttempts[urlKey] = attempts + 1
+        let delay = calculateBackoffDelay(attempt: attempts)
+        return (true, delay)
+    }
+    
+    static func resetRetryCount(for url: URL) {
+        let urlKey = url.lastPathComponent
+        retryAttempts.removeValue(forKey: urlKey)
     }
 }

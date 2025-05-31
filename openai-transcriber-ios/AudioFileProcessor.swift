@@ -8,6 +8,9 @@
 import Foundation
 import AVFoundation
 import Accelerate
+import UIKit
+import UserNotifications
+import UserNotifications
 
 /// 音声ファイルを読み込んで無音で分割するプロセッサ
 @available(iOS 16.0, *)
@@ -29,6 +32,10 @@ final class AudioFileProcessor: ObservableObject {
     // MARK: - Properties
     @Published var isProcessing = false
     @Published var progress: Double = 0.0
+    
+    // Rate limiting properties
+    private var lastRequestTime: Date = Date(timeIntervalSince1970: 0)
+    private let rateLimitDelay: TimeInterval = 0.15  // 150ms between requests
     
     // UserDefaultsから設定を読み込むように変更
     private var silenceThreshold: Float {
@@ -370,5 +377,40 @@ final class AudioFileProcessor: ObservableObject {
         for url in urls {
             try? FileManager.default.removeItem(at: url)
         }
+    }
+    
+    // MARK: - Notification Methods
+    
+    private func sendProcessingNotification(_ title: String, _ body: String) {
+        guard UIApplication.shared.applicationState != .active else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("⚠️ Failed to send notification: \(error)")
+            }
+        }
+    }
+    
+    private func applyRateLimit() async {
+        let now = Date()
+        let timeSinceLastRequest = now.timeIntervalSince(lastRequestTime)
+        
+        if timeSinceLastRequest < rateLimitDelay {
+            let waitTime = rateLimitDelay - timeSinceLastRequest
+            try? await Task.sleep(nanoseconds: UInt64(waitTime * 1_000_000_000))
+        }
+        
+        lastRequestTime = Date()
     }
 }

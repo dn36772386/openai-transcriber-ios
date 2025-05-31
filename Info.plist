@@ -30,5 +30,7 @@
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>文字起こしや要約の完了時に通知を送信します</string>
 </dict>
 </plist>
