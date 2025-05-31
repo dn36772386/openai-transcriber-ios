@@ -11,7 +11,7 @@ struct SettingsView: View {
     @State private var silenceThreshold: Float = UserDefaults.standard.float(forKey: "silenceThreshold") == 0 ? 0.01 : UserDefaults.standard.float(forKey: "silenceThreshold")
     @State private var silenceWindow: Double = UserDefaults.standard.double(forKey: "silenceWindow") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "silenceWindow")
     @State private var minSegmentDuration: Double = UserDefaults.standard.double(forKey: "minSegmentDuration") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "minSegmentDuration")
-    @State private var geminiMaxTokens: Int = UserDefaults.standard.integer(forKey: "geminiMaxTokens") == 0 ? 8192 : UserDefaults.standard.integer(forKey: "geminiMaxTokens")
+    @State private var geminiMaxTokens: Int = UserDefaults.standard.integer(forKey: "geminiMaxTokens") == 0 ? 10000 : UserDefaults.standard.integer(forKey: "geminiMaxTokens")
     
     // 要約レベルの圧縮率設定
     @State private var heavySummaryRatio: Int = UserDefaults.standard.integer(forKey: "heavySummaryRatio") == 0 ? 30 : UserDefaults.standard.integer(forKey: "heavySummaryRatio")
@@ -100,7 +100,7 @@ struct SettingsView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Text("最大トークン数")
+                            Text("最大トークン数（軽い要約時）")
                             Spacer()
                             Text("\(geminiMaxTokens)")
                                 .foregroundColor(.secondary)
@@ -108,12 +108,45 @@ struct SettingsView: View {
                         Slider(value: Binding(
                             get: { Double(geminiMaxTokens) },
                             set: { geminiMaxTokens = Int($0) }
-                        ), in: 1024...65535, step: 1024)
+                        ), in: 5000...20000, step: 1000)
+                        
+                        HStack {
+                            Text("推奨設定:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Button("8000") {
+                                geminiMaxTokens = 8000
+                            }
+                            Button("10000") {
+                                geminiMaxTokens = 10000
+                            }
+                            Button("12000") {
+                                geminiMaxTokens = 12000
+                            }
+                        }
+                        .font(.caption)
+                        
+                        // 実際に使用されるトークン数の表示
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("実際の使用トークン数:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("• しっかり要約: 約\(Int(Double(geminiMaxTokens) * Double(heavySummaryRatio) / 100.0))トークン")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            Text("• 標準的な要約: 約\(Int(Double(geminiMaxTokens) * Double(standardSummaryRatio) / 100.0))トークン")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            Text("• 軽い要約: 約\(geminiMaxTokens)トークン")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.top, 8)
                     }
                 } header: {
                     Text("Gemini設定")
                 } footer: {
-                    Text("要約生成時の最大出力トークン数を設定します（1024〜65535）")
+                    Text("軽い要約時の最大トークン数を設定します。他の要約レベルではこの値に各レベルの割合を掛けた値が使用されます。")
                 }
                 
                 // 要約設定を最下部に移動

@@ -161,6 +161,23 @@ struct SummaryView: View {
         return basePrompt + ratioInstruction
     }
     
+    private func getMaxTokensForLevel(_ level: SummaryLevel) -> Int {
+        // 設定から最大トークン数を取得（デフォルト: 10000）
+        let baseMaxTokens = UserDefaults.standard.integer(forKey: "geminiMaxTokens") > 0 
+            ? UserDefaults.standard.integer(forKey: "geminiMaxTokens")
+            : 10000
+        
+        // 要約レベルの割合を取得して計算
+        let ratio = getSummaryRatio(for: level)
+        let calculatedTokens = Int(Double(baseMaxTokens) * Double(ratio) / 100.0)
+        
+        // 最低2000トークンを確保（思考トークン分を考慮）
+        let finalTokens = max(2000, calculatedTokens)
+        
+        print("📊 Summary tokens calculation - Base: \(baseMaxTokens), Ratio: \(ratio)%, Result: \(finalTokens)")
+        return finalTokens
+    }
+    
     private func generateSummary() {
         isCancelled = false
         summaryProgress = 0.0
@@ -200,6 +217,9 @@ struct SummaryView: View {
         // サブタイトル用のプロンプト
         let subtitlePrompt = "\n\nまた、この内容を表す20文字以内の短いサブタイトルも生成してください。サブタイトルは「サブタイトル：」で始めてください。"
         
+        // 要約レベルに応じたトークン数を取得
+        let maxTokens = getMaxTokensForLevel(selectedSummaryLevel)
+        
         do {
             // プログレス更新（擬似的）
             for i in 1...9 {
@@ -208,7 +228,7 @@ struct SummaryView: View {
                 try await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
             }
             
-            let result = try await GeminiClient.shared.summarize(text: fullText, prompt: prompt + subtitlePrompt)
+            let result = try await GeminiClient.shared.summarize(text: fullText, prompt: prompt + subtitlePrompt, maxTokens: maxTokens)
             
             if isCancelled { throw CancellationError() }
             summaryProgress = 1.0
@@ -248,6 +268,10 @@ struct SummaryView: View {
                         errorMessage = nsError.localizedDescription
                     } else if error.localizedDescription.contains("keyNotFound") {
                         errorMessage = "APIレスポンスの形式が変更されました。アプリの更新が必要です。"
+                    } else if error.localizedDescription.contains("MAX_TOKENS") {
+                        errorMessage = nsError.localizedDescription
+                    } else if error.localizedDescription.contains("timeout") {
+                        errorMessage = "タイムアウトしました。ネットワーク接続を確認してください。"
                     } else {
                         errorMessage = "要約生成エラー: \(error.localizedDescription)"
                     }

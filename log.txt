@@ -1,86 +1,88 @@
 ✅ App: init() - App instance created!
 ✅ AppDelegate: init() - AppDelegate instance created!
-✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x300d300e0>
+✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x301048140>
 ✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegateが初期化されました！
 ✅ BackgroundSessionManager initialized
-✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x301a77c80>
+✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x30071d4c0>
 ✅ Loaded 6 history items from UserDefaults.
-🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/1791C441-70DB-4093-82D0-DAFFF33A383B/Documents
+🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/73656B9D-3D9A-46C6-8C1B-99B98E571C26/Documents
 ✅ App: ContentView appeared
-✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x3001583c0>)
+✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x301c1a490>)
 
+<0x15818d040> Gesture: System gesture gate timed out.
+NSBundle file:///System/Library/PrivateFrameworks/MetalTools.framework/ principal class is nil because all fallbacks have failed
+Unable to open mach-O at path: /Library/Caches/com.apple.xbs/Binaries/RenderBox/install/Root/System/Library/PrivateFrameworks/RenderBox.framework/default.metallib  Error:2
+59638328 Plugin query method called
+Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
+elapsedCPUTimeForFrontBoard couldn't generate a task port
+Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
+elapsedCPUTimeForFrontBoard couldn't generate a task port
+Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
+elapsedCPUTimeForFrontBoard couldn't generate a task port
+Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
+elapsedCPUTimeForFrontBoard couldn't generate a task port
+connection invalidated
 ✅ Saved 6 history items to UserDefaults.
 📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3
 
+📝 Gemini API Response: {
+  "candidates": [
+    {
+      "content": {
+        "role": "model"
+      },
+      "finishReason": "MAX_TOKENS",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 570,
+    "totalTokenCount": 1593,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 570
+      }
+    ],
+    "thoughtsTokenCount": 1023
+  },
+  "modelVersion": "models/gemini-2.5-pro-preview-05-06",
+  "responseId": "l-U6aPmqDqSImtkP4fqnwQk"
+}
+...
+✅ Saved 6 history items to UserDefaults.
+📝 Updated history item: ID F45F1C73-4089-4E17-9E2F-50EA1DB22362
+
+✅ Saved 6 history items to UserDefaults.
+📝 Updated history item: ID F45F1C73-4089-4E17-9E2F-50EA1DB22362
+
+📝 Gemini API Response: {
+  "candidates": [
+    {
+      "content": {
+        "role": "model"
+      },
+      "finishReason": "MAX_TOKENS",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 1164,
+    "totalTokenCount": 2187,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 1164
+      }
+    ],
+    "thoughtsTokenCount": 1023
+  },
+  "modelVersion": "models/gemini-2.5-pro-preview-05-06",
+  "responseId": "s-U6aPDJJ-2VmtkPjaPSkAY"
+}
+...
 ✅ Saved 6 history items to UserDefaults.
 📝 Updated history item: ID 5532C454-B130-4441-A9F8-C71470E0589F
 
 ✅ Saved 6 history items to UserDefaults.
 📝 Updated history item: ID 5532C454-B130-4441-A9F8-C71470E0589F
-📝 Debug log file will be written to: /private/var/mobile/Containers/Data/Application/1791C441-70DB-4093-82D0-DAFFF33A383B/tmp/debug_log.txt
-🛠 📁 Loading history audio from: /var/mobile/Containers/Data/Application/1791C441-70DB-4093-82D0-DAFFF33A383B/Documents/AudioFiles/full_session_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16.wav
-🛠 ✅ History audio loaded successfully
-🛠 🔄 resetPlayer called with URL: full_session_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16.wav
-🛠 ✅ Same URL already loaded, skipping resetPlayer
-🛠 🎵 playFrom called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_E272B46E-66FE-41B4-BE49-83CFFC08F5D2.wav
-🛠 ✅ Audio session configured for playback
-🛠 ✅ Audio file validation successful - Duration: 1.70s
-🛠 ▶️ Playback started successfully for: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_E272B46E-66FE-41B4-BE49-83CFFC08F5D2.wav
-🛠 🔄 resetPlayer called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_E272B46E-66FE-41B4-BE49-83CFFC08F5D2.wav
-🛠 ✅ Same URL already loaded, skipping resetPlayer
-
-🛠 🏁 AVAudioPlayerDelegate: Playback finished (success: true)
-🛠 🎵 playNextSegment called
-🛠 ✅ Playing next segment: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_1D07F640-6C8A-4400-9EFB-0062077B7A15.wav
-🛠 🎵 playFrom called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_1D07F640-6C8A-4400-9EFB-0062077B7A15.wav
-🛠 ✅ Audio session configured for playback
-🛠 ✅ Audio file validation successful - Duration: 4.80s
-🛠 ▶️ Playback started successfully for: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_1D07F640-6C8A-4400-9EFB-0062077B7A15.wav
-🛠 🔄 resetPlayer called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_1D07F640-6C8A-4400-9EFB-0062077B7A15.wav
-🛠 ✅ Same URL already loaded, skipping resetPlayer
-
-🛠 🏁 AVAudioPlayerDelegate: Playback finished (success: true)
-🛠 🎵 playNextSegment called
-🛠 ✅ Playing next segment: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_469435B3-E2D6-4933-9778-2D4776BA33C7.wav
-🛠 🎵 playFrom called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_469435B3-E2D6-4933-9778-2D4776BA33C7.wav
-🛠 ✅ Audio session configured for playback
-🛠 ✅ Audio file validation successful - Duration: 2.30s
-🛠 ▶️ Playback started successfully for: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_469435B3-E2D6-4933-9778-2D4776BA33C7.wav
-
-🛠 🏁 AVAudioPlayerDelegate: Playback finished (success: true)
-🛠 🎵 playNextSegment called
-🛠 ✅ Playing next segment: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_61BAC58D-70BC-4BE2-9BCC-8DF1F8E56957.wav
-🛠 🎵 playFrom called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_61BAC58D-70BC-4BE2-9BCC-8DF1F8E56957.wav
-🛠 ✅ Audio session configured for playback
-🛠 ✅ Audio file validation successful - Duration: 5.70s
-🛠 ▶️ Playback started successfully for: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_61BAC58D-70BC-4BE2-9BCC-8DF1F8E56957.wav
-
-🛠 🏁 AVAudioPlayerDelegate: Playback finished (success: true)
-🛠 🎵 playNextSegment called
-🛠 ✅ Playing next segment: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_CB966706-9193-436E-97EA-A4DA32E8A17E.wav
-🛠 🎵 playFrom called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_CB966706-9193-436E-97EA-A4DA32E8A17E.wav
-🛠 ✅ Audio session configured for playback
-🛠 ✅ Audio file validation successful - Duration: 1.80s
-🛠 ▶️ Playback started successfully for: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_CB966706-9193-436E-97EA-A4DA32E8A17E.wav
-
-🛠 🏁 AVAudioPlayerDelegate: Playback finished (success: true)
-🛠 🎵 playNextSegment called
-🛠 ✅ Playing next segment: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_6004C975-6369-4BA2-B089-00FFB9B6BDD5.wav
-🛠 🎵 playFrom called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_6004C975-6369-4BA2-B089-00FFB9B6BDD5.wav
-🛠 ✅ Audio session configured for playback
-🛠 ✅ Audio file validation successful - Duration: 7.30s
-🛠 ▶️ Playback started successfully for: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_6004C975-6369-4BA2-B089-00FFB9B6BDD5.wav
-🛠 🔄 resetPlayer called with URL: segment_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16_6004C975-6369-4BA2-B089-00FFB9B6BDD5.wav
-🛠 ✅ Same URL already loaded, skipping resetPlayer
-NSBundle file:///System/Library/PrivateFrameworks/MetalTools.framework/ principal class is nil because all fallbacks have failed
-Unable to open mach-O at path: /Library/Caches/com.apple.xbs/Binaries/RenderBox/install/Root/System/Library/PrivateFrameworks/RenderBox.framework/default.metallib  Error:2
-❌ Summary generation error: keyNotFound(CodingKeys(stringValue: "parts", intValue: nil), Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: "candidates", intValue: nil), _CodingKey(stringValue: "Index 0", intValue: 0), CodingKeys(stringValue: "content", intValue: nil)], debugDescription: "No value associated with key CodingKeys(stringValue: \"parts\", intValue: nil) (\"parts\").", underlyingError: nil))
-
-nw_path_necp_check_for_updates Failed to copy updated result (22)
-❌ Summary generation error: keyNotFound(CodingKeys(stringValue: "parts", intValue: nil), Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: "candidates", intValue: nil), _CodingKey(stringValue: "Index 0", intValue: 0), CodingKeys(stringValue: "content", intValue: nil)], debugDescription: "No value associated with key CodingKeys(stringValue: \"parts\", intValue: nil) (\"parts\").", underlyingError: nil))
-
-🗑️ Deleted full audio file from Documents: full_session_0E04ABB7-69EC-435F-AC5C-BF2945FA0A16.wav
-✅ Saved 6 history items to UserDefaults.
-📝 Updated history item: ID 0E04ABB7-69EC-435F-AC5C-BF2945FA0A16
-🛠 🔄 resetPlayer called with URL: nil
-🛠 🗑️ No URL provided, clearing player

@@ -12,7 +12,7 @@ final class GeminiClient {
     /// - Parameters:
     ///   - text: 入力テキスト
     ///   - prompt: システム / ユーザープロンプト
-    func summarize(text: String, prompt: String) async throws -> String {
+    func summarize(text: String, prompt: String, maxTokens: Int? = nil) async throws -> String {
         guard let apiKey = KeychainHelper.shared.geminiApiKey() else {
             throw NSError(
                 domain: "GeminiClient",
@@ -46,11 +46,20 @@ final class GeminiClient {
             ],
             "generationConfig": [
                 "temperature": 0.7,
-                "maxOutputTokens": UserDefaults.standard.integer(forKey: "geminiMaxTokens") > 0 
-                    ? UserDefaults.standard.integer(forKey: "geminiMaxTokens")
-                    : 8192
+                "maxOutputTokens": maxTokens ?? 8192,
+                "candidateCount": 1,
+                "topK": 40,
+                "topP": 0.95
             ]
         ]
+        
+        print("📝 Gemini API Request - Max Output Tokens: \(maxTokens ?? 8192)")
+        
+        // 入力テキストが長すぎる場合の警告
+        let estimatedInputTokens = text.count / 4  // 概算
+        if estimatedInputTokens > 50000 {
+            print("⚠️ Text might be too long for summarization: ~\(estimatedInputTokens) tokens")
+        }
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
@@ -99,7 +108,42 @@ final class GeminiClient {
         
         do {
             let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-            return geminiResponse.candidates.first?.content.parts?.first?.text
+            
+            // 使用トークン情報をログ出力
+            if let usage = geminiResponse.usageMetadata {
+                print("📊 Token Usage - Prompt: \(usage.promptTokenCount ?? 0), Total: \(usage.totalTokenCount ?? 0), Thoughts: \(usage.thoughtsTokenCount ?? 0)")
+            }
+            
+            // 最初の候補を取得
+            guard let firstCandidate = geminiResponse.candidates.first else {
+                throw NSError(
+                    domain: "GeminiClient",
+                    code: 3,
+                    userInfo: [NSLocalizedDescriptionKey: "レスポンスに候補が含まれていません"]
+                )
+            }
+            
+            // finishReasonをチェック
+            if let finishReason = firstCandidate.finishReason {
+                switch finishReason {
+                case "MAX_TOKENS":
+                    throw NSError(
+                        domain: "GeminiClient",
+                        code: 4,
+                        userInfo: [NSLocalizedDescriptionKey: "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。"]
+                    )
+                case "SAFETY":
+                    throw NSError(
+                        domain: "GeminiClient",
+                        code: 5,
+                        userInfo: [NSLocalizedDescriptionKey: "安全性フィルターによりブロックされました"]
+                    )
+                default:
+                    break
+                }
+            }
+            
+            return firstCandidate.content.parts?.first?.text
                    ?? "要約を生成できませんでした"
         } catch {
             print("❌ Decoding error: \(error)")
@@ -122,6 +166,7 @@ final class GeminiClient {
 struct GeminiResponse: Codable {
     let candidates: [Candidate]
     let promptFeedback: PromptFeedback?
+    let usageMetadata: UsageMetadata?
     
     struct PromptFeedback: Codable {
         let safetyRatings: [SafetyRating]?
@@ -130,6 +175,12 @@ struct GeminiResponse: Codable {
     struct SafetyRating: Codable {
         let category: String?
         let probability: String?
+    }
+    
+    struct UsageMetadata: Codable {
+        let promptTokenCount: Int?
+        let totalTokenCount: Int?
+        let thoughtsTokenCount: Int?
     }
 }
 
