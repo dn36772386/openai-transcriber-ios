@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 // MARK: - Gemini クライアント
 final class GeminiClient {
@@ -7,12 +8,26 @@ final class GeminiClient {
     
     /// 現在のプレビュー版モデル ID
     private let modelID = "gemini-2.5-pro-preview-05-06"   // 公開時点の最新 ID を指定
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     
     /// テキストを要約して返す
     /// - Parameters:
     ///   - text: 入力テキスト
     ///   - prompt: システム / ユーザープロンプト
     func summarize(text: String, prompt: String, maxTokens: Int? = nil) async throws -> String {
+        
+        // バックグラウンドタスクを開始
+        backgroundTask = await UIApplication.shared.beginBackgroundTask(withName: "GeminiSummarization") {
+            // タイムアウト時の処理
+            print("⚠️ Background task expired")
+            self.endBackgroundTask()
+        }
+        
+        defer {
+            // 処理完了時にバックグラウンドタスクを終了
+            endBackgroundTask()
+        }
+        
         guard let apiKey = KeychainHelper.shared.geminiApiKey() else {
             throw NSError(
                 domain: "GeminiClient",
@@ -63,8 +78,13 @@ final class GeminiClient {
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 120          // タイムアウト 120 秒
+        // バックグラウンド対応の設定
+        let config = URLSessionConfiguration.default    // ephemeralからdefaultに変更
+        config.timeoutIntervalForRequest = 120
+        config.timeoutIntervalForResource = 300         // リソースタイムアウトを追加
+        config.allowsCellularAccess = true              // セルラー接続を許可
+        config.shouldUseExtendedBackgroundIdleMode = true  // バックグラウンドモードを有効化
+        config.sessionSendsLaunchEvents = false         // バックグラウンド起動は不要
         config.waitsForConnectivity = true             // 回線が戻るまで待つ
         let session = URLSession(configuration: config)
 
@@ -158,6 +178,13 @@ final class GeminiClient {
                 return text
             }
             throw error
+        }
+    }
+    
+    private func endBackgroundTask() {
+        if backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
         }
     }
 }

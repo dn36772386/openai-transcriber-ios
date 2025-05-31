@@ -630,19 +630,47 @@ struct ContentView: View {
             
             Debug.log("✅ Processing completed: \(result.segments.count) segments found")
             
-            let delayBetweenRequests: UInt64 = 150_000_000  // 0.15秒（約6.6リクエスト/秒）
+            let delayBetweenRequests: UInt64 = 125_000_000  // 0.125秒（8リクエスト/秒）
             
             // Initialize progress tracking
             pendingSegmentsCount = result.segments.count
             completedSegmentsCount = 0
             
-            // Process segments in batches to reduce memory usage
-            let batchSize = 5
-            for batchIndex in stride(from: 0, to: result.segments.count, by: batchSize) {
-                let endIndex = min(batchIndex + batchSize, result.segments.count)
-                let batch = Array(result.segments[batchIndex..<endIndex])
+            for (index, segment) in result.segments.enumerated() {
+                let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
                 
-                await processSegmentBatch(batch, originalFileName: originalFileName, totalDuration: result.totalDuration, delayBetweenRequests: delayBetweenRequests)
+                if index == 0 {
+                    self.currentPlayingURL = segment.url
+                }
+                
+                let newLine = TranscriptLine(
+                    id: UUID(),
+                    time: startDate,
+                    text: "…文字起こし中… [\(originalFileName) - セグメント\(index + 1)]",
+                    audioURL: segment.url
+                )
+                self.transcriptLines.append(newLine)
+                self.transcriptionTasks[segment.url] = newLine.id
+                
+                // レート制限を考慮してリトライ
+                var retryCount = 0
+                while retryCount < 3 {
+                    do {
+                        try client.transcribeInBackground(
+                            url: segment.url,
+                            started: startDate
+                        )
+                        break // 成功したらループを抜ける
+                    } catch let error as NSError where error.code == 429 {
+                        // レート制限エラーの場合は待機してリトライ
+                        retryCount += 1
+                        print("⏸ Rate limit hit, retrying... (attempt \(retryCount)/3)")
+                        try await Task.sleep(nanoseconds: 500_000_000) // 0.5秒待機してリトライ
+                    }
+                }
+                
+                // 次のリクエストまで少し待機
+                try await Task.sleep(nanoseconds: delayBetweenRequests)
             }
             
             showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除
@@ -663,61 +691,6 @@ struct ContentView: View {
         }
     }
     
-    // MARK: - Batch Processing Methods
-    
-    @MainActor
-    private func processSegmentBatch(_ segments: [(url: URL, startTime: TimeInterval, duration: TimeInterval)], originalFileName: String, totalDuration: TimeInterval, delayBetweenRequests: UInt64) async {
-        for (segmentIndex, segment) in segments.enumerated() {
-            let startDate = Date(timeIntervalSinceNow: -totalDuration + segment.startTime)
-            
-            if segmentIndex == 0 && self.currentPlayingURL == nil {
-                self.currentPlayingURL = segment.url
-            }
-            
-            let newLine = TranscriptLine(
-                id: UUID(),
-                time: startDate,
-                text: "…文字起こし中… [\(originalFileName) - セグメント\(completedSegmentsCount + segmentIndex + 1)]",
-                audioURL: segment.url
-            )
-            self.transcriptLines.append(newLine)
-            self.transcriptionTasks[segment.url] = newLine.id                // レート制限を考慮してリトライ
-                var retryCount = 0
-                while retryCount < 3 {
-                    do {
-                        try client.transcribeInBackground(
-                            url: segment.url,
-                            started: startDate
-                        )
-                        break // 成功したらループを抜ける
-                    } catch let error as NSError where error.code == 429 {
-                        // レート制限エラーの場合は待機してリトライ
-                        retryCount += 1
-                        print("⏸ Rate limit hit, retrying... (attempt \(retryCount)/3)")
-                        do {
-                            try await Task.sleep(nanoseconds: delayBetweenRequests * 2) // 2倍の待機
-                        } catch {
-                            print("❌ Sleep error: \(error)")
-                            break
-                        }
-                    } catch {
-                        print("❌ Transcription error: \(error)")
-                        break
-                    }
-                }
-                
-                // 次のリクエストまで少し待機
-                do {
-                    try await Task.sleep(nanoseconds: delayBetweenRequests)
-                } catch {
-                    print("❌ Sleep error: \(error)")
-                }
-        }
-        
-        // Update progress after processing batch
-        completedSegmentsCount += segments.count
-    }
-
     // MARK: - Segment & Transcription Methods
     
     @MainActor
@@ -770,9 +743,35 @@ struct ContentView: View {
         }
         self.transcriptionTasks.removeValue(forKey: originalURL)
         
-        // Update progress and send notification
-        pendingSegmentsCount = max(0, pendingSegmentsCount - 1)
-        sendNotificationIfNeeded()
+        // 進捗を更新
+        completedSegmentsCount += 1
+        
+        // すべて完了したかチェック
+        if completedSegmentsCount == pendingSegmentsCount && pendingSegmentsCount > 0 {
+            showCompletionNotification()
+            pendingSegmentsCount = 0
+            completedSegmentsCount = 0
+        }
+    }
+    
+    // MARK: - Notification Methods
+    private func showCompletionNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "文字起こし完了"
+        content.body = "\(completedSegmentsCount)件のセグメントの文字起こしが完了しました"
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil  // 即座に通知
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("⚠️ Failed to send notification: \(error)")
+            }
+        }
     }
 
     // MARK: - Audio Playback Methods
@@ -981,28 +980,6 @@ struct ContentView: View {
     private func showFormatError(_ message: String) {
         formatAlertMessage = message
         showFormatAlert = true
-    }
-    
-    // MARK: - Notification Methods
-    private func sendNotificationIfNeeded() {
-        guard pendingSegmentsCount == 0 else { return }
-        
-        let content = UNMutableNotificationContent()
-        content.title = "文字起こし完了"
-        content.body = "全ての音声セグメントの文字起こしが完了しました"
-        content.sound = .default
-        
-        let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
-            content: content,
-            trigger: nil
-        )
-        
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("⚠️ Failed to send notification: \(error)")
-            }
-        }
     }
 }
 

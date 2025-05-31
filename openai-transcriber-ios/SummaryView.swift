@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import UserNotifications
 
 enum SummaryLevel: String, CaseIterable {
     case heavy = "しっかり要約"
@@ -23,6 +25,7 @@ struct SummaryView: View {
     @State private var summaryProgress: Double = 0.0
     @State private var isCancelled = false
     @State private var currentTask: Task<Void, Never>?
+    @State private var appDidEnterBackground = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -79,6 +82,25 @@ struct SummaryView: View {
             if let summary = currentSummary {
                 summaryText = summary
             }
+            // バックグラウンド通知を監視
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.didEnterBackgroundNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                if isLoading {
+                    appDidEnterBackground = true
+                    // バックグラウンドに入ったことをユーザーに通知
+                    showBackgroundWarning()
+                }
+            }
+        }
+        .onDisappear {
+            NotificationCenter.default.removeObserver(
+                self,
+                name: UIApplication.didEnterBackgroundNotification,
+                object: nil
+            )
         }
         .onChange(of: currentSummary) { _, newValue in
             if let summary = newValue {
@@ -107,6 +129,27 @@ struct SummaryView: View {
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text(getConfirmationMessage())
+        }
+        .onAppear {
+            // バックグラウンド通知を監視
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.didEnterBackgroundNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                if isLoading {
+                    appDidEnterBackground = true
+                    // バックグラウンドに入ったことをユーザーに通知
+                    showBackgroundWarning()
+                }
+            }
+        }
+        .onDisappear {
+            NotificationCenter.default.removeObserver(
+                self,
+                name: UIApplication.didEnterBackgroundNotification,
+                object: nil
+            )
         }
         .onChange(of: HistoryManager.shared.currentHistoryId) { oldId, newId in
             // 履歴が切り替わったら要約をリセット
@@ -300,7 +343,10 @@ struct SummaryView: View {
                 print("❌ Summary generation error: \(error)")
                 
                 // エラーメッセージをより分かりやすく
-                if let nsError = error as NSError? {
+                if appDidEnterBackground {
+                    errorMessage = "バックグラウンドでの処理中にエラーが発生しました。アプリを開いたまま再度お試しください。"
+                    showError = true
+                } else if let nsError = error as NSError? {
                     if nsError.domain == "GeminiClient" {
                         errorMessage = nsError.localizedDescription
                     } else if error.localizedDescription.contains("keyNotFound") {
@@ -325,6 +371,25 @@ struct SummaryView: View {
         summaryTargetHistoryId = nil
         summaryProgress = 0.0
         currentTask = nil
+    }
+    
+    private func showBackgroundWarning() {
+        let content = UNMutableNotificationContent()
+        content.title = "要約処理中"
+        content.body = "アプリを開いたままにしてください。バックグラウンドでは処理が中断される可能性があります。"
+        content.sound = .default
+        
+        let request = UNNotificationRequest(
+            identifier: "background-warning",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("⚠️ Failed to show background warning: \(error)")
+            }
+        }
     }
 }
 
