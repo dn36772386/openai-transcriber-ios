@@ -92,14 +92,35 @@ struct Debug {
 
 // MARK: - WhisperQueue (元のファイルに含まれていた場合)
 
-actor WhisperQueue {
-    /// Whisper への送信は 1 本ずつで OK なので
-    /// `actor` の直列実行特性だけで十分。`DispatchSemaphore` は不要。
-    private let client = OpenAIClient()
+import Foundation
 
-    // async に変更し、MainActor上でクライアントメソッドを呼び出す
+actor WhisperQueue {
+    private let client = OpenAIClient()
+    private let maxConcurrentRequests = 3
+    private var activeRequests = 0
+    private var pendingRequests: [(url: URL, started: Date)] = []
+
     func enqueue(url: URL, started: Date) async throws {
         Debug.log("WhisperQueue ▶︎ segment started:", started)
+        
+        // 同時実行数チェック
+        if activeRequests >= maxConcurrentRequests {
+            Debug.log("WhisperQueue ⏸️ Queuing request (active: \(activeRequests))")
+            pendingRequests.append((url: url, started: started))
+            return
+        }
+        
+        activeRequests += 1
+        defer { 
+            activeRequests -= 1
+            // 待機中のリクエストを処理
+            if !pendingRequests.isEmpty {
+                let next = pendingRequests.removeFirst()
+                Task { try? await enqueue(url: next.url, started: next.started) }
+            }
+        }
+        
+        Debug.log("WhisperQueue ▶️ Processing request (active: \(activeRequests))")
         // OpenAIClient.transcribeInBackground は @MainActor で実行する必要がある
         try await MainActor.run {
             try client.transcribeInBackground(url: url, started: started)

@@ -417,7 +417,6 @@ struct ContentView: View {
             if granted {
                 do {
                     isCancelling = false
-                    historyManager.currentHistoryId = nil
                     transcriptLines.removeAll()
                     currentPlayingURL = nil
                     audioPlayer?.stop()
@@ -425,6 +424,9 @@ struct ContentView: View {
                     currentSummary = nil
                     currentSubtitle = nil
                     transcriptionTasks.removeAll()
+                    
+                    // 録音開始時に履歴を作成
+                    historyManager.currentHistoryId = historyManager.startNewSession()
                     
                     print("Starting recorder with isManual: \(self.modeIsManual)")
                     try recorder.start(isManual: self.modeIsManual)
@@ -586,10 +588,7 @@ struct ContentView: View {
         }
         print("🎧 Segment file path:", url.path)
 
-        // 初回セグメント時に履歴を作成
-        if historyManager.currentHistoryId == nil {
-            historyManager.currentHistoryId = historyManager.startNewSession()
-        }
+        // 履歴は録音開始時に既に作成されているはず
 
         if self.currentPlayingURL == nil { self.currentPlayingURL = url }
 
@@ -831,16 +830,22 @@ struct SidebarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            Spacer().frame(height: UIDevice.current.userInterfaceIdiom == .phone ? 20 : 0)
             Text("Transcriber")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(Color.textPrimary)
                 .padding(.horizontal, 14)
-                .frame(height: 50)
+                .frame(height: 40)
 
             VStack(alignment: .leading, spacing: 5) {
                 SidebarMenuItem(icon: "mic", text: "文字起こし", type: .transcribe, activeMenuItem: $activeMenuItem, action: {
                     if activeMenuItem == .transcribe {
-                        onPrepareNewSession()
+                        // 新規セッションの準備（履歴作成はしない）
+                        // 実際の履歴作成は録音開始時に行う
+                        if UIDevice.current.userInterfaceIdiom == .phone {
+                            withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
+                        }
+                        return
                     }
                     activeMenuItem = .transcribe
                     closeSidebar()

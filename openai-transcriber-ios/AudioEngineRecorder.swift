@@ -192,7 +192,7 @@ final class AudioEngineRecorder: ObservableObject {
             AudioEngineRecorder.hasLoggedSettings = true
         }
 
-        Debug.log(String(format: "🎙️ RMS = %.5f (threshold: %.5f)", rms, silenceThreshold))
+        // Debug.log(String(format: "🎙️ RMS = %.5f (threshold: %.5f)", rms, silenceThreshold)) // 頻繁なログを削除
 
         // 閾値を超えたら「発話中」とみなす
         let isVoice = rms > silenceThreshold

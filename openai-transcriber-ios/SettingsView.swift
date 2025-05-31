@@ -34,43 +34,7 @@ struct SettingsView: View {
                         }
                 }
                 
-                Section {
-                    VStack(alignment: .leading) {
-                        Text("要約プロンプト")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        TextEditor(text: $summarizePrompt)
-                            .frame(minHeight: 100)
-                            .padding(4)
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(4)
-                    }
-                } header: {
-                    Text("要約設定")
-                } footer: {
-                    Text("文書を要約する際のプロンプトを設定します")
-                }
-                
-                Section {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("最大トークン数")
-                            Spacer()
-                            Text("\(geminiMaxTokens)")
-                                .foregroundColor(.secondary)
-                        }
-                        Slider(value: Binding(
-                            get: { Double(geminiMaxTokens) },
-                            set: { geminiMaxTokens = Int($0) }
-                        ), in: 1024...65535, step: 1024)
-                    }
-                } header: {
-                    Text("Gemini設定")
-                } footer: {
-                    Text("要約生成時の最大出力トークン数を設定します（1024〜65535）")
-                }
-                
-                // 新規追加：録音設定セクション
+                // 録音設定セクション
                 Section {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -125,6 +89,44 @@ struct SettingsView: View {
                     Text("録音設定（自動モード）")
                 } footer: {
                     Text("自動モードでの音声区切りの設定を調整します。マニュアルモードでは適用されません。")
+                }
+                
+                // Gemini設定
+                Section {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("最大トークン数")
+                            Spacer()
+                            Text("\(geminiMaxTokens)")
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: Binding(
+                            get: { Double(geminiMaxTokens) },
+                            set: { geminiMaxTokens = Int($0) }
+                        ), in: 1024...65535, step: 1024)
+                    }
+                } header: {
+                    Text("Gemini設定")
+                } footer: {
+                    Text("要約生成時の最大出力トークン数を設定します（1024〜65535）")
+                }
+                
+                // 要約設定を最下部に移動
+                Section {
+                    VStack(alignment: .leading) {
+                        Text("要約プロンプト")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        TextEditor(text: $summarizePrompt)
+                            .frame(minHeight: 100)
+                            .padding(4)
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(4)
+                    }
+                } header: {
+                    Text("要約設定")
+                } footer: {
+                    Text("文書を要約する際のプロンプトを設定します")
                 }
             }
             .navigationTitle("設定")
