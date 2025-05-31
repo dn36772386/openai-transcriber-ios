@@ -326,6 +326,9 @@ struct SummaryView: View {
             // 要約生成フラグをリセット
             isGeneratingSummary = false
             
+            // 要約完了通知を送信
+            showCompletionNotification(subtitle: subtitle)
+            
             // 要約結果を正しい履歴に保存
             if let targetId = summaryTargetHistoryId {
                 // 対象の履歴を更新（現在の履歴でない場合も正しく更新）
@@ -340,6 +343,10 @@ struct SummaryView: View {
             if error is CancellationError {
                 print("ℹ️ Summary generation cancelled")
             } else {
+                // エラー通知を送信（バックグラウンドでも動作）
+                let errorDescription = getErrorDescription(from: error)
+                showErrorNotification(message: errorDescription)
+                
                 print("❌ Summary generation error: \(error)")
                 
                 // エラーメッセージをより分かりやすく
@@ -390,6 +397,65 @@ struct SummaryView: View {
                 print("⚠️ Failed to show background warning: \(error)")
             }
         }
+    }
+    
+    private func showCompletionNotification(subtitle: String) {
+        guard UIApplication.shared.applicationState != .active else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "要約完了"
+        content.body = subtitle.isEmpty ? "文字起こしの要約が完成しました" : "「\(subtitle)」の要約が完成しました"
+        content.sound = .default
+        content.categoryIdentifier = "SUMMARY_COMPLETE"
+        
+        let request = UNNotificationRequest(
+            identifier: "summary-complete-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("⚠️ Failed to send summary completion notification: \(error)")
+            }
+        }
+    }
+    
+    private func showErrorNotification(message: String) {
+        guard UIApplication.shared.applicationState != .active else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "要約エラー"
+        content.body = message
+        content.sound = .default
+        content.categoryIdentifier = "SUMMARY_ERROR"
+        
+        let request = UNNotificationRequest(
+            identifier: "summary-error-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("⚠️ Failed to send error notification: \(error)")
+            }
+        }
+    }
+    
+    private func getErrorDescription(from error: Error) -> String {
+        if appDidEnterBackground {
+            return "バックグラウンドでの処理中にエラーが発生しました"
+        } else if let nsError = error as NSError? {
+            if nsError.domain == "GeminiClient" {
+                return nsError.localizedDescription
+            } else if error.localizedDescription.contains("MAX_TOKENS") {
+                return "出力トークン数の上限に達しました"
+            } else if error.localizedDescription.contains("timeout") {
+                return "タイムアウトしました"
+            }
+        }
+        return "要約生成に失敗しました"
     }
 }
 

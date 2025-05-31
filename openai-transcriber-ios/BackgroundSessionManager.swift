@@ -131,11 +131,15 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
             ]
         )
         
-        // Send background notification if needed
-        if UIApplication.shared.applicationState != .active {
-            sendBackgroundNotification(success: taskError == nil, taskId: taskId)
-        }
+        // 個別のセグメント通知は送信しない
+        // ContentViewの showCompletionNotification() で
+        // 全体の完了通知のみを送信する
         
+        // // Send background notification if needed
+        // if UIApplication.shared.applicationState != .active {
+        //     sendBackgroundNotification(success: taskError == nil, taskId: taskId)
+        // }
+
         // 完了したタスクのデータをクリーンアップ
         self.cleanupTask(taskId)
         self.retryCountStore.removeValue(forKey: taskId)

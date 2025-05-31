@@ -100,6 +100,8 @@ struct ContentView: View {
     
     @State private var pendingSegmentsCount = 0
     @State private var completedSegmentsCount = 0
+    @State private var failedSegmentsCount = 0
+    @State private var segmentErrors: [String] = []
     
     
     // タイトルタップ用の状態
@@ -426,6 +428,23 @@ struct ContentView: View {
                 }
             }
             
+            // 通知カテゴリーを設定（タップ時のアクション用）
+            let summaryCategory = UNNotificationCategory(
+                identifier: "SUMMARY_COMPLETE",
+                actions: [],
+                intentIdentifiers: [],
+                options: []
+            )
+            
+            let errorCategory = UNNotificationCategory(
+                identifier: "SUMMARY_ERROR",
+                actions: [],
+                intentIdentifiers: [],
+                options: []
+            )
+            
+            UNUserNotificationCenter.current().setNotificationCategories([summaryCategory, errorCategory])
+            
             NotificationCenter.default.publisher(for: .transcriptionDidFinish)
                 .receive(on: DispatchQueue.main)
                 .sink { notification in
@@ -635,6 +654,8 @@ struct ContentView: View {
             // Initialize progress tracking
             pendingSegmentsCount = result.segments.count
             completedSegmentsCount = 0
+            failedSegmentsCount = 0
+            segmentErrors = []
             
             for (index, segment) in result.segments.enumerated() {
                 let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
@@ -736,26 +757,41 @@ struct ContentView: View {
 
         if let error = notification.userInfo?["error"] as? Error {
             self.transcriptLines[index].text = "⚠️ \(error.localizedDescription)"
+            failedSegmentsCount += 1
+            segmentErrors.append("セグメント\(index + 1): \(error.localizedDescription)")
         } else if let text = notification.userInfo?["text"] as? String {
             self.transcriptLines[index].text = text
+            completedSegmentsCount += 1
         } else {
             self.transcriptLines[index].text = "⚠️ 不明なエラー"
+            failedSegmentsCount += 1
+            segmentErrors.append("セグメント\(index + 1): 不明なエラー")
         }
         self.transcriptionTasks.removeValue(forKey: originalURL)
         
-        // 進捗を更新
-        completedSegmentsCount += 1
-        
         // すべて完了したかチェック
-        if completedSegmentsCount == pendingSegmentsCount && pendingSegmentsCount > 0 {
-            showCompletionNotification()
+        if (completedSegmentsCount + failedSegmentsCount) == pendingSegmentsCount && pendingSegmentsCount > 0 {
+            showFinalNotification()
             pendingSegmentsCount = 0
             completedSegmentsCount = 0
+            failedSegmentsCount = 0
+            segmentErrors = []
+        }
+    }
+    
+    // MARK: - Final Notification
+    private func showFinalNotification() {
+        if failedSegmentsCount > 0 {
+            showMixedResultNotification()
+        } else {
+            showCompletionNotification()
         }
     }
     
     // MARK: - Notification Methods
     private func showCompletionNotification() {
+        guard UIApplication.shared.applicationState != .active else { return }
+        
         let content = UNMutableNotificationContent()
         content.title = "文字起こし完了"
         content.body = "\(completedSegmentsCount)件のセグメントの文字起こしが完了しました"
@@ -772,6 +808,32 @@ struct ContentView: View {
                 print("⚠️ Failed to send notification: \(error)")
             }
         }
+    }
+    
+    private func showMixedResultNotification() {
+        guard UIApplication.shared.applicationState != .active else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "文字起こし完了（一部エラー）"
+        content.body = "\(completedSegmentsCount)件成功、\(failedSegmentsCount)件失敗"
+        content.sound = .default
+        
+        // エラーの詳細を通知に含める（最大3件まで）
+        if !segmentErrors.isEmpty {
+            let errorSummary = segmentErrors.prefix(3).joined(separator: "\n")
+            content.body += "\n\nエラー詳細:\n\(errorSummary)"
+            if segmentErrors.count > 3 {
+                content.body += "\n他\(segmentErrors.count - 3)件のエラー"
+            }
+        }
+        
+        let request = UNNotificationRequest(
+            identifier: "transcription-mixed-\(UUID().uuidString)",
+            content: content,
+            trigger: nil
+        )
+        
+        UNUserNotificationCenter.current().add(request)
     }
 
     // MARK: - Audio Playback Methods
