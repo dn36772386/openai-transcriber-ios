@@ -108,24 +108,26 @@ struct SummaryView: View {
             // サブタイトルは別途管理
         }
         .confirmationDialog(
-            "要約レベルを選択",
+            getConfirmationDialogTitle(),
             isPresented: $showSummaryOptions,
             titleVisibility: .visible
         ) {
             ForEach(SummaryLevel.allCases, id: \.self) { level in
-                Button(level.rawValue) {
+                Button(action: {
                     selectedSummaryLevel = level
                     // 要約開始時に現在の履歴IDを保存
                     summaryTargetHistoryId = HistoryManager.shared.currentHistoryId
                     isGeneratingSummary = true
                     generateSummary()
+                }) {
+                    Text(getButtonLabel(for: level))
                 }
             }
             Button("キャンセル", role: .cancel) {}
         } message: {
-            Text("どの程度要約しますか？")
+            Text(getConfirmationMessage())
         }
-        .onChange(of: HistoryManager.shared.currentHistoryId) { _, newId in
+        .onChange(of: HistoryManager.shared.currentHistoryId) { oldId, newId in
             // 履歴が切り替わったら要約をリセット
             if let item = HistoryManager.shared.historyItems.first(where: { $0.id == newId }) {
                 summaryText = item.summary ?? ""
@@ -139,20 +141,43 @@ struct SummaryView: View {
         }
     }
     
+    private func getConfirmationDialogTitle() -> String {
+        let charCount = transcriptLines
+            .map { $0.text }
+            .joined(separator: "\n")
+            .count
+        return "要約レベルを選択（\(charCount)文字）"
+    }
+    
+    private func getButtonLabel(for level: SummaryLevel) -> String {
+        let charCount = transcriptLines
+            .map { $0.text }
+            .joined(separator: "\n")
+            .count
+        let ratio = getSummaryRatio(for: level)
+        let compressedCount = Int(Double(charCount) * Double(ratio) / 100.0)
+        
+        return "\(level.rawValue)（約\(compressedCount)文字）"
+    }
+    
+    private func getConfirmationMessage() -> String {
+        return "圧縮率を選んでください"
+    }
+    
     private func getSummaryRatio(for level: SummaryLevel) -> Int {
         switch level {
         case .heavy:
-            return UserDefaults.standard.integer(forKey: "heavySummaryRatio") > 0 
-                ? UserDefaults.standard.integer(forKey: "heavySummaryRatio") 
-                : 30
+            return UserDefaults.standard.integer(forKey: "heavyCompressionRatio") > 0 
+                ? UserDefaults.standard.integer(forKey: "heavyCompressionRatio") 
+                : 70
         case .standard:
-            return UserDefaults.standard.integer(forKey: "standardSummaryRatio") > 0 
-                ? UserDefaults.standard.integer(forKey: "standardSummaryRatio") 
-                : 60
+            return UserDefaults.standard.integer(forKey: "standardCompressionRatio") > 0 
+                ? UserDefaults.standard.integer(forKey: "standardCompressionRatio") 
+                : 50
         case .light:
-            return UserDefaults.standard.integer(forKey: "lightSummaryRatio") > 0 
-                ? UserDefaults.standard.integer(forKey: "lightSummaryRatio") 
-                : 80
+            return UserDefaults.standard.integer(forKey: "lightCompressionRatio") > 0 
+                ? UserDefaults.standard.integer(forKey: "lightCompressionRatio") 
+                : 30
         }
     }
     
@@ -160,25 +185,40 @@ struct SummaryView: View {
         let basePrompt = UserDefaults.standard.string(forKey: "summarizePrompt") ?? 
             "以下の文章を簡潔に要約してください。重要なポイントを箇条書きで示してください："
         
-        let ratioInstruction = "\n\n要約の長さは元の文章の約\(ratio)%程度にしてください。"
+        let ratioInstruction = "\n\n要約は元の文章の約\(ratio)%の長さにまとめてください。"
         
         return basePrompt + ratioInstruction
     }
     
-    private func getMaxTokensForLevel(_ level: SummaryLevel) -> Int {
-        // 設定から最大トークン数を取得（デフォルト: 10000）
-        let baseMaxTokens = UserDefaults.standard.integer(forKey: "geminiMaxTokens") > 0 
-            ? UserDefaults.standard.integer(forKey: "geminiMaxTokens")
-            : 10000
+    private func calculateOptimalTokens(text: String, level: SummaryLevel) -> Int {
+        let charCount = text.count
+        let compressionRatio = Double(getSummaryRatio(for: level)) / 100.0
         
-        // 要約レベルの割合を取得して計算
-        let ratio = getSummaryRatio(for: level)
-        let calculatedTokens = Int(Double(baseMaxTokens) * Double(ratio) / 100.0)
+        // 要約後の推定文字数
+        let compressedCharCount = Int(Double(charCount) * compressionRatio)
         
-        // 最低2000トークンを確保（思考トークン分を考慮）
-        let finalTokens = max(2000, calculatedTokens)
+        // 日本語は1文字≈0.5トークン
+        let outputTokens = compressedCharCount / 2
         
-        print("📊 Summary tokens calculation - Base: \(baseMaxTokens), Ratio: \(ratio)%, Result: \(finalTokens)")
+        // Gemini 2.5の思考トークンを考慮（3倍）
+        let totalTokens = outputTokens * 3
+        
+        // 最小・最大の制限
+        let minTokens = UserDefaults.standard.integer(forKey: "minTokenLimit") > 0
+            ? UserDefaults.standard.integer(forKey: "minTokenLimit")
+            : 4000
+        let maxTokens = UserDefaults.standard.integer(forKey: "maxTokenLimit") > 0
+            ? UserDefaults.standard.integer(forKey: "maxTokenLimit")
+            : 30000
+        
+        let finalTokens = min(maxTokens, max(minTokens, totalTokens))
+        
+        print("📊 Token calculation:")
+        print("  - Original: \(charCount)文字")
+        print("  - Compressed (\(Int(compressionRatio * 100))%): \(compressedCharCount)文字")
+        print("  - Output tokens: \(outputTokens)")
+        print("  - Total allocated: \(finalTokens)")
+        
         return finalTokens
     }
     
@@ -221,8 +261,8 @@ struct SummaryView: View {
         // サブタイトル用のプロンプト
         let subtitlePrompt = "\n\nまた、この内容を表す20文字以内の短いサブタイトルも生成してください。サブタイトルは「サブタイトル：」で始めてください。"
         
-        // 要約レベルに応じたトークン数を取得
-        let maxTokens = getMaxTokensForLevel(selectedSummaryLevel)
+        // 文字数と圧縮率から最適なトークン数を計算
+        let maxTokens = calculateOptimalTokens(text: fullText, level: selectedSummaryLevel)
         
         do {
             // プログレス更新（擬似的）

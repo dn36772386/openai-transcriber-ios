@@ -11,12 +11,15 @@ struct SettingsView: View {
     @State private var silenceThreshold: Float = UserDefaults.standard.float(forKey: "silenceThreshold") == 0 ? 0.01 : UserDefaults.standard.float(forKey: "silenceThreshold")
     @State private var silenceWindow: Double = UserDefaults.standard.double(forKey: "silenceWindow") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "silenceWindow")
     @State private var minSegmentDuration: Double = UserDefaults.standard.double(forKey: "minSegmentDuration") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "minSegmentDuration")
-    @State private var geminiMaxTokens: Int = UserDefaults.standard.integer(forKey: "geminiMaxTokens") == 0 ? 10000 : UserDefaults.standard.integer(forKey: "geminiMaxTokens")
     
-    // 要約レベルの圧縮率設定
-    @State private var heavySummaryRatio: Int = UserDefaults.standard.integer(forKey: "heavySummaryRatio") == 0 ? 30 : UserDefaults.standard.integer(forKey: "heavySummaryRatio")
-    @State private var standardSummaryRatio: Int = UserDefaults.standard.integer(forKey: "standardSummaryRatio") == 0 ? 60 : UserDefaults.standard.integer(forKey: "standardSummaryRatio")
-    @State private var lightSummaryRatio: Int = UserDefaults.standard.integer(forKey: "lightSummaryRatio") == 0 ? 80 : UserDefaults.standard.integer(forKey: "lightSummaryRatio")
+    // 圧縮率設定
+    @State private var heavyCompressionRatio: Int = UserDefaults.standard.integer(forKey: "heavyCompressionRatio") == 0 ? 70 : UserDefaults.standard.integer(forKey: "heavyCompressionRatio")
+    @State private var standardCompressionRatio: Int = UserDefaults.standard.integer(forKey: "standardCompressionRatio") == 0 ? 50 : UserDefaults.standard.integer(forKey: "standardCompressionRatio")
+    @State private var lightCompressionRatio: Int = UserDefaults.standard.integer(forKey: "lightCompressionRatio") == 0 ? 30 : UserDefaults.standard.integer(forKey: "lightCompressionRatio")
+    
+    // トークン制限
+    @State private var minTokenLimit: Int = UserDefaults.standard.integer(forKey: "minTokenLimit") == 0 ? 4000 : UserDefaults.standard.integer(forKey: "minTokenLimit")
+    @State private var maxTokenLimit: Int = UserDefaults.standard.integer(forKey: "maxTokenLimit") == 0 ? 30000 : UserDefaults.standard.integer(forKey: "maxTokenLimit")
 
     var body: some View {
         NavigationView {
@@ -96,105 +99,100 @@ struct SettingsView: View {
                     Text("自動モードでの音声区切りの設定を調整します。マニュアルモードでは適用されません。")
                 }
                 
-                // Gemini設定
-                Section {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("最大トークン数（軽い要約時）")
-                            Spacer()
-                            Text("\(geminiMaxTokens)")
-                                .foregroundColor(.secondary)
-                        }
-                        Slider(value: Binding(
-                            get: { Double(geminiMaxTokens) },
-                            set: { geminiMaxTokens = Int($0) }
-                        ), in: 5000...20000, step: 1000)
-                        
-                        HStack {
-                            Text("推奨設定:")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Button("8000") {
-                                geminiMaxTokens = 8000
-                            }
-                            Button("10000") {
-                                geminiMaxTokens = 10000
-                            }
-                            Button("12000") {
-                                geminiMaxTokens = 12000
-                            }
-                        }
-                        .font(.caption)
-                        
-                        // 実際に使用されるトークン数の表示
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("実際の使用トークン数:")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("• しっかり要約: 約\(Int(Double(geminiMaxTokens) * Double(heavySummaryRatio) / 100.0))トークン")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text("• 標準的な要約: 約\(Int(Double(geminiMaxTokens) * Double(standardSummaryRatio) / 100.0))トークン")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text("• 軽い要約: 約\(geminiMaxTokens)トークン")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.top, 8)
-                    }
-                } header: {
-                    Text("Gemini設定")
-                } footer: {
-                    Text("軽い要約時の最大トークン数を設定します。他の要約レベルではこの値に各レベルの割合を掛けた値が使用されます。")
-                }
-                
-                // 要約設定を最下部に移動
+                // 圧縮率設定
                 Section {
                     VStack(alignment: .leading, spacing: 15) {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
-                                Text("しっかり要約")
+                                Text("しっかり要約（詳細を残す）")
                                 Spacer()
-                                Text("\(heavySummaryRatio)%")
+                                Text("\(heavyCompressionRatio)%")
                                     .foregroundColor(.secondary)
                             }
                             Slider(value: Binding(
-                                get: { Double(heavySummaryRatio) },
-                                set: { heavySummaryRatio = Int($0) }
-                            ), in: 10...50, step: 5)
+                                get: { Double(heavyCompressionRatio) },
+                                set: { heavyCompressionRatio = Int($0) }
+                            ), in: 60...80, step: 5)
+                            Text("議論の流れや詳細が分かる要約")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                         
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
-                                Text("標準的な要約")
+                                Text("標準的な要約（バランス型）")
                                 Spacer()
-                                Text("\(standardSummaryRatio)%")
+                                Text("\(standardCompressionRatio)%")
                                     .foregroundColor(.secondary)
                             }
                             Slider(value: Binding(
-                                get: { Double(standardSummaryRatio) },
-                                set: { standardSummaryRatio = Int($0) }
-                            ), in: 40...70, step: 5)
+                                get: { Double(standardCompressionRatio) },
+                                set: { standardCompressionRatio = Int($0) }
+                            ), in: 40...60, step: 5)
+                            Text("主要な論点を網羅した要約")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                         
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 4) {
                             HStack {
-                                Text("軽い要約")
+                                Text("軽い要約（要点のみ）")
                                 Spacer()
-                                Text("\(lightSummaryRatio)%")
+                                Text("\(lightCompressionRatio)%")
                                     .foregroundColor(.secondary)
                             }
                             Slider(value: Binding(
-                                get: { Double(lightSummaryRatio) },
-                                set: { lightSummaryRatio = Int($0) }
-                            ), in: 70...90, step: 5)
+                                get: { Double(lightCompressionRatio) },
+                                set: { lightCompressionRatio = Int($0) }
+                            ), in: 20...40, step: 5)
+                            Text("決定事項と要点のみの要約")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
                     }
                 } header: {
-                    Text("要約レベル設定")
+                    Text("要約の圧縮率設定")
                 } footer: {
-                    Text("各要約レベルの圧縮率を設定します")
+                    Text("文字起こしの何％に圧縮するかを設定します。長い会議ほど圧縮率の選択が重要になります。")
+                }
+                
+                // トークン制限設定
+                Section {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("最小トークン数")
+                            Spacer()
+                            Text("\(minTokenLimit)")
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: Binding(
+                            get: { Double(minTokenLimit) },
+                            set: { minTokenLimit = Int($0) }
+                        ), in: 2000...6000, step: 500)
+                        Text("短い会議でも最低限確保するトークン数")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("最大トークン数")
+                            Spacer()
+                            Text("\(maxTokenLimit)")
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: Binding(
+                            get: { Double(maxTokenLimit) },
+                            set: { maxTokenLimit = Int($0) }
+                        ), in: 20000...50000, step: 2000)
+                        Text("コスト制限のための上限値")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } header: {
+                    Text("トークン制限")
+                } footer: {
+                    Text("自動計算されたトークン数の上下限を設定します")
                 }
                 
                 Section {
@@ -230,12 +228,15 @@ struct SettingsView: View {
                         UserDefaults.standard.set(silenceThreshold, forKey: "silenceThreshold")
                         UserDefaults.standard.set(silenceWindow, forKey: "silenceWindow")
                         UserDefaults.standard.set(minSegmentDuration, forKey: "minSegmentDuration")
-                        UserDefaults.standard.set(geminiMaxTokens, forKey: "geminiMaxTokens")
                         
-                        // 要約レベルの保存
-                        UserDefaults.standard.set(heavySummaryRatio, forKey: "heavySummaryRatio")
-                        UserDefaults.standard.set(standardSummaryRatio, forKey: "standardSummaryRatio")
-                        UserDefaults.standard.set(lightSummaryRatio, forKey: "lightSummaryRatio")
+                        // 圧縮率の保存
+                        UserDefaults.standard.set(heavyCompressionRatio, forKey: "heavyCompressionRatio")
+                        UserDefaults.standard.set(standardCompressionRatio, forKey: "standardCompressionRatio")
+                        UserDefaults.standard.set(lightCompressionRatio, forKey: "lightCompressionRatio")
+                        
+                        // トークン制限の保存
+                        UserDefaults.standard.set(minTokenLimit, forKey: "minTokenLimit")
+                        UserDefaults.standard.set(maxTokenLimit, forKey: "maxTokenLimit")
                         
                         dismiss()
                     }
