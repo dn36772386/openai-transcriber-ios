@@ -12,13 +12,13 @@ struct SummaryView: View {
     @Binding var currentSubtitle: String?
     var onSummaryGenerated: ((String, String) -> Void)?
     @Binding var isGeneratingSummary: Bool
+    @Binding var showSummaryOptions: Bool
+    @Binding var selectedSummaryLevel: SummaryLevel
     
     @State private var summaryText = "" 
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
-    @State private var showSummaryOptions = false
-    @State private var selectedSummaryLevel: SummaryLevel = .standard
     @State private var summaryTargetHistoryId: UUID? = nil
     @State private var summaryProgress: Double = 0.0
     @State private var isCancelled = false
@@ -82,27 +82,6 @@ struct SummaryView: View {
             
             Spacer()
             
-            // 要約生成ボタン
-            if !transcriptLines.isEmpty {
-                Button(action: { showSummaryOptions = true }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 14, weight: .regular))
-                        Text(isLoading ? "生成中..." : "要約を生成")
-                            .font(.system(size: 14, weight: .regular))
-                    }
-                    .foregroundColor(isLoading ? Color.textSecondary : Color.textPrimary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.border, lineWidth: 1)
-                    )
-                }
-                .disabled(isLoading)
-                .padding(.horizontal)
-                .padding(.bottom, 16)
-            }
         }
         .background(Color.appBackground)
         .alert("エラー", isPresented: $showError) {

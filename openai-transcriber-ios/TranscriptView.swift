@@ -25,7 +25,7 @@ struct TranscriptView: View {
                         .font(.headline)
                         .foregroundColor(.gray)
                     
-                    Text("右上のマイクをタップして\n音声の録音を開始します")
+                    Text("右上の ⭕ ボタンをタップして\n音声の録音を開始します")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)

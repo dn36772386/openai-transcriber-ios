@@ -94,6 +94,8 @@ struct ContentView: View {
     @State private var isEditingSubtitle = false
     @State private var editingSubtitleText = ""
     @State private var isGeneratingSummary = false
+    @State private var showSummaryOptions = false
+    @State private var selectedSummaryLevel: SummaryLevel = .standard
     
     
     // タイトルタップ用の状態
@@ -160,7 +162,9 @@ struct ContentView: View {
                                 self.currentSummary = summary
                                 self.currentSubtitle = subtitle
                             },
-                            isGeneratingSummary: $isGeneratingSummary
+                            isGeneratingSummary: $isGeneratingSummary,
+                            showSummaryOptions: $showSummaryOptions,
+                            selectedSummaryLevel: $selectedSummaryLevel
                         )
                         .tag(ContentTab.summary)
                         .gesture(DragGesture()
@@ -176,15 +180,40 @@ struct ContentView: View {
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                      
-                    // 下部の再生バー
-                    if selectedTab == .transcription && (currentPlayingURL != nil || !transcriptLines.isEmpty) {
-                        CompactAudioPlayerView(
-                            url: $currentPlayingURL,
-                            player: $audioPlayer,
-                            onPlaybackFinished: self.playNextSegment,
-                            playerDelegate: audioPlayerDelegate
-                        )
-                        .padding(.bottom, 8)
+                    // 下部のコントロール（再生バーまたは要約生成ボタン）
+                    if !transcriptLines.isEmpty {
+                        if selectedTab == .transcription {
+                            // 文字起こしタブ：再生バー
+                            CompactAudioPlayerView(
+                                url: $currentPlayingURL,
+                                player: $audioPlayer,
+                                onPlaybackFinished: self.playNextSegment,
+                                playerDelegate: audioPlayerDelegate
+                            )
+                            .padding(.bottom, 16)
+                        } else {
+                            // 要約タブ：要約生成ボタン
+                            Button(action: { 
+                                showSummaryOptions = true 
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 14, weight: .regular))
+                                    Text(isGeneratingSummary ? "生成中..." : "要約を生成")
+                                        .font(.system(size: 14, weight: .regular))
+                                }
+                                .foregroundColor(isGeneratingSummary ? Color.textSecondary : Color.textPrimary)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.border, lineWidth: 1)
+                                )
+                            }
+                            .disabled(isGeneratingSummary)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                        }
                     }
                 }
                 .toolbar {
@@ -1316,29 +1345,14 @@ struct MainContentView: View {
     let playNextSegmentCallback: () -> Void
 
     var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                TranscriptView(
-                    lines: $transcriptLines,
-                    currentPlayingURL: audioPlayerURL,
-                    onLineTapped: onLineTapped,
-                    onRetranscribe: onRetranscribe
-                )
-                .frame(maxHeight: .infinity)
-                
-                // スペーサーを追加して高さを調整
-                if audioPlayerURL == nil && transcriptLines.isEmpty && !isRecording {
-                    Spacer()
-                        .frame(height: 50)
-                }
-            
-            // 初回利用ガイド
-            if transcriptLines.isEmpty && !UserDefaults.standard.bool(forKey: "hasShownWelcomeGuide") {
-                WelcomeGuideView()
-                    .transition(.opacity)
-            }
-            }
-            .frame(width: geometry.size.width, height: geometry.size.height)
+        VStack(spacing: 0) {
+            TranscriptView(
+                lines: $transcriptLines,
+                currentPlayingURL: audioPlayerURL,
+                isRecording: isRecording,
+                onLineTapped: onLineTapped,
+                onRetranscribe: onRetranscribe
+            )
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
     }
