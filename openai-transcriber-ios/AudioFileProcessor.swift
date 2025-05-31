@@ -46,7 +46,8 @@ final class AudioFileProcessor: ObservableObject {
         return value > 0 ? value : 0.5
     }
     
-    private let maxSegmentDuration: TimeInterval = 300.0  // 最大セグメント長（5分）
+    private let maxSegmentDuration: TimeInterval = 240.0  // 最大セグメント長（4分）
+    private let maxSegmentSize: Int64 = 24 * 1024 * 1024  // 最大24MB（APIは25MBまで）
     private let outputFormat: AVAudioFormat
     
     // MARK: - Initialization
@@ -75,6 +76,9 @@ final class AudioFileProcessor: ObservableObject {
             }
         }
         
+        Debug.log("📊 AudioFileProcessor: Processing \(url.lastPathComponent)")
+        Debug.log("📊 File exists: \(FileManager.default.fileExists(atPath: url.path))")
+        
         // 設定値をログ出力
         print("📊 Processing with settings:")
         print("   - Silence threshold: \(silenceThreshold)")
@@ -82,14 +86,25 @@ final class AudioFileProcessor: ObservableObject {
         print("   - Min segment duration: \(minSegmentDuration)s")
         
         // セキュリティスコープドリソースアクセス
-        guard url.startAccessingSecurityScopedResource() else {
-            throw ProcessingError.fileNotFound
+        // ローカルファイル（/tmp/内）の場合はセキュリティスコープ不要
+        let needsSecurityScope = !url.path.contains("/tmp/")
+        
+        if needsSecurityScope {
+            guard url.startAccessingSecurityScopedResource() else {
+                Debug.log("❌ Failed to access security scoped resource")
+                throw ProcessingError.fileNotFound
+            }
         }
-        defer { url.stopAccessingSecurityScopedResource() }
+        
+        defer { 
+            if needsSecurityScope { url.stopAccessingSecurityScopedResource() }
+            Debug.log("📊 Stopped accessing security scoped resource (if needed)")
+        }
         
         // フォーマット検証
         let validation = await AudioFormatHandler.validateFormat(url: url)
         guard validation.isValid else {
+            Debug.log("❌ Format validation failed: \(validation.error ?? "Unknown")")
             throw ProcessingError.unsupportedFormat
         }
         
@@ -97,7 +112,9 @@ final class AudioFileProcessor: ObservableObject {
         let file: AVAudioFile
         do {
             file = try AVAudioFile(forReading: url)
+            Debug.log("✅ AVAudioFile opened successfully")
         } catch {
+            Debug.log("❌ AVAudioFile failed to open: \(error)")
             // AVAudioFileで開けない場合は、先に変換が必要
             throw ProcessingError.unsupportedFormat
         }
@@ -130,6 +147,7 @@ final class AudioFileProcessor: ObservableObject {
         var currentSegmentFrames: [AVAudioPCMBuffer] = []
         var lastSpeechTime: TimeInterval = 0
         var currentTime: TimeInterval = 0
+        var currentSegmentSize: Int64 = 0
         
         // ファイルを読み込みながら処理
         while file.framePosition < totalFrames {
@@ -151,6 +169,10 @@ final class AudioFileProcessor: ObservableObject {
             
             // 発話検出ロジック
             if isSpeech {
+                // バッファサイズを概算（16bit, 16kHz, mono）
+                let bufferSize = Int64(buffer.frameLength) * 2  // 16bit = 2bytes
+                let estimatedSegmentSize = currentSegmentSize + bufferSize
+                
                 // 発話開始
                 if currentSegmentStart == nil {
                     currentSegmentStart = currentTime
@@ -159,6 +181,36 @@ final class AudioFileProcessor: ObservableObject {
                 }
                 currentSegmentFrames.append(buffer)
                 lastSpeechTime = currentTime
+                currentSegmentSize += bufferSize
+                
+                // セグメントが最大サイズまたは最大時間に達した場合、強制的に分割
+                let segmentDuration = currentTime - (currentSegmentStart ?? 0)
+                if estimatedSegmentSize >= maxSegmentSize || segmentDuration >= maxSegmentDuration {
+                    print("⚠️ Force splitting segment: size=\(estimatedSegmentSize/1024/1024)MB, duration=\(segmentDuration)s")
+                    
+                    if segmentDuration >= minSegmentDuration {
+                        if let segmentURL = try await saveSegment(
+                            frames: currentSegmentFrames,
+                            inputFormat: inputFormat,
+                            startTime: currentSegmentStart ?? currentTime,
+                            duration: segmentDuration,
+                            needsConversion: needsConversion,
+                            converter: converter
+                        ) {
+                            segments.append((
+                                url: segmentURL,
+                                startTime: currentSegmentStart ?? currentTime,
+                                duration: segmentDuration
+                            ))
+                            print("💾 Saved forced segment: \(currentSegmentStart ?? 0)s - \(currentTime)s")
+                        }
+                    }
+                    
+                    // リセット
+                    currentSegmentStart = nil
+                    currentSegmentFrames = []
+                    currentSegmentSize = 0
+                }
                 
             } else if let segmentStart = currentSegmentStart {
                 // 無音検出
@@ -190,6 +242,7 @@ final class AudioFileProcessor: ObservableObject {
                     // リセット
                     currentSegmentStart = nil
                     currentSegmentFrames = []
+                    currentSegmentSize = 0
                 }
             }
             

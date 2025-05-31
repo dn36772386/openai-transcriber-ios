@@ -20,10 +20,11 @@ final class OpenAIClient {
         // ── 0 byte／極小ファイルは送信しない ─────────────────────
         let attr  = try FileManager.default.attributesOfItem(atPath: url.path)
         let bytes = (attr[.size] as? NSNumber)?.intValue ?? 0
-        guard bytes >= 4_096 else { // 4 kB 未満は破棄
+        let maxBytes = 25 * 1024 * 1024  // 25MB
+        guard bytes >= 4_096 && bytes <= maxBytes else {
             throw NSError(domain: "Whisper", code: -3,
                           userInfo: [NSLocalizedDescriptionKey:
-                                     "Audio too short (\(bytes) bytes) – skipped"])
+                                     "Audio size invalid (\(bytes) bytes) – must be between 4KB and 25MB"])
         }
 
         // ── multipart/form-data を構築 ──────────────────────────────

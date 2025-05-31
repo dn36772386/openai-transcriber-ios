@@ -1,0 +1,141 @@
+✅ App: init() - App instance created!
+✅ AppDelegate: init() - AppDelegate instance created!
+✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x302ffc1d0>
+✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegateが初期化されました！
+✅ BackgroundSessionManager initialized
+✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x3023ff1b0>
+✅ Loaded 6 history items from UserDefaults.
+🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/Documents
+✅ App: ContentView appeared
+✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x3023feb20>)
+
+📝 Debug log file will be written to: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/debug_log.txt
+🛠 📄 --- fileImporter 開始 ---
+🛠 📄 fileImporter 成功. URL: /private/var/mobile/Library/Mobile Documents/com~apple~CloudDocs/録音75.mp3, securityScoped: true
+🛠 ⚙️ --- processImportedFileWithFormatSupport 開始: 録音75.mp3 ---
+🛠 ⚙️ セキュリティスコープアクセス開始試行
+🛠 ⚙️ セキュリティスコープアクセス開始結果: true
+🛠 ⚙️ コピー先Local URL: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/録音75.mp3
+🛠 ⚙️ ファイルコピー開始
+🛠 ⚙️ 既存ファイルを削除
+🛠 ⚙️ ファイルコピー成功
+🛠 ⚙️ Task開始
+🛠 ⚙️ --- processImportedFileWithFormatSupport 終了 ---
+🛠 ⚙️ セキュリティスコープアクセス停止 (defer)
+🛠 📄 --- fileImporter 終了 ---
+🛠 ⚙️ Task内: validateFormat 呼び出し開始
+
+The view service did terminate with error: Error Domain=_UIViewServiceErrorDomain Code=1 "(null)" UserInfo={Terminated=disconnect method}
+✅ [validateFormat] AVAudioFile successfully read 録音75.mp3
+🛠 ⚙️ Task内: validateFormat 終了. isValid: true
+🛠 ⚙️ Task内: メタデータ取得試行
+🛠 ⚙️ Task内: プログレス表示
+🛠 ⚙️ Task内: extractAudio/performSilenceSplitting 呼び出し開始
+➕ Started new history item: ID \(newItem.id)
+🛠 🎵 Processing file: 録音75.mp3
+🛠 🎵 Original file: 録音75.mp3
+🛠 📊 AudioFileProcessor: Processing 録音75.mp3
+🛠 📊 File exists: true
+📊 Processing with settings:
+   - Silence threshold: 0.010000001
+   - Silence window: 0.5s
+   - Min segment duration: 0.5s
+✅ [validateFormat] AVAudioFile successfully read 録音75.mp3
+🛠 ✅ AVAudioFile opened successfully
+📁 Processing file: 録音75.mp3
+📊 Format: <AVAudioFormat 0x300e9e5d0:  1 ch,  48000 Hz, Float32>
+⏱️ Duration: 3021.48s
+🎤 Speech started at 1.5000000000000002s
+
+💾 Saved segment: 1.5000000000000002s - 779.8000000001088s
+🎤 Speech started at 780.4000000001089s
+💾 Saved segment: 780.4000000001089s - 801.6000000001137s
+🎤 Speech started at 802.2000000001138s
+💾 Saved segment: 802.2000000001138s - 806.7000000001149s
+🎤 Speech started at 807.300000000115s
+
+💾 Saved segment: 807.300000000115s - 1366.8999999998523s
+🎤 Speech started at 1367.7999999998515s
+
+✅ Processing complete: 5 segments
+🛠 📊 Stopped accessing security scoped resource (if needed)
+🛠 ✅ Processing completed: 5 segments found
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_F06A804A-009E-439B-B618-BD2D777EFEEC.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_A2C2C488-EAA0-43BC-BC3E-FC6449BB730F.formdata
+🔵 [1] Registering task metadata.
+🛠 🔵 [1] Starting background upload task for segment_F06A804A-009E-439B-B618-BD2D777EFEEC.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_2C2AF8EE-CD4F-4368-8BA6-6828300B538C.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_28B68B60-F942-4B1F-8B34-C8299165B158.formdata
+🔵 [2] Registering task metadata.
+🛠 🔵 [2] Starting background upload task for segment_2C2AF8EE-CD4F-4368-8BA6-6828300B538C.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_97222841-319A-43E2-96C3-84ACCD2598CF.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_D703191C-B4EE-428B-AC27-6EE4183DD23D.formdata
+🔵 [3] Registering task metadata.
+🛠 🔵 [3] Starting background upload task for segment_97222841-319A-43E2-96C3-84ACCD2598CF.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_1A4FA06B-5D26-44FE-8908-335EC193A93C.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_ACC0285A-6DAA-4C13-A0B5-505247BB4A1E.formdata
+🔵 [4] Registering task metadata.
+🛠 🔵 [4] Starting background upload task for segment_1A4FA06B-5D26-44FE-8908-335EC193A93C.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_7EFE4982-A1BD-48BB-90B9-C528752405B9.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_7639CD38-505E-456A-8843-748E9DF83DAB.formdata
+🔵 [5] Registering task metadata.
+🛠 🔵 [5] Starting background upload task for segment_7EFE4982-A1BD-48BB-90B9-C528752405B9.wav
+🛠 ⚙️ Task内: extractAudio/performSilenceSplitting 終了
+🛠 ⚙️ --- Task 終了 ---
+
+🔵 [3] Received data chunk: 104 bytes
+🔵 [3] Task Completed.
+✅ [3] Success: 依頼にあるのが、えーと、オンラインな、こんな感じのアプリですが
+🗑️ [3] Deleting temp file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_D703191C-B4EE-428B-AC27-6EE4183DD23D.formdata
+🔵 [2] Received data chunk: 442 bytes
+🔵 [2] Task Completed.
+✅ [2] Success: 自分の健診検査とか、今の人級で年長とかを自分で見れるんですかね、給与の明細が。 それと同じように取り付けられたらと思うんで、 前回もある程度まで打ち合わせ行っていたみたいなんですけど、 ちょっと止まるのでそこ入れてとか、 そういうのはもう病院だけではできないので、 全国で研究してやりましょう。
+🗑️ [2] Deleting temp file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_28B68B60-F942-4B1F-8B34-C8299165B158.formdata
+
+🔵 [5] Received data chunk: 176 bytes
+🔵 [5] Task Completed.
+❌ [5] HTTP Error: 413 - {
+  "error": {
+    "message": "413: Maximum content size limit (26214400) exceeded (26468324 bytes read)",
+    "type": "server_error",
+    "param": null,
+    "code": null
+  }
+}
+🗑️ [5] Deleting temp file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_7639CD38-505E-456A-8843-748E9DF83DAB.formdata
+
+🔵 [4] Received data chunk: 5803 bytes
+🔵 [4] Task Completed.
+✅ [4] Success: おかわりから同意書のデバッグサインはどのアリアなのかという話があった ここに電子サインとか生成AIとか音声AIの話 それらも書いてるんですけど ここから中島さんにマイギター使ってもらって 音声AIって書いてるんだけど、現実を見ると リプレイスの時に見れた方が絶対に歌いとるかもしれない そうですね なのでその辺は審議しながら皆さんと見合いながら 次の数値のところを見ていきますという風に考えをしているので この辺も計画例を挙げたけれども 実際にコンサルさん入ったなという計画をしたら このほうが効率的なので この辺の整理をしていくのも一緒にやってほしい 次の2030年以降は次のコースになります 一応入りすべき課題とか 言っている人が入って出てくる赤身の保証の部分ですね これが何より大切だと思うので テイクしてシステムレターができるみたいな 今まだ主要な人にいいのを持っているから やるのはやるのかという この辺の赤嶋さんの言葉が一番私たちに良さそう やるのはやるのか 初回のね 初回のね 初回言うてますからね ありがとうございます 鳥肌が立った 部長にも言うたらあれ 先生全職に行かせるべきですよ それでDXを推進する これは一応医療情報部内に置くことになりますので 医療情報部の県民の先生たちなどに置いて 計算しています 次のページはこうです これが主体です 今申し上げたとおりに 病院の診てて全部診療会 そこまでの基本構想を作るのが 病院庁とした施設の構造で書いて その下にある病院情報システム委員会 ここが全員ここに参加するようなプロジェクトとして 機動力を推進する システムの作り システムリプレイスの 基本構想設定というところはないんですけど 病院の診療会議の委員会で書いたことを 回しつつ 次のページは 後はいえ効果も出さなあかんということで どんな効果かというのは 医師の働き方だとか そういうふうに考えると 全額回収できるようなものでもないと思うので でもある程度お金は借りながらやるので 増収して回収 それとは別に 病院の価値だとか 不死身のサービス 治療の要件 大学のブランドの効果 というのがいる 増入効果をまとめると 後ろに資料があるんですけど 今日はちょっと観察して これはもう 医師庁向けにもこの資料が出ているので 無視はできない 無視しないでね この取り組みの中で 止まらないやつとかってあります? 走り始めていて 止められない止まらない 今年の分はもう走り始めている 25年度のところが 25年度は この中で一番止めれないのは 患者サービスアプリ 患者サービスアプリ 理事長が待ち時間が長い 警察が この1月に動くじゃないですか マスクがこれを入れるんです 私が分からないのは これはどんなシステムですか コンシルスか 特別のコンシルス 体感されてしまったんだね コンシルスを入れるのか スマホの導入したほうがいいんじゃないかという 高いんですけど 高いですよね SXGPにはなってないんですよね SXGPを入れる こっちの場合は 新しい部屋だったら そこに入れるんだけど 今の部屋に入れようと思うと 扱いの費用になるので それだとキャリアに支援聞いてもらうので キャリアに入れるかなという スマホだとそのあたりも 最終費用のところで考える そうですね そのあたりも 10月は予算要件なので 8月は終わりですけど 絶妙なタイミングで入社できたのは そういう意味ではないですけど 細かい爪をとにかく どんだけ来年やってきてもいいですけどね キシスにあったらこうだみたいなところも シナリオとか そうですね ある程度分けていきました 9月5日は どうやって作るのかというのが やるのかなと思って ちょっとDXの話が出たので ちょっとそれぞれですけど 今回の申し上げの中で 普通のシステムなんですけど ということから 病院の中のDXを進めていくところが 今のアビムさんが持っている 大学の契約もあって 病院の契約もあって そこにプラス そこの中でどこまで 相談に乗ってくるのか できて 病院の中の推進 病院の中でDXを全部理解している 人がいなくて 今がこうなので 将来的なビジョンを超えて ある程度お示ししながらやらないと 伴走支援的な感じですよね 伴走支援みたいなものを どうできるのかというのを ちょっと考えて 部長にご承知を そうなんですか ご話を聞かないと 新病院のあっちから戻られた 新病院に戻って 私たちは話し通しやすい 戻られてよかったですね って言っちゃったらダメですけど あかんしんどそうだったのかな それはありがたい話というか では本題に戻ります スケジュール感は この予算に向けての 9月どうか そうですね 9月の最初は 契約が映っておられましたか 契約まだ連絡来てないです 伴走支払いこのタイミングで よろしいかだけ聞きます 多分今から言ったら 中旬くらいになると思います
+🗑️ [4] Deleting temp file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_ACC0285A-6DAA-4C13-A0B5-505247BB4A1E.formdata
+
+🔵 [1] Received data chunk: 9779 bytes
+🔵 [1] Task Completed.
+✅ [1] Success: ご挨拶ということでまだ契約も 終わっていない状況だと思います のである程度これからのスケジュール 間どこからいつからどんなもんで 始めていこうかだったりですね あとちょっとお願い事項として は皆さんご存じのとおり私自身 が前回都松のほうでさせていただ いていた関係で資料系は私の頭 には一部残ってはいるものの一切 持ち出していないのでいろいろ 検討させていただいて企画条件 やったりですねといったところの 資料等々またお見せいただければ なと思っておりますのでそのあたり ご準備いただくようなところ あと担当者ですかね不実である とか先場している島田さんには お願いしますとお願いしてます けれども またアラースさんですかね担当 は マネージャーアラースさん上川 西村さん 西村さん とうとうそのあたりの連絡先も いただいてやってもらうことで あったかなとちょっとご案内いただ ければありがたいなというところ で考えておりますといったところ と私からのお願い事項はそのぐらい で はい ちょっとお待たせします それは全然あんまりしていなかった と思うんですけど 一応ちょっと直近の進め方のあたり だけちょっと合わせておきたい なと思っております この仕様書でいただいているやつ なんですけど取り急ぎはまだ現状 の可視化をちょっと早めに進めて いかないといけないなというところ で先ほどの完成途中をいただければ 一定ちょっと現状の把握はさせて いただこうかなと思っています それに加えてネットワークのところ の現状可視化が一番体で時間が かかるところかなと思っている のでちょっとそのあたりをどう 進めていきましょうかというところ がちょっと一つご相談ポイント でそのあたりのスケジュールを 見させていく上でこの仕様書の 一番後ろのページですねスケジュール いただいている部分ありますけど 基本計画の策定の大体の決め方 の目三点あったりします そこを2月ぐらいには何とか会 を開いてみたいなそういうルール 的なところがあればそこからちょっと 逆算して引いていこうかなと思 うんですけど まず進め方として前回と同じように 前回私が入ったときもすでに各 文をリアリングというのを当てた 対応でしたけどもあのときは各 文をインタビューされて意見が あのときはOSSに移す方向でという 大きな方針の中で各文を課題感 であるとかというのをお聞きされて いましたあの辺はまず同じように されるのかどうか今回はそこは 前回の話のときに頑張って変え たのでもう少し軽くやるのかどうか とその上で会議対応をどうする か企画調整会議と同じようにまた 企画あれって今も続いているんです けどもちょっとそういったところ を同じようにしたいとご要望が あるのかどうかですねで委員会 はたぶん毎月1回がたぶんされて いると思いますのでそこで最終 承認をもらうというのは当然変わ らないと思いますのでそれにもって いくための会議を皆様と進める ものとその間にクッションという かその企画調整会議みたいなもの をどうやって入れていくのかこの あたりに関して何かイメージが あったらお聞きいただければと その資料とかは我々の方で皆さん とお話しながら作っていく予定 になりますので 今の社会情勢とかそういうのを 考えると前回リプレイスと次回 を同じようには金額感を含めて できないんじゃないかと個人的に 思っているんですで医療情報部 の体制の今医療情報部長の日野 先生が県庁で医療事務局長兼務 なんですけどこのメンバーで体幹 なんですよなので基本的に入れて いるのはいらっしゃる間に周り と一緒とは違うんで全体のそういう 基本的なところはちょっと抑えて いただきたいと思うんですけど 今の社会情勢からみんなの仕事 がそういったのと今そのまま横 スラで三森とあたりで人数が30 はいまあ半はいネットワーク6年 保守込みで何も触らずお見せします で病院の特性からsesだけは大阪市 から長期借りができるんですよ それについての概算要求は2028年 5月構築なんだけどsesなので着手 がときからお金がかかるからということで 2027年からのお金なので今年概算 は一旦要求しているんですその 要求が18億前回8.5億なんですけど 法人会の吉岡部長さんがこればっかり 言ってまあそうなりますよね 大学法人経営の大阪市にも出して もらっていて1回出して多分議会 始まる前に何だこれはっていう のがいろいろ返ってくるんですけど まだそれが返ってきてないんで そろそろ返ってくる頃かなと思うん ですけどそんな絡みで費用感っていう ところが今回一番テーマになる かなと思っているのでちょっと その全体の規模感からどのような 構築を目指していくのかという ところの基本設計は何をつくった かというのが私はイメージしている ところでかつ医師の働き方改革 より会議がすごく少なくなって いて病院情報システム委員会という のを全体の各進路とからも代表 いたして医療職全員始まる前に 60人規模だったんですけどそれ 人数半分にして毎月やっていた のは年4回で今回開くのが10月で 1位が1月1位が4月になるのと病院 の戦略的な動きを決める会議は 戦略会議というのが毎月やる でもそれの議案提出が1週間前 なんですよねということはほぼ 2ヶ月前には用意してかからない と皆さんの自分がねまあすご いことがあってその会議に対して シャンシャンという会議があって ちょっとその辺逆算しながらその 主要なことをどこで決めてどう 委員会を使って決めていくのか また来年度の市内の会議で決めよう とかそこに木野先生いないので かつ年度過ぎの医療事務局長が 木野先生のですよ良い状態として ますねちょっとその辺のスケジュール とかを考えながら 先ほど言われた10月1月4月という のは何会議でしたっけ 病院情報システム委員会 委員会ですね委員会とその戦略 会議の関係性は委員会のほうが 上って思っておいてもいいですか 戦略会議のほうが上ですね 戦略会議のほうが上 病院の全ての意思決定はそこです またそこが大変ですからどうしよう ということは1月に縛られるわけ ではないという理解でいいんですかね そうですね1月に縛られるわけではないです そうすると2月の戦略会議がこういうことをこのぐらいの金額 で具体的に細かいことは来年と4月 以降に決めるんだけど方向性は こうだいたいこんな金額だと そうですね 大方針ですね どんな金額かというと6年リーサイン したら毎年病院で支出はこれになり 皆さんこれで病院に行きますか その辺で何でそんだけかかるのとか 何でそれをやらないといけないの その方向性をなぜやらないのかが戦略会議で上野先生方に理解いただけるような目盤を仕掛けて それを日野先生が最後に対談直前にお話しいただいて感じているからね 総論で言うと費用感でもう少し細分化すると データウェアハウスとかあのあたりの構成の見直しとかネットワークの何とかの強化とか 医療DXがあっているんですよね はい これが今病院ではDXをやらないと医療機関からの対策をいただいて 中島さんの仕事を言っていることはありますか はい 病院がDXをやらないと医療機関からの対策を言っていることはありますか 全然多分大きなことなので 3ページかな 3ページに感染症状の取り巻き、社会背景とそれから電子ワークの更新の対応ができます 病院の建て替えの計画も中継の計画も頑張っているので 新病院を睨んでデジタル、モジラルというところの更新を行わないとダメですね 新病院に何をやっていくのかを示しているところなので DXなら一応確実に再増加して 国策でやる分と新病院とカラフルと病院と 研究協力はもう6分だけではないので ほっとしやることは電子補正とリモートカルテ 一部RPAでとかしましょうか 学び指標とか今おっしゃっているDWHとか データ活用とかということを進めていた人が入っているものがあるので そこを使って法律仕事 人給指摘で今人給の方が 大学のところで会話をしてもらっていますけど それプラス、ここの意味は高橋先生も話しているんですけど 健康診断のデータを人給で問い扱う 交代かとか
+🗑️ [1] Deleting temp file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_A2C2C488-EAA0-43BC-BC3E-FC6449BB730F.formdata
+
+✅ Saved full audio to: \(destinationFullAudioURL.path)
+✅ Saved 7 history items to UserDefaults.
+📝 Updated history item: ID \(id)
+
+⚠️ Update skipped: No data to save for ID \(id)
+🛠 📁 Loading history audio from: /var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/Documents/full_session_A6CB3BA4-6396-468C-8932-353A2D56FE4B.wav
+🛠 ✅ History audio loaded successfully
+
+<0x101d99400> Gesture: System gesture gate timed out.
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_A6CB3BA4-6396-468C-8932-353A2D56FE4B_DC786347-3F61-4718-82E6-4428AECB289B.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_F3083959-5715-4CAF-9305-3E179415DAF6.formdata
+🔵 [6] Registering task metadata.
+🛠 🔵 [6] Starting background upload task for segment_A6CB3BA4-6396-468C-8932-353A2D56FE4B_DC786347-3F61-4718-82E6-4428AECB289B.wav
+
+🔵 [6] Received data chunk: 369 bytes
+🔵 [6] Task Completed.
+❌ [6] HTTP Error: 500 - {
+  "error": {
+    "message": "The server had an error processing your request. Sorry about that! You can retry your request, or contact us through our help center at help.openai.com if you keep seeing this error. (Please include the request ID req_58e61675c829914997317298da0e1d9b in your email.)",
+    "type": "server_error",
+    "param": null,
+    "code": null
+  }
+}
+🗑️ [6] Deleting temp file: /private/var/mobile/Containers/Data/Application/91ABDF0E-5EC7-4EDA-AA8D-046D082C9ACC/tmp/upload_F3083959-5715-4CAF-9305-3E179415DAF6.formdata

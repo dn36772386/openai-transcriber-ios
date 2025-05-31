@@ -71,6 +71,7 @@
 		181594B92DD8959F00720E1C /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundSessionManager.swift; sourceTree = "<group>"; };
 		185D0B862DEAD1E7003E4BDA /* ProofreadView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProofreadView.swift; sourceTree = "<group>"; };
+		185D0B892DEAE4B7003E4BDA /* log.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = log.txt; sourceTree = "<group>"; };
 		1860716D2DD8B02500D3461D /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		1860716F2DD8B2BD00D3461D /* OpenAIClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OpenAIClient.swift; sourceTree = "<group>"; };
 		186071752DD8BF2700D3461D /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -113,6 +114,7 @@
 		1806C16E2DD373640066C50F = {
 			isa = PBXGroup;
 			children = (
+				185D0B892DEAE4B7003E4BDA /* log.txt */,
 				181594B92DD8959F00720E1C /* Info.plist */,
 				1806C1792DD373640066C50F /* openai-transcriber-ios */,
 				1806C18A2DD373670066C50F /* openai-transcriber-iosTests */,

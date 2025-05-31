@@ -13,6 +13,8 @@ class BackgroundSessionManager: NSObject {
     // 各タスクIDに対応するメタデータ（元のファイルURL、開始時刻、一時ファイルURL）を保持
     private var taskMetadataStore = [Int: (originalURL: URL, startTime: Date, tempFileURL: URL)]()
     
+    // リトライ回数を管理
+    private var retryCountStore = [Int: Int]()
     // バックグラウンドURLSession
     lazy var backgroundSession: URLSession = {
         let config = URLSessionConfiguration.background(withIdentifier: BackgroundSessionManager.backgroundSessionIdentifier)
@@ -81,6 +83,27 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
         } else if let httpResponse = httpResponse, !(200..<300).contains(httpResponse.statusCode) {
             let errorMsg = String(data: data ?? Data(), encoding: .utf8) ?? "Unknown HTTP Error"
             print("❌ [\(taskId)] HTTP Error: \(httpResponse.statusCode) - \(errorMsg)")
+            
+            // 500エラーの場合はリトライ
+            if httpResponse.statusCode == 500 {
+                let retryCount = retryCountStore[taskId] ?? 0
+                if retryCount < 3 {
+                    print("🔄 [\(taskId)] Retrying (attempt \(retryCount + 1)/3)...")
+                    retryCountStore[taskId] = retryCount + 1
+                    
+                    // 3秒後にリトライ
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        let tempFileURL = metadata.tempFileURL
+                        if FileManager.default.fileExists(atPath: tempFileURL.path) {
+                            let retryTask = self.backgroundSession.uploadTask(with: task.originalRequest!, fromFile: tempFileURL)
+                            self.taskMetadataStore[retryTask.taskIdentifier] = metadata
+                            retryTask.resume()
+                        }
+                    }
+                    return
+                }
+            }
+            
             taskError = NSError(domain: "HTTPError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMsg])
         } else if let data = data {
             do {
@@ -109,6 +132,7 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
         
         // 完了したタスクのデータをクリーンアップ
         self.cleanupTask(taskId)
+        self.retryCountStore.removeValue(forKey: taskId)
     }
     
     // 全てのイベントが処理された後に呼ばれる

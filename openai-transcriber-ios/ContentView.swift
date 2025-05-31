@@ -532,8 +532,13 @@ struct ContentView: View {
                 historyManager.currentHistoryId = historyManager.startNewSession()
             }
             
+            Debug.log("🎵 Processing file: \(url.lastPathComponent)")
+            Debug.log("🎵 Original file: \(originalURL.lastPathComponent)")
+            
             let result = try await fileProcessor.processFile(at: url)
             let originalFileName = originalURL.lastPathComponent
+            
+            Debug.log("✅ Processing completed: \(result.segments.count) segments found")
             
             for (index, segment) in result.segments.enumerated() {
                 let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
@@ -565,6 +570,10 @@ struct ContentView: View {
             }
             
         } catch {
+            Debug.log("❌ performSilenceSplitting error: \(error)")
+            Debug.log("❌ Error type: \(type(of: error))")
+            Debug.log("❌ Error description: \(error.localizedDescription)")
+            
             showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 showFormatError("処理エラー: \(error.localizedDescription)")
