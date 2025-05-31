@@ -112,6 +112,7 @@ struct ContentView: View {
                     ContentTabView(selectedTab: $selectedTab)
                         .background(Color.white)
                         .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
+                        .padding(.bottom, 0)
                     
                     // 既存のMainContentViewをswitch文で囲む
                     TabView(selection: $selectedTab) {
@@ -401,9 +402,9 @@ struct ContentView: View {
             updateTitleText()
         }
         .onChange(of: selectedTab) { _, _ in
-            // タブ切り替え時の振動を削除（よりシックに）
-            // let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
-            // impactFeedback.impactOccurred()
+            // タブ切り替え時の振動
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
         }
     }
 
@@ -1315,20 +1316,29 @@ struct MainContentView: View {
     let playNextSegmentCallback: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            TranscriptView(
-                lines: $transcriptLines,
-                currentPlayingURL: audioPlayerURL,
-                onLineTapped: onLineTapped,
-                onRetranscribe: onRetranscribe
-            )
-            // パディングを削除してフラットに
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                TranscriptView(
+                    lines: $transcriptLines,
+                    currentPlayingURL: audioPlayerURL,
+                    onLineTapped: onLineTapped,
+                    onRetranscribe: onRetranscribe
+                )
+                .frame(maxHeight: .infinity)
+                
+                // スペーサーを追加して高さを調整
+                if audioPlayerURL == nil && transcriptLines.isEmpty && !isRecording {
+                    Spacer()
+                        .frame(height: 50)
+                }
             
             // 初回利用ガイド
             if transcriptLines.isEmpty && !UserDefaults.standard.bool(forKey: "hasShownWelcomeGuide") {
                 WelcomeGuideView()
                     .transition(.opacity)
             }
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
     }

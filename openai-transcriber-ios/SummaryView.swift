@@ -28,6 +28,9 @@ struct SummaryView: View {
         VStack(spacing: 0) {
             if summaryText.isEmpty && !isLoading {
                 EmptyStateView()
+                    .padding(.horizontal, 10)
+                    .padding(.top, 10)
+                    .padding(.bottom, 10)
             } else if isLoading {
                 VStack(spacing: 20) {
                     ProgressView()
@@ -47,6 +50,9 @@ struct SummaryView: View {
                     .foregroundColor(.red)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 10)
+                .padding(.top, 10)
+                .padding(.bottom, 10)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -63,7 +69,18 @@ struct SummaryView: View {
                         Spacer(minLength: 50)
                     }
                 }
+                .background(Color.cardBackground)
+                .cornerRadius(6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.border, lineWidth: 1)
+                )
+                .padding(.horizontal, 10)
+                .padding(.top, 10)
+                .padding(.bottom, 10)
             }
+            
+            Spacer()
             
             // 要約生成ボタン
             if !transcriptLines.isEmpty {
@@ -203,20 +220,32 @@ struct SummaryView: View {
         // Gemini 2.5の思考トークンを考慮（3倍）
         let totalTokens = outputTokens * 3
         
-        // 最小・最大の制限
-        let minTokens = UserDefaults.standard.integer(forKey: "minTokenLimit") > 0
-            ? UserDefaults.standard.integer(forKey: "minTokenLimit")
-            : 4000
+        // 文字数に応じた動的な最小トークン数
+        let dynamicMinTokens: Int
+        if charCount <= 1000 {
+            // 1000文字以下：最小1500トークン
+            dynamicMinTokens = 1500
+        } else if charCount <= 5000 {
+            // 5000文字以下：最小3000トークン
+            dynamicMinTokens = 3000
+        } else {
+            // それ以上：設定値を使用
+            dynamicMinTokens = UserDefaults.standard.integer(forKey: "minTokenLimit") > 0
+                ? UserDefaults.standard.integer(forKey: "minTokenLimit")
+                : 6000
+        }
+        
         let maxTokens = UserDefaults.standard.integer(forKey: "maxTokenLimit") > 0
             ? UserDefaults.standard.integer(forKey: "maxTokenLimit")
             : 30000
         
-        let finalTokens = min(maxTokens, max(minTokens, totalTokens))
+        let finalTokens = min(maxTokens, max(dynamicMinTokens, totalTokens))
         
         print("📊 Token calculation:")
         print("  - Original: \(charCount)文字")
         print("  - Compressed (\(Int(compressionRatio * 100))%): \(compressedCharCount)文字")
         print("  - Output tokens: \(outputTokens)")
+        print("  - Dynamic min tokens: \(dynamicMinTokens)")
         print("  - Total allocated: \(finalTokens)")
         
         return finalTokens

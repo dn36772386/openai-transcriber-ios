@@ -3,6 +3,7 @@ import SwiftUI
 struct TranscriptView: View {
     @Binding var lines: [TranscriptLine]
     var currentPlayingURL: URL?
+    var isRecording: Bool
     var onLineTapped: (URL) -> Void
     var onRetranscribe: (TranscriptLine) -> Void
     
@@ -10,9 +11,10 @@ struct TranscriptView: View {
     @State private var selectedLineId: UUID?
     @State private var showActionSheet = false
     
+    
     var body: some View {
         ZStack {
-            if lines.isEmpty {
+            if lines.isEmpty && !isRecording {
                 // 空の状態の表示（要約ビューと同じスタイル）
                 VStack(spacing: 20) {
                     Image(systemName: "mic.circle")
@@ -27,6 +29,23 @@ struct TranscriptView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if lines.isEmpty && isRecording {
+                // 録音中の表示
+                VStack(spacing: 20) {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.red)
+                        .symbolEffect(.pulse, options: .repeating)
+                    
+                    Text("録音中...")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                    
+                    Text("話し終わったら右上の ✓ をタップ")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -68,6 +87,15 @@ struct TranscriptView: View {
                 }
             }
         }
+        .background(Color.cardBackground)
+        .cornerRadius(6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.border, lineWidth: 1)
+        )
+        .padding(.horizontal, 10)
+        .padding(.top, 10)
+        .padding(.bottom, 10)
         .confirmationDialog(
             "アクション選択",
             isPresented: $showActionSheet,

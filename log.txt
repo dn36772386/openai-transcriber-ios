@@ -1,93 +1,56 @@
 ✅ App: init() - App instance created!
 ✅ AppDelegate: init() - AppDelegate instance created!
-✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x301858030>
-
+✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x30152c110>
 ✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegateが初期化されました！
 ✅ BackgroundSessionManager initialized
-✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x300f33440>
-✅ Loaded 7 history items from UserDefaults.
-🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/1A4FDF6A-EDD9-4DAF-9541-B7D3CA325E53/Documents
+✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x30027c600>
+✅ Loaded 10 history items from UserDefaults.
+🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/Documents
 ✅ App: ContentView appeared
-✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x301438a50>)
+✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x3019430f0>)
 
-<0x101d91040> Gesture: System gesture gate timed out.
-NSBundle file:///System/Library/PrivateFrameworks/MetalTools.framework/ principal class is nil because all fallbacks have failed
-Unable to open mach-O at path: /Library/Caches/com.apple.xbs/Binaries/RenderBox/install/Root/System/Library/PrivateFrameworks/RenderBox.framework/default.metallib  Error:2
-59638328 Plugin query method called
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-#FactoryInstall Unable to query results, error: 5
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-LaunchServices: store (null) or url (null) was nil: Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-Attempt to map database failed: permission was denied. This attempt will not be retried.
-Failed to initialize client context with error Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-LaunchServices: store (null) or url (null) was nil: Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-Attempt to map database failed: permission was denied. This attempt will not be retried.
-Failed to initialize client context with error Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-LaunchServices: store (null) or url (null) was nil: Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-Attempt to map database failed: permission was denied. This attempt will not be retried.
-Failed to initialize client context with error Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-LaunchServices: store (null) or url (null) was nil: Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-Attempt to map database failed: permission was denied. This attempt will not be retried.
-Failed to initialize client context with error Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-LaunchServices: store (null) or url (null) was nil: Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-Attempt to map database failed: permission was denied. This attempt will not be retried.
-Failed to initialize client context with error Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-LaunchServices: store (null) or url (null) was nil: Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-Attempt to map database failed: permission was denied. This attempt will not be retried.
-Failed to initialize client context with error Error Domain=NSOSStatusErrorDomain Code=-54 "process may not map database" UserInfo={NSDebugDescription=process may not map database, _LSLine=68, _LSFunction=_LSServer_GetServerStoreForConnectionWithCompletionHandler}
-Got a keyboard will change frame notification, but keyboard was not even present.
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Got a keyboard will change frame notification, but keyboard was not even present.
-Got a keyboard will change frame notification, but keyboard was not even present.
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Got a keyboard will change frame notification, but keyboard was not even present.
-Got a keyboard will change frame notification, but keyboard was not even present.
-VS terminated with error: Error Domain=_UIViewServiceErrorDomain Code=1 "(null)" UserInfo={Terminated=disconnect method}
-Got a keyboard will change frame notification, but keyboard was not even present.
-Got a keyboard will hide notification, but keyboard was not even present.
-connection invalidated
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-59638328 Plugin query method called
-connection invalidated
-Received port for identifier response: <(null)> with error:Error Domain=RBSServiceErrorDomain Code=1 "Client not entitled" UserInfo={RBSEntitlement=com.apple.runningboard.process-state, NSLocalizedFailureReason=Client not entitled, RBSPermanent=false}
-elapsedCPUTimeForFrontBoard couldn't generate a task port
-✅ Saved 7 history items to UserDefaults.
-📝 Updated history item: ID 0E04ABB7-69EC-435F-AC5C-BF2945FA0A16
+➕ Started new history item: ID 6CECBE20-FA5B-4D79-A13B-CA1C50633C89
+🗑️ Deleting old history item (due to new session): F45F1C73-4089-4E17-9E2F-50EA1DB22362
+✅ Saved 10 history items to UserDefaults.
+Starting recorder
 
-📊 Summary tokens calculation - Base: 12000, Ratio: 40%, Result: 4800
+🎙️ Recording started in auto mode
+🎙️ Input format: <AVAudioFormat 0x30344c550:  1 ch,  48000 Hz, Float32>
+🎙️ Output format: Optional(<AVAudioFormat 0x303415900:  1 ch,  16000 Hz, Int16>)
+📝 Debug log file will be written to: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/debug_log.txt
+🛠 🎛️ Audio Settings - Threshold: 0.010000001, Window: 0.5s, MinDuration: 0.5s
+📝 Created new audio file: A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
+📝 Format: <AVAudioFormat 0x303415900:  1 ch,  16000 Hz, Int16>
 
-📝 Gemini API Request - Max Output Tokens: 4800
+🛠 ✅ finish tapped
+📊 Segment finalized: A0F080B6-E3FA-4C20-B907-4C234854B95C.wav, size: 519296 bytes, duration: 16.46s
+✅ Audio file valid: duration=16.1s
+⚠️ Update skipped: No data to save for ID 6CECBE20-FA5B-4D79-A13B-CA1C50633C89
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/upload_9718E201-1C40-43C5-B0CE-0B402DD7AE62.formdata
+🔵 [1] Registering task metadata.
+🛠 🔵 [1] Starting background upload task for A0F080B6-E3FA-4C20-B907-4C234854B95C.wav
+
+🔵 [1] Received data chunk: 194 bytes
+🔵 [1] Task Completed.
+✅ [1] Success: このままの状態で、コメントが大荒れしたこともある えー! ほんとに、500人くらいの人がずーっと言い合いをする えー! こともあるほど
+🗑️ [1] Deleting temp file: /private/var/mobile/Containers/Data/Application/5482472C-556F-4D00-9909-19A403CF1FA8/tmp/upload_9718E201-1C40-43C5-B0CE-0B402DD7AE62.formdata
+
+✅ Saved full audio to: \(destinationFullAudioURL.path)
+✅ Saved 10 history items to UserDefaults.
+📝 Updated history item: ID 6CECBE20-FA5B-4D79-A13B-CA1C50633C89
+⚠️ Segment file not found in Documents: segment_D06ED6FF-AA9A-4C95-9C67-C95764986C46_630974A3-276E-4E22-A9CA-76DBA43881F5.wav
+🛠 🔄 resetPlayer called with URL: nil
+🛠 🗑️ No URL provided, clearing player
+
+📊 Token calculation:
+  - Original: 204文字
+  - Compressed (70%): 142文字
+  - Output tokens: 71
+  - Total allocated: 4000
+
+📝 Gemini API Request - Max Output Tokens: 4000
 
 📝 Gemini API Response: {
   "candidates": [
@@ -100,24 +63,96 @@ elapsedCPUTimeForFrontBoard couldn't generate a task port
     }
   ],
   "usageMetadata": {
-    "promptTokenCount": 1164,
-    "totalTokenCount": 5963,
+    "promptTokenCount": 641,
+    "totalTokenCount": 4640,
     "promptTokensDetails": [
       {
         "modality": "TEXT",
-        "tokenCount": 1164
+        "tokenCount": 641
       }
     ],
-    "thoughtsTokenCount": 4799
+    "thoughtsTokenCount": 3999
   },
   "modelVersion": "models/gemini-2.5-pro-preview-05-06",
-  "responseId": "efY6aOSlOemhz7IP7o-k4QI"
+  "responseId": "D_46aLD5Kvutz7IP-4-MEQ"
 }
 ...
-📊 Token Usage - Prompt: 1164, Total: 5963, Thoughts: 4799
+📊 Token Usage - Prompt: 641, Total: 4640, Thoughts: 3999
 ❌ Decoding error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
 ❌ Summary generation error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
 
-📊 Summary tokens calculation - Base: 12000, Ratio: 70%, Result: 8400
+📊 Token calculation:
+  - Original: 204文字
+  - Compressed (30%): 61文字
+  - Output tokens: 30
+  - Total allocated: 6000
 
-📝 Gemini API Request - Max Output Tokens: 8400
+📝 Gemini API Request - Max Output Tokens: 6000
+
+📝 Gemini API Response: {
+  "candidates": [
+    {
+      "content": {
+        "role": "model"
+      },
+      "finishReason": "MAX_TOKENS",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 641,
+    "totalTokenCount": 6640,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 641
+      }
+    ],
+    "thoughtsTokenCount": 5999
+  },
+  "modelVersion": "models/gemini-2.5-pro-preview-05-06",
+  "responseId": "hv46aI_dJMGez7IP_ua62AI"
+}
+...
+📊 Token Usage - Prompt: 641, Total: 6640, Thoughts: 5999
+❌ Decoding error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
+❌ Summary generation error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
+
+📊 Token calculation:
+  - Original: 204文字
+  - Compressed (20%): 40文字
+  - Output tokens: 20
+  - Total allocated: 6000
+
+📝 Gemini API Request - Max Output Tokens: 6000
+
+📝 Gemini API Response: {
+  "candidates": [
+    {
+      "content": {
+        "role": "model"
+      },
+      "finishReason": "MAX_TOKENS",
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 641,
+    "totalTokenCount": 6640,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 641
+      }
+    ],
+    "thoughtsTokenCount": 5999
+  },
+  "modelVersion": "models/gemini-2.5-pro-preview-05-06",
+  "responseId": "C_86aMCuH-XzqtsP-Yns6AQ"
+}
+...
+📊 Token Usage - Prompt: 641, Total: 6640, Thoughts: 5999
+❌ Decoding error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
+❌ Summary generation error: Error Domain=GeminiClient Code=4 "出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。" UserInfo={NSLocalizedDescription=出力トークン数の上限に達しました。要約レベルを『軽い要約』に変更するか、設定で最大トークン数を増やしてください。}
+
+#FactoryInstall Unable to query results, error: 5
