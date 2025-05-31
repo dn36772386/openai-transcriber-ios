@@ -94,11 +94,11 @@ class HistoryManager: ObservableObject {
         )
 
         historyItems.insert(newItem, at: 0)
-        print("➕ Started new history item: ID \\(newItem.id)")
+        print("➕ Started new history item: ID \(newItem.id)")
 
         while historyItems.count > maxHistoryItems {
             let oldItem = historyItems.removeLast()
-            print("🗑️ Deleting old history item (due to new session): \\(oldItem.id)")
+            print("🗑️ Deleting old history item (due to new session): \(oldItem.id)")
             deleteAssociatedFiles(for: oldItem)
         }
 

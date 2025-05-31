@@ -1,135 +1,758 @@
 ✅ App: init() - App instance created!
 ✅ AppDelegate: init() - AppDelegate instance created!
-✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x3034a4140>
+✅ App: appDelegate = <openai_transcriber_ios.AppDelegate: 0x301458070>
 ✅ AppDelegate: didFinishLaunchingWithOptions - AppDelegateが初期化されました！
 ✅ BackgroundSessionManager initialized
-✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x3023fc7c0>
-
-✅ Loaded 6 history items from UserDefaults.
-🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/Documents
+✅ AppDelegate: BackgroundSessionManager = <openai_transcriber_ios.BackgroundSessionManager: 0x300309d00>
+✅ Loaded 4 history items from UserDefaults.
+🗄️ HistoryManager initialized. Documents Directory: /var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/Documents
 ✅ App: ContentView appeared
-✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x3038c42d0>)
+✅ App: AppDelegate instance = Optional(<SwiftUI.AppDelegate: 0x301822ac0>)
 
-#FactoryInstall Unable to query results, error: 5
+➕ Started new history item: ID \(newItem.id)
+✅ Saved 5 history items to UserDefaults.
+
+The view service did terminate with error: Error Domain=_UIViewServiceErrorDomain Code=1 "(null)" UserInfo={Terminated=disconnect method}
 NSBundle file:///System/Library/PrivateFrameworks/MetalTools.framework/ principal class is nil because all fallbacks have failed
 Unable to open mach-O at path: /Library/Caches/com.apple.xbs/Binaries/RenderBox/install/Root/System/Library/PrivateFrameworks/RenderBox.framework/default.metallib  Error:2
-📝 Debug log file will be written to: /private/var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/tmp/debug_log.txt
-🛠 WhisperQueue ▶︎ Enqueuing background task for: memo_B9B0DCAB-9C80-4761-8B5B-7F3BAE18770F.m4a
-🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/tmp/upload_C9CA39AF-9295-4490-A279-C550D16CC2F4.formdata
+📝 Debug log file will be written to: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/debug_log.txt
+🛠 WhisperQueue ▶︎ Enqueuing background task for: memo_191728BB-0816-4771-9F20-E05F84FF13ED.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_8ABF6ECD-0D2D-465A-A6E8-1DA51B7A1633.formdata
 🔵 [1] Registering task metadata.
-🛠 🔵 [1] Starting background upload task for memo_B9B0DCAB-9C80-4761-8B5B-7F3BAE18770F.m4a
+🛠 🔵 [1] Starting background upload task for memo_191728BB-0816-4771-9F20-E05F84FF13ED.wav
 
-🔵 [1] Received data chunk: 226 bytes
+🔵 [1] Received data chunk: 98 bytes
 🔵 [1] Task Completed.
-❌ [1] HTTP Error: 400 - {
-  "error": {
-    "message": "Invalid file format. Supported formats: ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']",
-    "type": "invalid_request_error",
-    "param": null,
-    "code": null
-  }
-}
-🗑️ [1] Deleting temp file: /private/var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/tmp/upload_C9CA39AF-9295-4490-A279-C550D16CC2F4.formdata
-🔔 Received notification for unknown/completed task: file:///private/var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/tmp/memo_B9B0DCAB-9C80-4761-8B5B-7F3BAE18770F.m4a
+✅ [1] Success: テステスマーク テステスマーク テステスマーク 本日は静電のり
+🗑️ [1] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_8ABF6ECD-0D2D-465A-A6E8-1DA51B7A1633.formdata
+🔔 Received notification for unknown/completed task: file:///private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/memo_191728BB-0816-4771-9F20-E05F84FF13ED.wav
 
-✅ Saved 5 history items to UserDefaults.
-🗑️ Deleted history item with ID: \(id)
-
-➕ Added new history item: ID AEAFCFA3-F1E1-487C-8D5D-6148700038A2, Date: 2025-05-31 09:21:51 +0000
-✅ Saved 6 history items to UserDefaults.
-
-✅ Saved 6 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 5 history items to UserDefaults.
-🗑️ Deleted history item with ID: \(id)
-
-➕ Added new history item: ID 058F527F-EDDF-4400-AAE9-49B7046DA77C, Date: 2025-05-31 09:22:04 +0000
-✅ Saved 6 history items to UserDefaults.
-
-✅ Saved 6 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 6 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 5 history items to UserDefaults.
-🗑️ Deleted history item with ID: \(id)
-✅ Saved 4 history items to UserDefaults.
-🗑️ Deleted history item with ID: \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-🛠 ⚠️ 要約生成中のため録音開始を制限
-
-🛠 ⚠️ 要約生成中のため録音開始を制限
-🛠 ⚠️ 要約生成中のため録音開始を制限
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-✅ Saved 4 history items to UserDefaults.
-📝 Updated history item: ID \(id)
-
-🛠 WhisperQueue ▶︎ Enqueuing background task for: memo_3BCC2510-CD72-475D-B568-B079424E1D63.m4a
-🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/tmp/upload_39F2B81C-87DD-4650-8DAD-C07477DE90F4.formdata
+🛠 WhisperQueue ▶︎ Enqueuing background task for: memo_B791EC8A-0473-44F4-B259-1569AADBED51.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_35491985-504D-4FF7-8CEA-ABFDFF4F4EBB.formdata
 🔵 [2] Registering task metadata.
-🛠 🔵 [2] Starting background upload task for memo_3BCC2510-CD72-475D-B568-B079424E1D63.m4a
+🛠 🔵 [2] Starting background upload task for memo_B791EC8A-0473-44F4-B259-1569AADBED51.wav
 
-🔵 [2] Received data chunk: 226 bytes
+🔵 [2] Received data chunk: 89 bytes
 🔵 [2] Task Completed.
-❌ [2] HTTP Error: 400 - {
-  "error": {
-    "message": "Invalid file format. Supported formats: ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm']",
-    "type": "invalid_request_error",
-    "param": null,
-    "code": null
-  }
-}
-🗑️ [2] Deleting temp file: /private/var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/tmp/upload_39F2B81C-87DD-4650-8DAD-C07477DE90F4.formdata
-🔔 Received notification for unknown/completed task: file:///private/var/mobile/Containers/Data/Application/A9194E38-EF53-476B-AC7F-9FB84C8FD2A5/tmp/memo_3BCC2510-CD72-475D-B568-B079424E1D63.m4a
+✅ [2] Success: これもリアルタイムでちゃんと文字起こししてほしいなぁ
+🗑️ [2] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_35491985-504D-4FF7-8CEA-ABFDFF4F4EBB.formdata
+🔔 Received notification for unknown/completed task: file:///private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/memo_B791EC8A-0473-44F4-B259-1569AADBED51.wav
+
+🛠 WhisperQueue ▶︎ Enqueuing background task for: memo_AE55F932-4A79-4C54-8D17-33D6AF7F65DC.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_3D8975D1-7D64-4420-AD7D-73B9F9563535.formdata
+🔵 [3] Registering task metadata.
+🛠 🔵 [3] Starting background upload task for memo_AE55F932-4A79-4C54-8D17-33D6AF7F65DC.wav
+
+🔵 [3] Received data chunk: 143 bytes
+🔵 [3] Task Completed.
+✅ [3] Success: まぁでもこれはしゃーないか まぁこれぐらいでいいんじゃないかな OKOK、いったんこれで狩りやん
+🗑️ [3] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_3D8975D1-7D64-4420-AD7D-73B9F9563535.formdata
+🔔 Received notification for unknown/completed task: file:///private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/memo_AE55F932-4A79-4C54-8D17-33D6AF7F65DC.wav
+
+➕ Added new history item: ID 5367BBB8-F080-4B5E-A4DF-6A5E1C8C5AB5, Date: 2025-05-31 09:43:30 +0000
+✅ Saved 6 history items to UserDefaults.
+➕ Added new history item: ID C820F5E0-CCDE-4942-B82D-E33EEEFF105F, Date: 2025-05-31 09:43:31 +0000
+✅ Saved 7 history items to UserDefaults.
+
+➕ Added new history item: ID 8BAC31F2-BACF-4839-A9B2-ED194A94E134, Date: 2025-05-31 09:43:32 +0000
+✅ Saved 8 history items to UserDefaults.
+➕ Added new history item: ID B41784D9-C000-4C13-86A1-F6219FDFFADA, Date: 2025-05-31 09:43:33 +0000
+✅ Saved 9 history items to UserDefaults.
+
+⚠️ Update skipped: No data to save for ID E665C6BC-563D-455B-870A-7916149A8FAD
+
+✅ Saved 9 history items to UserDefaults.
+📝 Updated history item: ID B41784D9-C000-4C13-86A1-F6219FDFFADA
+
+✅ Saved 9 history items to UserDefaults.
+📝 Updated history item: ID 8BAC31F2-BACF-4839-A9B2-ED194A94E134
+
+✅ Saved 9 history items to UserDefaults.
+📝 Updated history item: ID 5367BBB8-F080-4B5E-A4DF-6A5E1C8C5AB5
+
+⚠️ Update skipped: No data to save for ID E665C6BC-563D-455B-870A-7916149A8FAD
+
+✅ Saved 9 history items to UserDefaults.
+📝 Updated history item: ID 5532C454-B130-4441-A9F8-C71470E0589F
+
+#FactoryInstall Unable to query results, error: 5
+➕ Started new history item: ID \(newItem.id)
+✅ Saved 10 history items to UserDefaults.
+Starting recorder
+🎙️ Recording started in auto mode
+🎙️ Input format: <AVAudioFormat 0x303504820:  1 ch,  48000 Hz, Float32>
+🎙️ Output format: Optional(<AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>)
+🛠 🎛️ Audio Settings - Threshold: 0.010000001, Window: 0.5s, MinDuration: 0.5s
+
+📝 Created new audio file: 7EB6D152-BE7F-4A3C-BA11-060ECC90D9ED.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: 7EB6D152-BE7F-4A3C-BA11-060ECC90D9ED.wav, size: 23296 bytes, duration: 1.21s
+✅ Audio file valid: duration=0.6s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/7EB6D152-BE7F-4A3C-BA11-060ECC90D9ED.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 7EB6D152-BE7F-4A3C-BA11-060ECC90D9ED.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_F374B92D-8EBF-4B8C-ADB2-F1CEDF4200E5.formdata
+🔵 [4] Registering task metadata.
+🛠 🔵 [4] Starting background upload task for 7EB6D152-BE7F-4A3C-BA11-060ECC90D9ED.wav
+📝 Created new audio file: CAAB57A6-CD42-46F7-A87C-11E0932C55F8.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [4] Received data chunk: 29 bytes
+🔵 [4] Task Completed.
+✅ [4] Success: ぽっぽっぽっ
+🗑️ [4] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_F374B92D-8EBF-4B8C-ADB2-F1CEDF4200E5.formdata
+
+📊 Segment finalized: CAAB57A6-CD42-46F7-A87C-11E0932C55F8.wav, size: 42496 bytes, duration: 2.41s
+✅ Audio file valid: duration=1.2s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/CAAB57A6-CD42-46F7-A87C-11E0932C55F8.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: CAAB57A6-CD42-46F7-A87C-11E0932C55F8.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_9D2E6DC2-C78E-44AF-942A-C194E09A7B17.formdata
+🔵 [5] Registering task metadata.
+🛠 🔵 [5] Starting background upload task for CAAB57A6-CD42-46F7-A87C-11E0932C55F8.wav
+📝 Created new audio file: C1BD5A87-5FD6-44DB-B23F-DA9364F8ACF9.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: C1BD5A87-5FD6-44DB-B23F-DA9364F8ACF9.wav, size: 10496 bytes, duration: 0.80s
+🗑️ Segment too small/short, deleted: C1BD5A87-5FD6-44DB-B23F-DA9364F8ACF9.wav
+📝 Created new audio file: 12D07E82-41A3-4FBE-96C4-9AB89282A798.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [5] Received data chunk: 30 bytes
+🔵 [5] Task Completed.
+✅ [5] Success: なんでここに?
+🗑️ [5] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_9D2E6DC2-C78E-44AF-942A-C194E09A7B17.formdata
+
+📊 Segment finalized: 12D07E82-41A3-4FBE-96C4-9AB89282A798.wav, size: 42496 bytes, duration: 2.59s
+✅ Audio file valid: duration=1.2s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/12D07E82-41A3-4FBE-96C4-9AB89282A798.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 12D07E82-41A3-4FBE-96C4-9AB89282A798.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_2DCF7F3F-FDC3-4705-9ABD-328E705FB56D.formdata
+🔵 [6] Registering task metadata.
+🛠 🔵 [6] Starting background upload task for 12D07E82-41A3-4FBE-96C4-9AB89282A798.wav
+📝 Created new audio file: 7A59F797-8732-4B6B-981D-627107B22E7A.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: 7A59F797-8732-4B6B-981D-627107B22E7A.wav, size: 7296 bytes, duration: 0.59s
+🗑️ Segment too small/short, deleted: 7A59F797-8732-4B6B-981D-627107B22E7A.wav
+📝 Created new audio file: F7960211-BA95-4239-ABE4-96C2B0E9B097.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [6] Received data chunk: 26 bytes
+🔵 [6] Task Completed.
+✅ [6] Success: おっそっと
+🗑️ [6] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_2DCF7F3F-FDC3-4705-9ABD-328E705FB56D.formdata
+📊 Segment finalized: F7960211-BA95-4239-ABE4-96C2B0E9B097.wav, size: 29696 bytes, duration: 1.39s
+✅ Audio file valid: duration=0.8s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/F7960211-BA95-4239-ABE4-96C2B0E9B097.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: F7960211-BA95-4239-ABE4-96C2B0E9B097.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_76B9DCAD-75E6-4CC4-9553-46EF6C5E258B.formdata
+🔵 [7] Registering task metadata.
+🛠 🔵 [7] Starting background upload task for F7960211-BA95-4239-ABE4-96C2B0E9B097.wav
+📝 Created new audio file: BE239A75-D9A9-4F5B-987A-8AC0000330E7.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: BE239A75-D9A9-4F5B-987A-8AC0000330E7.wav, size: 10496 bytes, duration: 0.70s
+🗑️ Segment too small/short, deleted: BE239A75-D9A9-4F5B-987A-8AC0000330E7.wav
+🔵 [7] Received data chunk: 26 bytes
+🔵 [7] Task Completed.
+✅ [7] Success: いてきます
+🗑️ [7] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_76B9DCAD-75E6-4CC4-9553-46EF6C5E258B.formdata
+📝 Created new audio file: D4C9BE97-EABD-46B7-88B5-5B050F200BAF.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: D4C9BE97-EABD-46B7-88B5-5B050F200BAF.wav, size: 7296 bytes, duration: 0.71s
+🗑️ Segment too small/short, deleted: D4C9BE97-EABD-46B7-88B5-5B050F200BAF.wav
+📝 Created new audio file: 17D8EA38-048F-4C57-ADE8-61F160BED58C.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+📊 Segment finalized: 17D8EA38-048F-4C57-ADE8-61F160BED58C.wav, size: 55296 bytes, duration: 3.00s
+✅ Audio file valid: duration=1.6s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/17D8EA38-048F-4C57-ADE8-61F160BED58C.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 17D8EA38-048F-4C57-ADE8-61F160BED58C.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_3D7113DA-50BF-42E9-888D-15945B8A7CD0.formdata
+🔵 [8] Registering task metadata.
+🛠 🔵 [8] Starting background upload task for 17D8EA38-048F-4C57-ADE8-61F160BED58C.wav
+📝 Created new audio file: B63EFAEC-47AB-4F3D-A617-135272B8F559.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [8] Received data chunk: 50 bytes
+🔵 [8] Task Completed.
+✅ [8] Success: あ!すげぇ!すげぇギリギリや!
+🗑️ [8] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_3D7113DA-50BF-42E9-888D-15945B8A7CD0.formdata
+
+📊 Segment finalized: B63EFAEC-47AB-4F3D-A617-135272B8F559.wav, size: 864896 bytes, duration: 29.80s
+✅ Audio file valid: duration=26.9s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/B63EFAEC-47AB-4F3D-A617-135272B8F559.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: B63EFAEC-47AB-4F3D-A617-135272B8F559.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_48EBB478-F40A-4064-BF1D-59A1EF21ECB6.formdata
+🔵 [9] Registering task metadata.
+🛠 🔵 [9] Starting background upload task for B63EFAEC-47AB-4F3D-A617-135272B8F559.wav
+📝 Created new audio file: 4B736536-DE32-47D1-93A5-4B0680E2585C.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [9] Received data chunk: 255 bytes
+🔵 [9] Task Completed.
+✅ [9] Success: 反応どう? 魚炭で あ、そこ そこ反応無かった? 無かった もうちょっと向こうですかね なんか面白すぎる 無い?無い? 俺たちは反応無かったとこに投げ続けよったじゃん お疲れ様です
+🗑️ [9] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_48EBB478-F40A-4064-BF1D-59A1EF21ECB6.formdata
+
+📊 Segment finalized: 4B736536-DE32-47D1-93A5-4B0680E2585C.wav, size: 103296 bytes, duration: 4.41s
+✅ Audio file valid: duration=3.1s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/4B736536-DE32-47D1-93A5-4B0680E2585C.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 4B736536-DE32-47D1-93A5-4B0680E2585C.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_5C4C2119-811D-4FFB-B885-690AF59A7BEF.formdata
+🔵 [10] Registering task metadata.
+🛠 🔵 [10] Starting background upload task for 4B736536-DE32-47D1-93A5-4B0680E2585C.wav
+📝 Created new audio file: 3A10C91E-0E3A-4702-815F-61DC44BDCCEE.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [10] Received data chunk: 53 bytes
+🔵 [10] Task Completed.
+✅ [10] Success: 何もおらん!何もおらん! ウケる
+🗑️ [10] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_5C4C2119-811D-4FFB-B885-690AF59A7BEF.formdata
+📊 Segment finalized: 3A10C91E-0E3A-4702-815F-61DC44BDCCEE.wav, size: 52096 bytes, duration: 2.59s
+✅ Audio file valid: duration=1.5s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/3A10C91E-0E3A-4702-815F-61DC44BDCCEE.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 3A10C91E-0E3A-4702-815F-61DC44BDCCEE.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_61AE286F-2207-41E9-AD18-00A7FB1FC858.formdata
+🔵 [11] Registering task metadata.
+🛠 🔵 [11] Starting background upload task for 3A10C91E-0E3A-4702-815F-61DC44BDCCEE.wav
+📝 Created new audio file: 1C4CDBAF-560D-4131-A36E-AFF7A201ECD2.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [11] Received data chunk: 35 bytes
+🔵 [11] Task Completed.
+✅ [11] Success: ああああああああ
+🗑️ [11] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_61AE286F-2207-41E9-AD18-00A7FB1FC858.formdata
+
+📊 Segment finalized: 1C4CDBAF-560D-4131-A36E-AFF7A201ECD2.wav, size: 112896 bytes, duration: 5.30s
+✅ Audio file valid: duration=3.4s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/1C4CDBAF-560D-4131-A36E-AFF7A201ECD2.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 1C4CDBAF-560D-4131-A36E-AFF7A201ECD2.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_EBC2EC88-4297-4A65-A9D4-7A5F827C7FF1.formdata
+🔵 [12] Registering task metadata.
+🛠 🔵 [12] Starting background upload task for 1C4CDBAF-560D-4131-A36E-AFF7A201ECD2.wav
+📝 Created new audio file: 84CB7710-CD3D-468A-B7A9-EFF7553F88DC.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+📊 Segment finalized: 84CB7710-CD3D-468A-B7A9-EFF7553F88DC.wav, size: 42496 bytes, duration: 1.69s
+✅ Audio file valid: duration=1.2s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/84CB7710-CD3D-468A-B7A9-EFF7553F88DC.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 84CB7710-CD3D-468A-B7A9-EFF7553F88DC.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_1C7D3298-3013-4C6D-8701-93812FC85BC8.formdata
+🔵 [13] Registering task metadata.
+🛠 🔵 [13] Starting background upload task for 84CB7710-CD3D-468A-B7A9-EFF7553F88DC.wav
+📝 Created new audio file: 3E79347A-717D-41CB-8DBE-6F75F812FA3C.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [12] Received data chunk: 59 bytes
+🔵 [12] Task Completed.
+✅ [12] Success: 【はじめしゃちょーエンディング】
+🗑️ [12] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_EBC2EC88-4297-4A65-A9D4-7A5F827C7FF1.formdata
+🔵 [13] Received data chunk: 53 bytes
+🔵 [13] Task Completed.
+✅ [13] Success: いやでもそれが最悪ですけどね
+🗑️ [13] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_1C7D3298-3013-4C6D-8701-93812FC85BC8.formdata
+
+📊 Segment finalized: 3E79347A-717D-41CB-8DBE-6F75F812FA3C.wav, size: 154496 bytes, duration: 6.51s
+✅ Audio file valid: duration=4.7s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/3E79347A-717D-41CB-8DBE-6F75F812FA3C.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 3E79347A-717D-41CB-8DBE-6F75F812FA3C.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_35E93010-917F-4758-8E6E-7A48E2BDC885.formdata
+🔵 [14] Registering task metadata.
+🛠 🔵 [14] Starting background upload task for 3E79347A-717D-41CB-8DBE-6F75F812FA3C.wav
+📝 Created new audio file: 978FE9F7-7982-44C2-A526-37021B7626A4.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [14] Received data chunk: 21 bytes
+🔵 [14] Task Completed.
+✅ [14] Success: ??????????
+🗑️ [14] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_35E93010-917F-4758-8E6E-7A48E2BDC885.formdata
+
+📊 Segment finalized: 978FE9F7-7982-44C2-A526-37021B7626A4.wav, size: 173696 bytes, duration: 7.80s
+✅ Audio file valid: duration=5.3s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/978FE9F7-7982-44C2-A526-37021B7626A4.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 978FE9F7-7982-44C2-A526-37021B7626A4.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_74B2D721-7586-4A44-9748-143D6CE0872C.formdata
+🔵 [15] Registering task metadata.
+🛠 🔵 [15] Starting background upload task for 978FE9F7-7982-44C2-A526-37021B7626A4.wav
+📝 Created new audio file: 11AC4A31-7D52-4DBB-839A-610B20C08383.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [15] Received data chunk: 36 bytes
+🔵 [15] Task Completed.
+✅ [15] Success: 次回もお楽しみに!
+🗑️ [15] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_74B2D721-7586-4A44-9748-143D6CE0872C.formdata
+
+📊 Segment finalized: 11AC4A31-7D52-4DBB-839A-610B20C08383.wav, size: 429696 bytes, duration: 16.30s
+✅ Audio file valid: duration=13.3s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/11AC4A31-7D52-4DBB-839A-610B20C08383.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 11AC4A31-7D52-4DBB-839A-610B20C08383.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_9D34719C-4BAB-4EB2-B146-0340B26433D2.formdata
+🔵 [16] Registering task metadata.
+🛠 🔵 [16] Starting background upload task for 11AC4A31-7D52-4DBB-839A-610B20C08383.wav
+📝 Created new audio file: 2C2F6B51-F593-40C1-A6E8-3B4AEA772664.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [16] Received data chunk: 204 bytes
+🔵 [16] Task Completed.
+✅ [16] Success: もう10時前 っていうことは? あ、30?あ、そんなもん? あ、意外とそんなもん 我慢でいたことは感じる 間違ってなんか食ってこい 早く食ってこい
+🗑️ [16] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_9D34719C-4BAB-4EB2-B146-0340B26433D2.formdata
+📊 Segment finalized: 2C2F6B51-F593-40C1-A6E8-3B4AEA772664.wav, size: 29696 bytes, duration: 1.51s
+✅ Audio file valid: duration=0.8s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/2C2F6B51-F593-40C1-A6E8-3B4AEA772664.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 2C2F6B51-F593-40C1-A6E8-3B4AEA772664.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B1CFF173-5A59-4BF5-85C6-7DE96ED93F04.formdata
+🔵 [17] Registering task metadata.
+🛠 🔵 [17] Starting background upload task for 2C2F6B51-F593-40C1-A6E8-3B4AEA772664.wav
+📝 Created new audio file: 01C90E82-E53B-42C0-8C38-9E5488C863DA.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [17] Received data chunk: 20 bytes
+🔵 [17] Task Completed.
+✅ [17] Success: カモン
+🗑️ [17] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B1CFF173-5A59-4BF5-85C6-7DE96ED93F04.formdata
+
+📊 Segment finalized: 01C90E82-E53B-42C0-8C38-9E5488C863DA.wav, size: 112896 bytes, duration: 5.60s
+✅ Audio file valid: duration=3.4s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/01C90E82-E53B-42C0-8C38-9E5488C863DA.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 01C90E82-E53B-42C0-8C38-9E5488C863DA.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_55B984F3-C072-43A5-8F35-28B40698484E.formdata
+🔵 [18] Registering task metadata.
+🛠 🔵 [18] Starting background upload task for 01C90E82-E53B-42C0-8C38-9E5488C863DA.wav
+📝 Created new audio file: 70721A39-9BE2-44FE-9548-DCB4622417F5.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [18] Received data chunk: 38 bytes
+🔵 [18] Task Completed.
+✅ [18] Success: ごちそうさまでした
+🗑️ [18] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_55B984F3-C072-43A5-8F35-28B40698484E.formdata
+
+📊 Segment finalized: 70721A39-9BE2-44FE-9548-DCB4622417F5.wav, size: 71296 bytes, duration: 3.99s
+✅ Audio file valid: duration=2.1s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/70721A39-9BE2-44FE-9548-DCB4622417F5.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 70721A39-9BE2-44FE-9548-DCB4622417F5.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_140C3568-44F1-453C-8AE9-F0D3F2BEB06C.formdata
+🔵 [19] Registering task metadata.
+🛠 🔵 [19] Starting background upload task for 70721A39-9BE2-44FE-9548-DCB4622417F5.wav
+📝 Created new audio file: 77B21B69-659C-42B2-9785-460FA697A0DD.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [19] Received data chunk: 23 bytes
+🔵 [19] Task Completed.
+✅ [19] Success: 次回予告
+🗑️ [19] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_140C3568-44F1-453C-8AE9-F0D3F2BEB06C.formdata
+
+📊 Segment finalized: 77B21B69-659C-42B2-9785-460FA697A0DD.wav, size: 132096 bytes, duration: 7.60s
+✅ Audio file valid: duration=4.0s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/77B21B69-659C-42B2-9785-460FA697A0DD.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 77B21B69-659C-42B2-9785-460FA697A0DD.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_70E30763-A89A-4B2B-B511-5A33493709E4.formdata
+🔵 [20] Registering task metadata.
+🛠 🔵 [20] Starting background upload task for 77B21B69-659C-42B2-9785-460FA697A0DD.wav
+📝 Created new audio file: 7EC22E52-B584-4472-A95D-0B845AD9E3C6.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [20] Received data chunk: 93 bytes
+🔵 [20] Task Completed.
+✅ [20] Success: あ、来た?来た来た来た来た! マスケット! 大事だね!大事だね!
+🗑️ [20] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_70E30763-A89A-4B2B-B511-5A33493709E4.formdata
+
+📊 Segment finalized: 7EC22E52-B584-4472-A95D-0B845AD9E3C6.wav, size: 436096 bytes, duration: 18.90s
+✅ Audio file valid: duration=13.5s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/7EC22E52-B584-4472-A95D-0B845AD9E3C6.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 7EC22E52-B584-4472-A95D-0B845AD9E3C6.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_3BAA6457-1A31-40CB-A2AF-2DABA695AC9F.formdata
+🔵 [21] Registering task metadata.
+🛠 🔵 [21] Starting background upload task for 7EC22E52-B584-4472-A95D-0B845AD9E3C6.wav
+📝 Created new audio file: CB764E70-A693-4DD1-808E-233E35ED9085.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: CB764E70-A693-4DD1-808E-233E35ED9085.wav, size: 7296 bytes, duration: 0.70s
+🗑️ Segment too small/short, deleted: CB764E70-A693-4DD1-808E-233E35ED9085.wav
+📝 Created new audio file: DF73AB31-83A0-4918-B103-A1B1626234D5.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [21] Received data chunk: 130 bytes
+🔵 [21] Task Completed.
+✅ [21] Success: 見たことある 見たことある こいつ見たことある 同じやつやん ほんとだ もうこいつかよ
+🗑️ [21] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_3BAA6457-1A31-40CB-A2AF-2DABA695AC9F.formdata
+
+📊 Segment finalized: DF73AB31-83A0-4918-B103-A1B1626234D5.wav, size: 42496 bytes, duration: 2.11s
+✅ Audio file valid: duration=1.2s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/DF73AB31-83A0-4918-B103-A1B1626234D5.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: DF73AB31-83A0-4918-B103-A1B1626234D5.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_A6351255-CC0A-46F7-A254-F118C511FE75.formdata
+🔵 [22] Registering task metadata.
+🛠 🔵 [22] Starting background upload task for DF73AB31-83A0-4918-B103-A1B1626234D5.wav
+📝 Created new audio file: FF8DA707-00FD-4A08-B234-DC18FD5EDC8D.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+📊 Segment finalized: FF8DA707-00FD-4A08-B234-DC18FD5EDC8D.wav, size: 16896 bytes, duration: 0.90s
+✅ Audio file valid: duration=0.4s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/FF8DA707-00FD-4A08-B234-DC18FD5EDC8D.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: FF8DA707-00FD-4A08-B234-DC18FD5EDC8D.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_25959360-E658-4E7E-855E-D82C530590A4.formdata
+🔵 [23] Registering task metadata.
+🛠 🔵 [23] Starting background upload task for FF8DA707-00FD-4A08-B234-DC18FD5EDC8D.wav
+📝 Created new audio file: E103A516-F4C7-4898-831A-5DDB858BA980.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [22] Received data chunk: 29 bytes
+🔵 [22] Task Completed.
+✅ [22] Success: いただきます
+🗑️ [22] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_A6351255-CC0A-46F7-A254-F118C511FE75.formdata
+
+🔵 [23] Received data chunk: 11 bytes
+🔵 [23] Task Completed.
+✅ [23] Success:
+🗑️ [23] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_25959360-E658-4E7E-855E-D82C530590A4.formdata
+📊 Segment finalized: E103A516-F4C7-4898-831A-5DDB858BA980.wav, size: 52096 bytes, duration: 2.29s
+✅ Audio file valid: duration=1.5s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/E103A516-F4C7-4898-831A-5DDB858BA980.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: E103A516-F4C7-4898-831A-5DDB858BA980.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B6E2ACCD-AF46-40E7-A7A9-4B0A7122BB14.formdata
+🔵 [24] Registering task metadata.
+🛠 🔵 [24] Starting background upload task for E103A516-F4C7-4898-831A-5DDB858BA980.wav
+📝 Created new audio file: 9A43F804-5BC9-4648-81EC-B3A2B4D56A99.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [24] Received data chunk: 35 bytes
+🔵 [24] Task Completed.
+✅ [24] Success: ああああああああ
+🗑️ [24] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B6E2ACCD-AF46-40E7-A7A9-4B0A7122BB14.formdata
+
+📊 Segment finalized: 9A43F804-5BC9-4648-81EC-B3A2B4D56A99.wav, size: 224896 bytes, duration: 8.59s
+✅ Audio file valid: duration=6.9s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/9A43F804-5BC9-4648-81EC-B3A2B4D56A99.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 9A43F804-5BC9-4648-81EC-B3A2B4D56A99.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_A9C63DF7-9A58-446C-B41E-B3FD13AA34F5.formdata
+🔵 [25] Registering task metadata.
+🛠 🔵 [25] Starting background upload task for 9A43F804-5BC9-4648-81EC-B3A2B4D56A99.wav
+📝 Created new audio file: C114A8E3-ECA7-4B64-8FE4-BCA1C5A4512B.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [25] Received data chunk: 246 bytes
+🔵 [25] Task Completed.
+✅ [25] Success: さらに特大アルギニフライ、そういった一匹でもお腹いっぱいなんすね お疲れ様でした いろんな人にお疲れ様でした ありがとうございました またまたお店にも遊びに来ます
+🗑️ [25] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_A9C63DF7-9A58-446C-B41E-B3FD13AA34F5.formdata
+
+📊 Segment finalized: C114A8E3-ECA7-4B64-8FE4-BCA1C5A4512B.wav, size: 676096 bytes, duration: 23.08s
+✅ Audio file valid: duration=21.0s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/C114A8E3-ECA7-4B64-8FE4-BCA1C5A4512B.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: C114A8E3-ECA7-4B64-8FE4-BCA1C5A4512B.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_0B40ADB1-9EAD-445A-9E0D-673F6EA4B49C.formdata
+🔵 [26] Registering task metadata.
+🛠 🔵 [26] Starting background upload task for C114A8E3-ECA7-4B64-8FE4-BCA1C5A4512B.wav
+
+📝 Created new audio file: 7B4175BD-0336-4923-9CB9-9A82986D99EE.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [26] Received data chunk: 70 bytes
+🔵 [26] Task Completed.
+✅ [26] Success: もう帰ってしまう 限定飲食は 試食限定会場
+🗑️ [26] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_0B40ADB1-9EAD-445A-9E0D-673F6EA4B49C.formdata
+
+📊 Segment finalized: 7B4175BD-0336-4923-9CB9-9A82986D99EE.wav, size: 400896 bytes, duration: 13.59s
+✅ Audio file valid: duration=12.4s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/7B4175BD-0336-4923-9CB9-9A82986D99EE.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 7B4175BD-0336-4923-9CB9-9A82986D99EE.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_8788C925-B451-41B8-A4C4-C776F953FB8D.formdata
+🔵 [27] Registering task metadata.
+🛠 🔵 [27] Starting background upload task for 7B4175BD-0336-4923-9CB9-9A82986D99EE.wav
+📝 Created new audio file: E787C327-F427-4711-AC3E-E73637072473.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [27] Received data chunk: 84 bytes
+🔵 [27] Task Completed.
+✅ [27] Success: カワイイ ポジティブ キリアス イチジョウ リリカだよ
+🗑️ [27] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_8788C925-B451-41B8-A4C4-C776F953FB8D.formdata
+
+📊 Segment finalized: E787C327-F427-4711-AC3E-E73637072473.wav, size: 4349696 bytes, duration: 141.19s
+✅ Audio file valid: duration=135.8s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/E787C327-F427-4711-AC3E-E73637072473.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: E787C327-F427-4711-AC3E-E73637072473.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_E3E3EF58-3C2F-4A3F-930C-058E32315DCA.formdata
+🔵 [28] Registering task metadata.
+🛠 🔵 [28] Starting background upload task for E787C327-F427-4711-AC3E-E73637072473.wav
+📝 Created new audio file: 02EF0307-95E6-41C2-A583-CB614C3D5B43.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [28] Received data chunk: 1611 bytes
+🔵 [28] Task Completed.
+✅ [28] Success: コソコソテーラーでーす コソコソしてるねー コソコソしてる 大丈夫? 喉おかしくなってない? 大丈夫 はーい みんな、リリカたちが今どこにいるか分かりますか? ドカナドカナ みんなとただいまです 大阪中野島美術館で開催中の 大カップコンテにやってきちゃいました イエーイ 現在開催中の大カップコンテは カップコンテ 実際どうなのかめちゃくちゃワクワクしてます でもせっかくだから 展覧会といえばラベルちゃんということで カップコンテに来ていただきました 何を隠そう 私も最近山崎マリ先生と モンスターハンター遊ばせてもらったりとか カップコンテさんのゲームを楽しんでいますので この機会にもっとゲームのこと カップコンテさんのことを もっと知れたらなーなんて思って ありがとう 大好き 最高すぎる 早く見たいから 早速大カップコンテに潜入しちゃおう さあ入れるよ 入りに行きましょう すでにホップになったゲーム すごいゲームスタート ゲームスタートじゃんこれ 想像したことは想像できる かっこいい 作品の展示もだけど デザイナーさんに限らず プロデューサーさんとかディレクターさんとかの ゲーム開発の姿も見れるのかもね 見に行かないと 見に行きたい 何があるんだい 何でっかい すげー 何これ あれは誰 リアレンス リアレンス すごい 出た
+🗑️ [28] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_E3E3EF58-3C2F-4A3F-930C-058E32315DCA.formdata
+
+📊 Segment finalized: 02EF0307-95E6-41C2-A583-CB614C3D5B43.wav, size: 3642496 bytes, duration: 117.29s
+✅ Audio file valid: duration=113.7s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/02EF0307-95E6-41C2-A583-CB614C3D5B43.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 02EF0307-95E6-41C2-A583-CB614C3D5B43.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_6A76F165-A50F-4A9C-AAE9-68B2D0EF20F1.formdata
+🔵 [29] Registering task metadata.
+🛠 🔵 [29] Starting background upload task for 02EF0307-95E6-41C2-A583-CB614C3D5B43.wav
+📝 Created new audio file: F99492E0-CF28-4A77-9EB6-6BBBDBFEEC3D.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [29] Received data chunk: 1693 bytes
+🔵 [29] Task Completed.
+✅ [29] Success: お腹出てきたよ 分かんない分かんない これ誰? 中村か やったやった 中村 あの子は知ってるロックマン そう正解 どんどんお腹が出てくる あれもロックマン? そうなんだ キャラクターパレードは歴代のキャラクターたちが大更新する新作アニメーションです キャラクターと一緒に各校のゲームクリエーションの進展 そういうことか 通路を一緒に歩きますよと キャラクターが一緒に歩く ストリートファイターのキャラたちも順番に出てくる やばいでもなんか技出されるんじゃないかって不安になる 情報はぜひ皆さんの目でご確認いただいて まだまだあるからね おー それが すごい 歴史だ 年表だよね 年表だね 一個一個に映像が埋め込まれてる これがファミコンってやつですね そうだファミリーコンピューター 若い村ってこんな昔のゲームだったんだ 昔のゲームもスイッチとかでも移植されてたりして遊べちゃうから こんな昔に作られたゲームなんだっていう感覚があんまりなくて ストリートファイター ガールも大人気でホロライブのファミコンファイターもやってるわけだから すごい歴代のタイトルロゴがガーって並んでる ロゴもいいね すごいみんなかっこいいになってもらえる ほんとだ すごい いっぱいある でもやっぱ知らない作品がいっぱいある そうなんだ これ大髪 リプマシネしてやってって言われた いいぞ ぜひやってほしい
+🗑️ [29] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_6A76F165-A50F-4A9C-AAE9-68B2D0EF20F1.formdata
+
+📊 Segment finalized: F99492E0-CF28-4A77-9EB6-6BBBDBFEEC3D.wav, size: 1597696 bytes, duration: 54.11s
+✅ Audio file valid: duration=49.8s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/F99492E0-CF28-4A77-9EB6-6BBBDBFEEC3D.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: F99492E0-CF28-4A77-9EB6-6BBBDBFEEC3D.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_333A7605-1A20-435C-9C61-7F60C10AF654.formdata
+🔵 [30] Registering task metadata.
+🛠 🔵 [30] Starting background upload task for F99492E0-CF28-4A77-9EB6-6BBBDBFEEC3D.wav
+📝 Created new audio file: 7C9EC426-14D9-49D5-BA43-CCE4C0327A05.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [30] Received data chunk: 626 bytes
+🔵 [30] Task Completed.
+✅ [30] Success: ロゴを並べてみるとどういうゲームかみたいな世界観が結構わかるよね デザインを見るだけでもイメージがまた なんかねすごい新鮮なのがね こんなガンガン音楽が聞こえる展示院が新鮮 美術館ってあんまりこういうのがないから ゲームBGMも込みでだよ絶対に すごい良い音楽 感動するよなゲームミュージック すごいモンスターハンターシリーズがずらーっと並べてある ほんとだ順番に すごいわかりやすいねこうやって これ勉強になれよ そうだったんだ
+🗑️ [30] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_333A7605-1A20-435C-9C61-7F60C10AF654.formdata
+
+📊 Segment finalized: 7C9EC426-14D9-49D5-BA43-CCE4C0327A05.wav, size: 567296 bytes, duration: 18.21s
+✅ Audio file valid: duration=17.6s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/7C9EC426-14D9-49D5-BA43-CCE4C0327A05.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 7C9EC426-14D9-49D5-BA43-CCE4C0327A05.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_9BD24089-E8D8-4260-B976-569217D5DED5.formdata
+🔵 [31] Registering task metadata.
+🛠 🔵 [31] Starting background upload task for 7C9EC426-14D9-49D5-BA43-CCE4C0327A05.wav
+📝 Created new audio file: F9F97784-3C49-418E-8514-F802F4EE1ADE.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [31] Received data chunk: 263 bytes
+🔵 [31] Task Completed.
+✅ [31] Success: わー! わー! すごい! 主要キャラクターたちの 更新台なのかな?これは イラストや設定が フィギュアなどなど へー! すごいね! すごい!衣装まであるじゃん! スクイーンカバーって書いてある
+🗑️ [31] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_9BD24089-E8D8-4260-B976-569217D5DED5.formdata
+
+📊 Segment finalized: F9F97784-3C49-418E-8514-F802F4EE1ADE.wav, size: 1213696 bytes, duration: 41.30s
+✅ Audio file valid: duration=37.8s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/F9F97784-3C49-418E-8514-F802F4EE1ADE.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: F9F97784-3C49-418E-8514-F802F4EE1ADE.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_F16AC933-2337-4371-AEB3-E86FF01307FB.formdata
+🔵 [32] Registering task metadata.
+🛠 🔵 [32] Starting background upload task for F9F97784-3C49-418E-8514-F802F4EE1ADE.wav
+📝 Created new audio file: CB1AB37F-3F1A-4F3F-AEE1-B4E2906FA33E.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [32] Received data chunk: 589 bytes
+🔵 [32] Task Completed.
+✅ [32] Success: 凄いビオレンスもいる 凄いデカリオレンス デカーイ あとここは片手? うわー 敵っていうタイプないけど ノースタンスで封じをする 逃亡対象ではあるね そうなんだ うん 凄ーい これ節制が? え? めっちゃ貴重だねこれ でもこんな大喜びですか? 全体的に目が小さく感じます 人回り大きく こういう風に指示をさ 出して出して 最終的にこうやってデザインして 出来上がってるって事なのね 細かいよ 6バスタこの腕のやつかな? 変形
+🗑️ [32] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_F16AC933-2337-4371-AEB3-E86FF01307FB.formdata
+📊 Segment finalized: CB1AB37F-3F1A-4F3F-AEE1-B4E2906FA33E.wav, size: 109696 bytes, duration: 3.79s
+✅ Audio file valid: duration=3.3s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/CB1AB37F-3F1A-4F3F-AEE1-B4E2906FA33E.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: CB1AB37F-3F1A-4F3F-AEE1-B4E2906FA33E.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B56A23AF-9733-410F-AF8B-C8854AF6DD31.formdata
+🔵 [33] Registering task metadata.
+🛠 🔵 [33] Starting background upload task for CB1AB37F-3F1A-4F3F-AEE1-B4E2906FA33E.wav
+📝 Created new audio file: 2094308C-CC8A-4433-AE5B-2AA40CC69585.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🔵 [33] Received data chunk: 36 bytes
+🔵 [33] Task Completed.
+✅ [33] Success: すごーい すごいね
+🗑️ [33] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B56A23AF-9733-410F-AF8B-C8854AF6DD31.formdata
+
+📊 Segment finalized: 2094308C-CC8A-4433-AE5B-2AA40CC69585.wav, size: 250496 bytes, duration: 9.88s
+✅ Audio file valid: duration=7.7s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/2094308C-CC8A-4433-AE5B-2AA40CC69585.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 2094308C-CC8A-4433-AE5B-2AA40CC69585.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_511B854E-121F-4DF8-855B-8C37F9FE7FFE.formdata
+🔵 [34] Registering task metadata.
+🛠 🔵 [34] Starting background upload task for 2094308C-CC8A-4433-AE5B-2AA40CC69585.wav
+📝 Created new audio file: 04C39F7C-087B-45B4-ADC8-464CB4B0197A.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+🔵 [34] Received data chunk: 165 bytes
+🔵 [34] Task Completed.
+✅ [34] Success: レオンさんもいるよバイオハザード わーなんかすごいフィギュアっていうのが え?わすごい いやもうファンもいる
+🗑️ [34] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_511B854E-121F-4DF8-855B-8C37F9FE7FFE.formdata
+
+📊 Segment finalized: 04C39F7C-087B-45B4-ADC8-464CB4B0197A.wav, size: 9661696 bytes, duration: 309.57s
+✅ Audio file valid: duration=301.8s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/04C39F7C-087B-45B4-ADC8-464CB4B0197A.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 04C39F7C-087B-45B4-ADC8-464CB4B0197A.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_CF654B6D-4DE3-43EA-8D94-34C31E3EFA05.formdata
+🔵 [35] Registering task metadata.
+🛠 🔵 [35] Starting background upload task for 04C39F7C-087B-45B4-ADC8-464CB4B0197A.wav
+📝 Created new audio file: 8FA18A5A-4506-4ED7-8662-95D83BD32E7F.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+📊 Segment finalized: 8FA18A5A-4506-4ED7-8662-95D83BD32E7F.wav, size: 439296 bytes, duration: 16.69s
+✅ Audio file valid: duration=13.6s
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/8FA18A5A-4506-4ED7-8662-95D83BD32E7F.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: 8FA18A5A-4506-4ED7-8662-95D83BD32E7F.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_599DC2C9-712A-41A3-B767-305C04EAE503.formdata
+🔵 [36] Registering task metadata.
+🛠 🔵 [36] Starting background upload task for 8FA18A5A-4506-4ED7-8662-95D83BD32E7F.wav
+📝 Created new audio file: A1F6B64D-A62C-4B65-855C-E86C079CA45A.wav
+📝 Format: <AVAudioFormat 0x303567d40:  1 ch,  16000 Hz, Int16>
+
+🛠 ✅ finish tapped
+📊 Segment finalized: A1F6B64D-A62C-4B65-855C-E86C079CA45A.wav, size: 176896 bytes, duration: 6.02s
+✅ Audio file valid: duration=5.4s
+✅ Saved full audio to: \(destinationFullAudioURL.path)
+✅ Saved 10 history items to UserDefaults.
+📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3
+🎧 Segment file path: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/A1F6B64D-A62C-4B65-855C-E86C079CA45A.wav
+🛠 WhisperQueue ▶︎ Enqueuing background task for: A1F6B64D-A62C-4B65-855C-E86C079CA45A.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B32E5D14-543A-41F8-B1D2-C79CE2DE4BF0.formdata
+🔵 [37] Registering task metadata.
+🛠 🔵 [37] Starting background upload task for A1F6B64D-A62C-4B65-855C-E86C079CA45A.wav
+
+🔵 [37] Received data chunk: 106 bytes
+🔵 [37] Task Completed.
+✅ [37] Success: お!打ち間違えた回数144回! あ、そう!0回よりも少ない! 分かったじゃん!
+🗑️ [37] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_B32E5D14-543A-41F8-B1D2-C79CE2DE4BF0.formdata
+🔵 [36] Received data chunk: 250 bytes
+🔵 [36] Task Completed.
+✅ [36] Success: ええっ?!168回も打ち間違えたのに! 完成しましたなぁ!でも・・・ コープレインデータ! どうだった? ラビー、ラビー、ラビー、ラビー、ラビー 何? ジャンルライアン、サンキュー!
+🗑️ [36] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_599DC2C9-712A-41A3-B767-305C04EAE503.formdata
+
+🔵 [35] Received data chunk: 4191 bytes
+🔵 [35] Task Completed.
+✅ [35] Success: 雨が流して喜ぶよ 1つのゲームの1人のキャラクターを構成する いろんな要素がここに散りばめてあるってことでしょ? そう! 泣けるぜ!言ってるよこれ! 泣けるぜ! なんか過去に丸々のデザイン展みたいなのは 何回かあったんだけど なんかこういうゲームクリエイション いろんな人が集まってやるっていうのがさ パズルみたいな展示方法と合ってて すごいなって思う いろんな人がいろんなパズルのピースを組み立てていって 1人1つのキャラクターができるみたいな ゲームってさ キャラクターもそうだけど そういうことをここにあるように ロゴだったり いろんな資料だったり デザインだったりがさ 1個にまとまって1つの作品になってるわけだから 情報無限にあるよねきっとね これで一部だからね ね! すごいよ ほくほく一部だもんな すごい表情差分もある ギャリット え待ってなんか はいはい 小学校の名札? 美剣さんの小学生の名札があるよ 持って帰りたい リリリリリリ なにあれ ポスター すごいポスターがある 世界に1つだけの原画らしいよ え?これ原画なんだ こんな贅沢に 特に昔はさ もしかしたら手で描いてたりとかも したんじゃない? 今は結構デジタルとかでさ 描かれたりすることも多いだろうけどさ もうこれキャンバスにアクリル絵の具 はぁ 絵の具 こうやってしてもいいじゃん なんかさこういう斜めのケースの展示って 手巻き物とかに使うんだけど そうなんだ 手巻き物でよくやる展示を このゲームパッケージでやってるのすごい好き なんか時が経ったなぁって思う さぁラウンド2 え?なんか波動拳の作り方とかあるよ え?すごい 波動拳の作り方って何? 波動拳 これ順番に出てるんだな 波動拳の作り方を真球で企画してるんだ これがドット絵の時でこっちが3Dだ え?これ波動拳打てるのかな 波動拳打とう 波動拳打ったことないんだけど おらぁ お あ!出た 出た はぁ すごいこっちは 波動拳 あ、え?すごい 綺麗 進化してるよ え?何これ ゲームでは半透明が難しいゴーシチゴじゃん ゲームでは半透明が難しい 半透明があるときないとき 何じゃん何 絵を半透明に 炎とかを透明にするの難しいんだ 水がらす炎など半透明の表現 穴を開けた 絵が開いた? 穴開いてる ドットならではだね この穴を開ける表現とか 混ざった色で置き換えた はぁはぁはぁはぁ どうやる色 うわぁすごい ドットを作る ここ256 縦140ドット これはなんだ 言語を選んでね ピクセルラボ ラボ でもアイル作りたい 5分以内で ドットを作る 5分長いよ 大丈夫 じゃあこの5分以内でドットを作れの アイルちゃんを作るの どっちが最高か せーの いやこれ きついぞ結構 きつい? でもパズルゲームみたいで楽しい ね ちゃんとどこにどの色を置くか教えてくれてるからさ 分かりやすいね しょいしょいしょいしょいしょいしょいしょいしょい しょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしょいしョぃしょぃしょぃしょぃしょぃしょぃしょぃしょぃ glove ショーズイ作れるのか オラオラオラオラオラオラ わー大丈夫? 混乱してる いや全く すごいこんな体験が出来るのおもろいな わーこれみんなにやってほしい体験してほしい 出来たー 早くね? コンプリート 早くない? ラレンちゃん遅くない? いやいやいやこれ2週目だからラレンちゃん 2週目なの? うんさっきプレッシャーってさ 2週目だね
+🗑️ [35] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_CF654B6D-4DE3-43EA-8D94-34C31E3EFA05.formdata
+
+🗑️ Deleted full audio file from Documents: full_session_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3.wav
+✅ Saved 10 history items to UserDefaults.
+📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3
+
+✅ Saved full audio to: \(destinationFullAudioURL.path)
+✅ Saved 10 history items to UserDefaults.
+📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3
+🛠 📁 Loading history audio from: /var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/Documents/AudioFiles/full_session_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3.wav
+🛠 ✅ History audio loaded successfully
+
+🛠 🎵 playFrom called with URL: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA402A74-BC02-40D7-A179-CA6F626CB774.wav
+🛠 ✅ Audio session configured for playback
+🛠 ✅ Audio file validation successful - Duration: 113.70s
+🛠 ▶️ Playback started successfully for: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA402A74-BC02-40D7-A179-CA6F626CB774.wav
+🛠 🔄 resetPlayer called with URL: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA402A74-BC02-40D7-A179-CA6F626CB774.wav
+🛠 ✅ Same URL already loaded, skipping resetPlayer
+🛠 🎵 playFrom called with URL: /
+🛠 ✅ Audio session configured for playback
+❌ Playback Error or Failed to load audio: The operation couldn’t be completed. (OSStatus error 2003334207.)
+🛠 🔄 resetPlayer called with URL: nil
+🛠 🗑️ No URL provided, clearing player
+
+🛠 🎵 playFrom called with URL: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA5954D2-90F3-40A6-9A8A-FFECEB48F705.wav
+🛠 ✅ Audio session configured for playback
+🛠 ✅ Audio file validation successful - Duration: 301.80s
+🛠 ▶️ Playback started successfully for: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA5954D2-90F3-40A6-9A8A-FFECEB48F705.wav
+🛠 🔄 resetPlayer called with URL: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA5954D2-90F3-40A6-9A8A-FFECEB48F705.wav
+🛠 ✅ Same URL already loaded, skipping resetPlayer
+
+<0x103d4cdc0> Gesture: System gesture gate timed out.
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA5954D2-90F3-40A6-9A8A-FFECEB48F705.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_858700F2-5DBE-44DF-BAC1-A19812BCF0D7.formdata
+🔵 [38] Registering task metadata.
+🛠 🔵 [38] Starting background upload task for segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA5954D2-90F3-40A6-9A8A-FFECEB48F705.wav
+
+🛠 WhisperQueue ▶︎ Enqueuing background task for: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_BC667EFF-2C78-42CC-9DB8-4E52DFA8A083.wav
+🛠 🔵 Wrote form data to temporary file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_676A19EB-FB63-49A1-9BD3-80AF68AC82CF.formdata
+🔵 [39] Registering task metadata.
+🛠 🔵 [39] Starting background upload task for segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_BC667EFF-2C78-42CC-9DB8-4E52DFA8A083.wav
+
+🔵 [39] Received data chunk: 243 bytes
+🔵 [39] Task Completed.
+✅ [39] Success: えぇ!?168回も打ち間違えたのに! 完成しましたラビン! コンプリートエクスプレイ! どうだった? ラビンラビンラビンラビンラビン 何? ジャンジュだよサンキュー! サンキュー!
+🗑️ [39] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_676A19EB-FB63-49A1-9BD3-80AF68AC82CF.formdata
+
+🔵 [38] Received data chunk: 3990 bytes
+🔵 [38] Task Completed.
+✅ [38] Success: 雨が流して喜ぶよ 1つのゲームの1人のキャラクターを構成する いろんな要素がここに散りばめてあるってことでしょ? そう! 泣けるぜ!言ってるよこれ! 泣けるぜ! なんか過去に丸々のデザイン展みたいなのは 何回かあったんだけど なんかこういうゲームクリエイション いろんな人が集まってやるっていうのがさ パズルみたいな展示方法と合ってて すごいなって思う いろんな人がいろんなパズルのピースを組み立てていって 1人1つのキャラクターができるみたいな ゲームってさ キャラクターもそうだけど そういうことをここにあるように ロゴだったり いろんな資料だったり デザインだったりがさ 1個にまとまって1つの作品になってるわけだから 情報無限にあるよねきっとね これで一部だからね ね! すごいよ ほくほく一部だもんな すごい表情差分もある キャリット え、まってなんか はいはい 小学校の名札? 宇鶴木さんの小学生の名札があるよ 持って帰りたい リリリリリリ あれ?ポスター すごーいポスターがある 世界に1つだけの原画らしいよ へーこれ原画なんだ すごー こんな贅沢に 特に昔はさ もしかしたら手で描いてたりとかも じゃない? 今は結構デジタルとかでさ 描かれたりすることも多いだろうけどさ もうこれキャンバスにアクリル絵の具 はぁー 絵の具パッケージもいいじゃん なんかさこういう斜めのケースの展示って 手巻き物とかに使うんだけど そうなんだ 手巻き物でよくやる展示を このゲームパッケージでやってるのすごい好き すごい好き なんか時が経ったなーって思う ラウンド2 え?なんか波動拳の作り方とかあるよ すごい 波動拳の作り方って何? 波動拳 これ順番に出てるんだな 波動拳の作り方を真球で企画してるんだ あーこれがドット絵の時でこっちが3Dだ え?これ波動拳打てるのかな 波動拳打とう 波動拳打ったことないんだけど おらー お あー出た 出た はっ すごいこっちは 波動拳 あ、えーすごい 綺麗 変化してるよ 波動拳 え、なにこれ ゲームでは半透明が難しいゴーシュゴーじゃん ゲームでは半透明が難しい ゴーシュゴー 半透明があるときないとき 何じゃん何 絵を半透明 あ、なんか炎とかを透明にするの難しいんだ 水ガラス炎など半透明の表現 穴を開けた 正解か? 穴開いてる ドットならではだね なんかこの穴を開ける表現とか えー 混ざった色で置き換えた あーえー うわーすごい ドット ここ256 縦240ドット これはなんだ 言語を選んでね ピクセルラボ ラボ でもアイルー作りたい 5分以内でドットを作る これ5分長いよ 大丈夫 じゃあこの5分以内でドットを作れの アイルーちゃんを 作るのどっちが最高か せーの いやこれきついぞ結構 きつい? でもパズルゲームみたいで楽しい ね なんかちゃんとこれさ どこにどの色を置くか教えてくれてるからさ 分かりやすいね しょいしょいしょいしょいしょいしょい 上手に作れるのか おらおらおらおらおら いけいけいけ ダンダンダンダン てんてんてんてん わー 大丈夫? 混乱してる? いや全く てんてんてんてん すごいこんな体験ができるの面白いな ねー わーこれみんなにやってほしい体験してほしい できたー 早くね? え? コンプリート 早くない? ラレンジャー遅くない? いやいやいや これ2週目だからラレン 2週目なの? さっきプレッシャーってさ 2週目だね
+🗑️ [38] Deleting temp file: /private/var/mobile/Containers/Data/Application/C7D75861-ABAF-431E-A0E3-61D22D2A575E/tmp/upload_858700F2-5DBE-44DF-BAC1-A19812BCF0D7.formdata
+
+🗑️ Deleted full audio file from Documents: full_session_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3.wav
+✅ Saved 10 history items to UserDefaults.
+📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3
+
+✅ Saved 10 history items to UserDefaults.
+📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3
+
+✅ Saved 9 history items to UserDefaults.
+🗑️ Deleted history item with ID: B41784D9-C000-4C13-86A1-F6219FDFFADA
+
+✅ Saved 8 history items to UserDefaults.
+🗑️ Deleted history item with ID: 8BAC31F2-BACF-4839-A9B2-ED194A94E134
+
+✅ Saved 7 history items to UserDefaults.
+🗑️ Deleted history item with ID: C820F5E0-CCDE-4942-B82D-E33EEEFF105F
+
+➕ Added new history item: ID 03787F91-3A82-4B7B-8572-CD2F43E1F3C2, Date: 2025-05-31 10:21:57 +0000
+✅ Saved 8 history items to UserDefaults.
+
+✅ Saved 7 history items to UserDefaults.
+🗑️ Deleted history item with ID: E665C6BC-563D-455B-870A-7916149A8FAD
+
+✅ Saved 7 history items to UserDefaults.
+📝 Updated history item: ID 5367BBB8-F080-4B5E-A4DF-6A5E1C8C5AB5
+
+✅ Saved 7 history items to UserDefaults.
+📝 Updated history item: ID 03787F91-3A82-4B7B-8572-CD2F43E1F3C2
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B20A0C45-6918-4183-8AF4-B8543BEFEED0.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_4171522A-9BB8-409B-9E21-B8E540D69F74.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_076EABF1-F185-466A-9199-D7A933CD80FB.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_84CA9838-1AF3-4DCE-B1E5-8301415E8E7E.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_7FC13092-B2EC-47FC-A9DF-A0B2DACEFDFA.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_0E8F1E66-ADDE-4501-855F-0E309EB4833E.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_A382601D-CB08-4EEE-9526-6829631204F7.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EC2D7766-A26C-4407-949A-C2129BF8DFC9.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_C9044A69-52E2-4B36-B1C1-154B9D7926D6.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_C0B2F65A-1A15-4FCE-91BC-E08F0A256C62.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_DE03F210-86F8-4C24-8DFB-A34A14EAB0D8.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_392C763E-42BB-4D19-BCB6-3EEABE702E3D.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_9B93D384-FA8A-4E60-A564-AD6072193AB6.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_99EEC196-F3CC-4B87-BBEA-5E48CA6A59F6.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_96EBAFC2-0645-4E17-9173-3ECCECCEA24B.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_3B3CA1FE-70C1-47C2-B921-C70A8380E842.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B00D261F-F74F-4344-97F0-C21514DC07C4.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_215EB29D-CA28-4F69-9CBC-44E307985B48.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_E79D2C56-5062-4B2B-A584-808CDD9B6BBD.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_3FDAC9ED-00D9-4F80-ADB5-00D00BFDEB21.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B23A0B2E-EFDD-4915-AF7E-DCA2AE756342.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B8CF5879-8063-4FD3-86AD-5D74F861B383.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_7D3CE731-AE76-4514-B5A8-E5D1DEBCEBB9.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_A0044D09-B69D-4ABA-A67D-6B2B99DD786E.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_319624BB-EB71-42AA-95CE-46EDCA998403.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA402A74-BC02-40D7-A179-CA6F626CB774.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_D68E7E69-125D-4E0B-ABD8-881BB1C3F811.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EE9BD63A-C864-48CD-9670-CBC4E2E32AEC.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_FBF9E29A-69A0-4209-9C87-AECA5A2C18B7.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_CBCE5EAA-2DF7-4A5D-B9E1-1C315CB432CB.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B8BD33E9-917F-4B4A-8624-DD661893167C.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA5954D2-90F3-40A6-9A8A-FFECEB48F705.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_BC667EFF-2C78-42CC-9DB8-4E52DFA8A083.wav
+
+✅ Saved 6 history items to UserDefaults.
+🗑️ Deleted history item with ID: 03787F91-3A82-4B7B-8572-CD2F43E1F3C2
+
+✅ Saved 5 history items to UserDefaults.
+🗑️ Deleted history item with ID: 5367BBB8-F080-4B5E-A4DF-6A5E1C8C5AB5
+
+✅ Saved 5 history items to UserDefaults.
+📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B20A0C45-6918-4183-8AF4-B8543BEFEED0.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_4171522A-9BB8-409B-9E21-B8E540D69F74.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_076EABF1-F185-466A-9199-D7A933CD80FB.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_84CA9838-1AF3-4DCE-B1E5-8301415E8E7E.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_7FC13092-B2EC-47FC-A9DF-A0B2DACEFDFA.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_0E8F1E66-ADDE-4501-855F-0E309EB4833E.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_A382601D-CB08-4EEE-9526-6829631204F7.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EC2D7766-A26C-4407-949A-C2129BF8DFC9.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_C9044A69-52E2-4B36-B1C1-154B9D7926D6.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_C0B2F65A-1A15-4FCE-91BC-E08F0A256C62.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_DE03F210-86F8-4C24-8DFB-A34A14EAB0D8.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_392C763E-42BB-4D19-BCB6-3EEABE702E3D.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_9B93D384-FA8A-4E60-A564-AD6072193AB6.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_99EEC196-F3CC-4B87-BBEA-5E48CA6A59F6.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_96EBAFC2-0645-4E17-9173-3ECCECCEA24B.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_3B3CA1FE-70C1-47C2-B921-C70A8380E842.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B00D261F-F74F-4344-97F0-C21514DC07C4.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_215EB29D-CA28-4F69-9CBC-44E307985B48.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_E79D2C56-5062-4B2B-A584-808CDD9B6BBD.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_3FDAC9ED-00D9-4F80-ADB5-00D00BFDEB21.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B23A0B2E-EFDD-4915-AF7E-DCA2AE756342.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B8CF5879-8063-4FD3-86AD-5D74F861B383.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_7D3CE731-AE76-4514-B5A8-E5D1DEBCEBB9.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_A0044D09-B69D-4ABA-A67D-6B2B99DD786E.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_319624BB-EB71-42AA-95CE-46EDCA998403.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA402A74-BC02-40D7-A179-CA6F626CB774.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_D68E7E69-125D-4E0B-ABD8-881BB1C3F811.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EE9BD63A-C864-48CD-9670-CBC4E2E32AEC.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_FBF9E29A-69A0-4209-9C87-AECA5A2C18B7.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_CBCE5EAA-2DF7-4A5D-B9E1-1C315CB432CB.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_B8BD33E9-917F-4B4A-8624-DD661893167C.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_EA5954D2-90F3-40A6-9A8A-FFECEB48F705.wav
+⚠️ Segment file not found in Documents: segment_DE0C33FC-C3DD-4B72-BE58-33297C62CEA3_BC667EFF-2C78-42CC-9DB8-4E52DFA8A083.wav
+
+✅ Saved 5 history items to UserDefaults.
+📝 Updated history item: ID DE0C33FC-C3DD-4B72-BE58-33297C62CEA3

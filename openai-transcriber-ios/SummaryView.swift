@@ -20,13 +20,33 @@ struct SummaryView: View {
     @State private var showSummaryOptions = false
     @State private var selectedSummaryLevel: SummaryLevel = .standard
     @State private var summaryTargetHistoryId: UUID? = nil
+    @State private var summaryProgress: Double = 0.0
+    @State private var isCancelled = false
+    @State private var currentTask: Task<Void, Never>?
     
     var body: some View {
         VStack(spacing: 0) {
             if summaryText.isEmpty && !isLoading {
                 EmptyStateView()
             } else if isLoading {
-                LoadingView()
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    
+                    Text("要約を生成中...")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                    
+                    ProgressView(value: summaryProgress)
+                        .progressViewStyle(LinearProgressViewStyle())
+                        .padding(.horizontal, 40)
+                    
+                    Button("キャンセル") {
+                        cancelSummary()
+                    }
+                    .foregroundColor(.red)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -103,8 +123,11 @@ struct SummaryView: View {
         }
         .onChange(of: HistoryManager.shared.currentHistoryId) { _, newId in
             // 履歴が切り替わったら要約をリセット
-            summaryText = ""
-            currentSummary = nil
+            if let item = HistoryManager.shared.historyItems.first(where: { $0.id == newId }) {
+                summaryText = item.summary ?? ""
+                currentSummary = item.summary
+                currentSubtitle = item.subtitle
+            }
             if isGeneratingSummary {
                 // 要約生成中に履歴が切り替わったらフラグをリセット
                 isGeneratingSummary = false
@@ -139,9 +162,20 @@ struct SummaryView: View {
     }
     
     private func generateSummary() {
-        Task {
+        isCancelled = false
+        summaryProgress = 0.0
+        currentTask = Task {
             await performSummary()
         }
+    }
+    
+    private func cancelSummary() {
+        isCancelled = true
+        currentTask?.cancel()
+        isLoading = false
+        isGeneratingSummary = false
+        summaryProgress = 0.0
+        summaryTargetHistoryId = nil
     }
     
     @MainActor
@@ -153,6 +187,12 @@ struct SummaryView: View {
             .map { "\($0.time.formatted(.dateTime.hour().minute().second())): \($0.text)" }
             .joined(separator: "\n")
         
+        // テキストが長すぎる場合の警告
+        let estimatedTokens = fullText.count / 4  // 概算
+        if estimatedTokens > 60000 {
+            print("⚠️ Text might be too long for summarization: ~\(estimatedTokens) tokens")
+        }
+        
         // 選択されたレベルに応じたプロンプトを生成
         let ratio = getSummaryRatio(for: selectedSummaryLevel)
         let prompt = getSummaryPrompt(for: selectedSummaryLevel, ratio: ratio)
@@ -161,7 +201,17 @@ struct SummaryView: View {
         let subtitlePrompt = "\n\nまた、この内容を表す20文字以内の短いサブタイトルも生成してください。サブタイトルは「サブタイトル：」で始めてください。"
         
         do {
+            // プログレス更新（擬似的）
+            for i in 1...9 {
+                if isCancelled { throw CancellationError() }
+                summaryProgress = Double(i) / 10.0
+                try await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
+            }
+            
             let result = try await GeminiClient.shared.summarize(text: fullText, prompt: prompt + subtitlePrompt)
+            
+            if isCancelled { throw CancellationError() }
+            summaryProgress = 1.0
             
             // サブタイトルを抽出
             let lines = result.split(separator: "\n")
@@ -187,13 +237,27 @@ struct SummaryView: View {
             }
             onSummaryGenerated?(summary, subtitle)
         } catch {
-            errorMessage = error.localizedDescription
-            showError = true
+            if error is CancellationError {
+                print("ℹ️ Summary generation cancelled")
+            } else {
+                print("❌ Summary generation error: \(error)")
+                errorMessage = "要約生成エラー: \(error.localizedDescription)"
+                showError = true
+            }
             isGeneratingSummary = false
         }
         
         isLoading = false
         summaryTargetHistoryId = nil
+        summaryProgress = 0.0
+        currentTask = nil
+    }
+}
+
+// キャンセルエラー
+struct CancellationError: Error {
+    var localizedDescription: String {
+        "キャンセルされました"
     }
 }
 

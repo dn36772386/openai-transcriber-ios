@@ -3,6 +3,7 @@ import AVFoundation
 import Foundation
 import Combine
 import UniformTypeIdentifiers
+import UIKit
 
 // MARK: - Color Palette
 extension Color {
@@ -93,6 +94,10 @@ struct ContentView: View {
     @State private var isEditingSubtitle = false
     @State private var editingSubtitleText = ""
     @State private var isGeneratingSummary = false
+    
+    // タイトルタップ用の状態
+    @State private var showTitleMenu = false
+    @State private var titleText = "Transcriber"
     
     private let client = OpenAIClient()
     
@@ -190,36 +195,6 @@ struct ContentView: View {
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
                         HStack(spacing: 15) {
-                            if !recorder.isRecording && !transcriptLines.isEmpty {
-                                Menu {
-                                    Button {
-                                        shareFullText()
-                                    } label: {
-                                        Label("文字起こし全文", systemImage: "doc.text")
-                                    }
-                                    
-                                    if currentSummary != nil {
-                                        Button {
-                                            shareSummary()
-                                        } label: {
-                                            Label("要約", systemImage: "doc.text.magnifyingglass")
-                                        }
-                                    }
-                                    
-                                    if currentSubtitle != nil {
-                                        Button {
-                                            shareSubtitle()
-                                        } label: {
-                                            Label("サブタイトル", systemImage: "text.bubble")
-                                        }
-                                    }
-                                } label: {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 22, weight: .light))
-                                        .foregroundColor(Color.accent)
-                                }
-                            }
-                            
                             if recorder.isRecording {
                                 Button {
                                     finishRecording()
@@ -248,43 +223,47 @@ struct ContentView: View {
                     }
                 }
                 .navigationBarTitleDisplayMode(.inline)
-                .background(Color.appBackground.edgesIgnoringSafeArea(.all))
-                
-                // サブタイトル表示・編集エリア
-                if selectedTab == .transcription && !transcriptLines.isEmpty {
-                    VStack(spacing: 8) {
-                        HStack {
-                            Text("サブタイトル")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Button(isEditingSubtitle ? "完了" : "編集") {
-                                if isEditingSubtitle {
-                                    currentSubtitle = editingSubtitleText
-                                    saveOrUpdateCurrentSession()
-                                }
-                                isEditingSubtitle.toggle()
-                                if isEditingSubtitle {
-                                    editingSubtitleText = currentSubtitle ?? ""
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Button(action: {
+                            if !transcriptLines.isEmpty {
+                                showTitleMenu = true
+                                // 超軽い振動
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
+                                impactFeedback.impactOccurred()
+                            }
+                        }) {
+                            VStack(spacing: 2) {
+                                Text(titleText)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                if !transcriptLines.isEmpty, let subtitle = currentSubtitle {
+                                    Text(subtitle)
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
                                 }
                             }
-                            .font(.caption)
                         }
-                        
-                        if isEditingSubtitle {
-                            TextField("サブタイトルを入力", text: $editingSubtitleText)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                        } else {
-                            Text(currentSubtitle ?? "未設定")
-                                .font(.subheadline)
-                                .foregroundColor(currentSubtitle == nil ? .gray : .primary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                        .disabled(transcriptLines.isEmpty)
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(Color.gray.opacity(0.05))
                 }
+                .background(Color.appBackground.edgesIgnoringSafeArea(.all))
+                
+                // タイトルメニュー
+                .confirmationDialog("共有", isPresented: $showTitleMenu) {
+                    Button("文字起こし全文") { shareFullText() }
+                    if currentSummary != nil {
+                        Button("要約") { shareSummary() }
+                    }
+                    if currentSubtitle != nil {
+                        Button("サブタイトル") { shareSubtitle() }
+                    }
+                    Button("キャンセル", role: .cancel) {}
+                }
+                
+                // サブタイトル編集エリア（非表示に）
             }
             .navigationViewStyle(StackNavigationViewStyle())
 
@@ -391,6 +370,17 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("音声録音を行うには、設定アプリの「プライバシー > マイク」で本アプリを許可してください。")
+        }
+        .onChange(of: transcriptLines) { _, _ in
+            updateTitleText()
+        }
+        .onChange(of: currentSubtitle) { _, _ in
+            updateTitleText()
+        }
+        .onChange(of: selectedTab) { _, _ in
+            // タブ切り替え時の振動
+            let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
+            impactFeedback.impactOccurred()
         }
     }
 
@@ -846,13 +836,33 @@ struct ContentView: View {
         let av = UIActivityViewController(activityItems: [subtitle], applicationActivities: nil)
         UIApplication.shared.windows.first?.rootViewController?.present(av, animated: true)
     }
+    
+    // MARK: - Title Update
+    private func updateTitleText() {
+        if transcriptLines.isEmpty {
+            titleText = "Transcriber"
+        } else if let firstLine = transcriptLines.first {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            titleText = formatter.string(from: firstLine.time)
+        } else {
+            titleText = "Transcriber"
+        }
+    }
 }
 
 // MARK: - Hamburger Button
 struct HamburgerButton: View {
     @Binding var showSidebar: Bool
     var body: some View {
-        Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showSidebar.toggle() } }) {
+        Button(action: { 
+            withAnimation(.easeInOut(duration: 0.2)) { 
+                showSidebar.toggle()
+                // サイドバー開閉時の振動
+                let impactFeedback = UIImpactFeedbackGenerator(style: .soft)
+                impactFeedback.impactOccurred()
+            }
+        }) {
             Image(systemName: "line.horizontal.3")
                 .imageScale(.large)
                 .foregroundColor(Color.icon)

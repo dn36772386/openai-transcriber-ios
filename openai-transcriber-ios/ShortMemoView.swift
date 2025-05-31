@@ -144,15 +144,15 @@ class ShortMemoRecorder: ObservableObject {
                 AVFormatIDKey: kAudioFormatLinearPCM,
                 AVSampleRateKey: 16_000,
                 AVNumberOfChannelsKey: 1,
-                AVEncoderBitRateKey: 16,
                 AVLinearPCMBitDepthKey: 16,
-                AVLinearPCMIsFloatKey: false,
-                AVLinearPCMIsBigEndianKey: false
+                AVLinearPCMIsFloatKey: false
             ]
             
             audioRecorder = try AVAudioRecorder(url: url, settings: settings)
+            audioRecorder?.prepareToRecord()
             audioRecorder?.record()
             recordingURL = url
+            print("🎤 ShortMemo recording started: \(url.lastPathComponent)")
             
         } catch {
             print("Failed to start recording: \(error)")

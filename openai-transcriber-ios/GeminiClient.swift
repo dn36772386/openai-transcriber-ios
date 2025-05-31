@@ -65,10 +65,30 @@ final class GeminiClient {
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let errorBody = String(data: data, encoding: .utf8) ?? "No error details"
+            print("❌ Gemini API Error - Status: \(status)")
+            print("❌ Error Body: \(errorBody)")
+            
+            // 詳細なエラーメッセージ
+            var errorMessage = "APIエラー: \(status)"
+            if status == 400 {
+                errorMessage = "リクエストが不正です。文章が長すぎる可能性があります。"
+            } else if status == 401 {
+                errorMessage = "認証エラー: APIキーを確認してください"
+            } else if status == 429 {
+                errorMessage = "レート制限: しばらく待ってから再試行してください"
+            } else if status == 500 {
+                errorMessage = "サーバーエラー: しばらく待ってから再試行してください"
+            }
+            
             throw NSError(
                 domain: "GeminiClient",
                 code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "APIエラー: \(status)"]
+                userInfo: [
+                    NSLocalizedDescriptionKey: errorMessage,
+                    "statusCode": status,
+                    "responseBody": errorBody
+                ]
             )
         }
         
