@@ -92,25 +92,59 @@ final class GeminiClient {
             )
         }
         
-        let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
-        return geminiResponse.candidates.first?.content.parts.first?.text
-               ?? "要約を生成できませんでした"
+        // デバッグ用にレスポンスを出力
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("📝 Gemini API Response: \(jsonString.prefix(500))...")
+        }
+        
+        do {
+            let geminiResponse = try JSONDecoder().decode(GeminiResponse.self, from: data)
+            return geminiResponse.candidates.first?.content.parts?.first?.text
+                   ?? "要約を生成できませんでした"
+        } catch {
+            print("❌ Decoding error: \(error)")
+            // フォールバックとして別の構造を試す
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let candidates = json["candidates"] as? [[String: Any]],
+               let firstCandidate = candidates.first,
+               let content = firstCandidate["content"] as? [String: Any],
+               let parts = content["parts"] as? [[String: Any]],
+               let firstPart = parts.first,
+               let text = firstPart["text"] as? String {
+                return text
+            }
+            throw error
+        }
     }
 }
 
 // MARK: - レスポンス構造体
 struct GeminiResponse: Codable {
     let candidates: [Candidate]
+    let promptFeedback: PromptFeedback?
+    
+    struct PromptFeedback: Codable {
+        let safetyRatings: [SafetyRating]?
+    }
+    
+    struct SafetyRating: Codable {
+        let category: String?
+        let probability: String?
+    }
 }
 
 struct Candidate: Codable {
     let content: Content
+    let finishReason: String?
+    let index: Int?
+    let safetyRatings: [GeminiResponse.SafetyRating]?
 }
 
 struct Content: Codable {
-    let parts: [Part]
+    let parts: [Part]?
+    let role: String?
 }
 
 struct Part: Codable {
-    let text: String
+    let text: String?
 }

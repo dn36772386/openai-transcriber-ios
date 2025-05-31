@@ -241,7 +241,20 @@ struct SummaryView: View {
                 print("ℹ️ Summary generation cancelled")
             } else {
                 print("❌ Summary generation error: \(error)")
-                errorMessage = "要約生成エラー: \(error.localizedDescription)"
+                
+                // エラーメッセージをより分かりやすく
+                if let nsError = error as NSError? {
+                    if nsError.domain == "GeminiClient" {
+                        errorMessage = nsError.localizedDescription
+                    } else if error.localizedDescription.contains("keyNotFound") {
+                        errorMessage = "APIレスポンスの形式が変更されました。アプリの更新が必要です。"
+                    } else {
+                        errorMessage = "要約生成エラー: \(error.localizedDescription)"
+                    }
+                } else {
+                    errorMessage = "要約生成エラー: \(error.localizedDescription)"
+                }
+                
                 showError = true
             }
             isGeneratingSummary = false

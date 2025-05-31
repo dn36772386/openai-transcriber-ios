@@ -98,6 +98,7 @@ struct ContentView: View {
     // タイトルタップ用の状態
     @State private var showTitleMenu = false
     @State private var titleText = "Transcriber"
+    @State private var isTitlePressed = false
     
     private let client = OpenAIClient()
     
@@ -226,6 +227,12 @@ struct ContentView: View {
                 .toolbar {
                     ToolbarItem(placement: .principal) {
                         Button(action: {
+                            withAnimation(.easeInOut(duration: 0.1)) {
+                                isTitlePressed = true
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                isTitlePressed = false
+                            }
                             if !transcriptLines.isEmpty {
                                 showTitleMenu = true
                                 // 超軽い振動
@@ -233,20 +240,35 @@ struct ContentView: View {
                                 impactFeedback.impactOccurred()
                             }
                         }) {
-                            VStack(spacing: 2) {
-                                Text(titleText)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
+                            HStack(spacing: 4) {
+                                VStack(spacing: 2) {
+                                    Text(titleText)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    
+                                    if !transcriptLines.isEmpty, let subtitle = currentSubtitle {
+                                        Text(subtitle)
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                }
                                 
-                                if !transcriptLines.isEmpty, let subtitle = currentSubtitle {
-                                    Text(subtitle)
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(1)
+                                // タップ可能なことを示すアイコン
+                                if !transcriptLines.isEmpty {
+                                    Image(systemName: isTitlePressed ? "chevron.down.circle.fill" : "chevron.down.circle")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(isTitlePressed ? .accentColor : .secondary.opacity(0.6))
+                                        .scaleEffect(isTitlePressed ? 0.9 : 1.0)
                                 }
                             }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(isTitlePressed ? Color.gray.opacity(0.1) : Color.clear)
+                            .cornerRadius(8)
                         }
                         .disabled(transcriptLines.isEmpty)
+                        .opacity(transcriptLines.isEmpty ? 0.5 : 1.0)
                     }
                 }
                 .background(Color.appBackground.edgesIgnoringSafeArea(.all))
@@ -843,7 +865,8 @@ struct ContentView: View {
             titleText = "Transcriber"
         } else if let firstLine = transcriptLines.first {
             let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm:ss"
+            formatter.dateFormat = "M/d HH:mm"
+            formatter.locale = Locale(identifier: "ja_JP")
             titleText = formatter.string(from: firstLine.time)
         } else {
             titleText = "Transcriber"
