@@ -41,6 +41,7 @@ struct HistoryItem: Identifiable, Codable {
     var fullAudioFileName: String?            // セッション全体の音声ファイル名 (Documents内)
     var transcriptLines: [TranscriptLineData] // 文字起こし結果 (Codable用)
     var summary: String?                       // 要約テキスト
+    var subtitle: String?                      // サブタイトル
 
     // Codable対応のためのシンプルな文字起こしデータ構造
     struct TranscriptLineData: Identifiable, Codable {
@@ -50,10 +51,11 @@ struct HistoryItem: Identifiable, Codable {
         var audioSegmentFileName: String? // 個別セグメントのファイル名 (Documents内)
     }
 
-    init(id: UUID = UUID(), date: Date = Date(), lines: [TranscriptLine], fullAudioURL: URL?, documentsDirectory: URL, summary: String? = nil) {
+    init(id: UUID = UUID(), date: Date = Date(), lines: [TranscriptLine], fullAudioURL: URL?, documentsDirectory: URL, summary: String? = nil, subtitle: String? = nil) {
         self.id = id
         self.date = date
         self.summary = summary
+        self.subtitle = subtitle
 
         // 1. セッション全体の音声ファイルをDocumentsにコピーし、ファイル名を保存
         // fullAudioFileName を先に初期化 (self.id を使用するため)

@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var silenceThreshold: Float = UserDefaults.standard.float(forKey: "silenceThreshold") == 0 ? 0.01 : UserDefaults.standard.float(forKey: "silenceThreshold")
     @State private var silenceWindow: Double = UserDefaults.standard.double(forKey: "silenceWindow") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "silenceWindow")
     @State private var minSegmentDuration: Double = UserDefaults.standard.double(forKey: "minSegmentDuration") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "minSegmentDuration")
+    @State private var geminiMaxTokens: Int = UserDefaults.standard.integer(forKey: "geminiMaxTokens") == 0 ? 8192 : UserDefaults.standard.integer(forKey: "geminiMaxTokens")
 
     var body: some View {
         NavigationView {
@@ -48,6 +49,25 @@ struct SettingsView: View {
                     Text("要約設定")
                 } footer: {
                     Text("文書を要約する際のプロンプトを設定します")
+                }
+                
+                Section {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("最大トークン数")
+                            Spacer()
+                            Text("\(geminiMaxTokens)")
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: Binding(
+                            get: { Double(geminiMaxTokens) },
+                            set: { geminiMaxTokens = Int($0) }
+                        ), in: 1024...65535, step: 1024)
+                    }
+                } header: {
+                    Text("Gemini設定")
+                } footer: {
+                    Text("要約生成時の最大出力トークン数を設定します（1024〜65535）")
                 }
                 
                 // 新規追加：録音設定セクション
@@ -123,6 +143,7 @@ struct SettingsView: View {
                         UserDefaults.standard.set(silenceThreshold, forKey: "silenceThreshold")
                         UserDefaults.standard.set(silenceWindow, forKey: "silenceWindow")
                         UserDefaults.standard.set(minSegmentDuration, forKey: "minSegmentDuration")
+                        UserDefaults.standard.set(geminiMaxTokens, forKey: "geminiMaxTokens")
                         
                         dismiss()
                     }

@@ -46,7 +46,9 @@ final class GeminiClient {
             ],
             "generationConfig": [
                 "temperature": 0.7,
-                "maxOutputTokens": 8192
+                "maxOutputTokens": UserDefaults.standard.integer(forKey: "geminiMaxTokens") > 0 
+                    ? UserDefaults.standard.integer(forKey: "geminiMaxTokens")
+                    : 8192
             ]
         ]
         

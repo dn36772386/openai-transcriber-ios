@@ -47,7 +47,7 @@ enum ContentTab {
 
 // MARK: - Sidebar Enum
 enum SidebarMenuItemType: CaseIterable {
-    case transcribe, proofread, copy, audioDownload, settings
+    case transcribe, copy, importAudio, settings
 }
 
 // MARK: - Content View Wrapper (iOS 15+ Compatibility)
@@ -89,7 +89,9 @@ struct ContentView: View {
     @State private var formatAlertMessage = ""
     @State private var selectedTab: ContentTab = .transcription
     @State private var currentSummary: String? = nil
-    @State private var showProofread = false
+    @State private var currentSubtitle: String? = nil
+    @State private var isEditingSubtitle = false
+    @State private var editingSubtitleText = ""
     
     private let client = OpenAIClient()
     
@@ -134,7 +136,11 @@ struct ContentView: View {
                         SummaryView(
                             transcriptLines: $transcriptLines,
                             currentSummary: $currentSummary,
-                            onSummaryGenerated: { summary in self.currentSummary = summary }
+                            currentSubtitle: $currentSubtitle,
+                            onSummaryGenerated: { summary, subtitle in 
+                                self.currentSummary = summary
+                                self.currentSubtitle = subtitle
+                            }
                         )
                     }
                      
@@ -160,6 +166,36 @@ struct ContentView: View {
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
                         HStack(spacing: 15) {
+                            if !recorder.isRecording && !transcriptLines.isEmpty {
+                                Menu {
+                                    Button {
+                                        shareFullText()
+                                    } label: {
+                                        Label("文字起こし全文", systemImage: "doc.text")
+                                    }
+                                    
+                                    if currentSummary != nil {
+                                        Button {
+                                            shareSummary()
+                                        } label: {
+                                            Label("要約", systemImage: "doc.text.magnifyingglass")
+                                        }
+                                    }
+                                    
+                                    if currentSubtitle != nil {
+                                        Button {
+                                            shareSubtitle()
+                                        } label: {
+                                            Label("サブタイトル", systemImage: "text.bubble")
+                                        }
+                                    }
+                                } label: {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 22, weight: .light))
+                                        .foregroundColor(Color.accent)
+                                }
+                            }
+                            
                             if !recorder.isRecording {
                                 Toggle("", isOn: $modeIsManual)
                                     .labelsHidden()
@@ -167,14 +203,6 @@ struct ContentView: View {
                                 Text(modeIsManual ? "manual" : "auto")
                                     .font(.caption)
                                     .foregroundColor(Color.textSecondary)
-                                
-                                Button {
-                                    showFilePicker = true
-                                } label: {
-                                    Image(systemName: "square.and.arrow.down")
-                                        .font(.system(size: 22, weight: .light))
-                                        .foregroundColor(Color.accent)
-                                }
                             }
 
                             if recorder.isRecording {
@@ -206,6 +234,42 @@ struct ContentView: View {
                 }
                 .navigationBarTitleDisplayMode(.inline)
                 .background(Color.appBackground.edgesIgnoringSafeArea(.all))
+                
+                // サブタイトル表示・編集エリア
+                if selectedTab == .transcription && !transcriptLines.isEmpty {
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("サブタイトル")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Button(isEditingSubtitle ? "完了" : "編集") {
+                                if isEditingSubtitle {
+                                    currentSubtitle = editingSubtitleText
+                                    saveOrUpdateCurrentSession()
+                                }
+                                isEditingSubtitle.toggle()
+                                if isEditingSubtitle {
+                                    editingSubtitleText = currentSubtitle ?? ""
+                                }
+                            }
+                            .font(.caption)
+                        }
+                        
+                        if isEditingSubtitle {
+                            TextField("サブタイトルを入力", text: $editingSubtitleText)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                        } else {
+                            Text(currentSubtitle ?? "未設定")
+                                .font(.subheadline)
+                                .foregroundColor(currentSubtitle == nil ? .gray : .primary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.05))
+                }
             }
             .navigationViewStyle(StackNavigationViewStyle())
 
@@ -217,8 +281,8 @@ struct ContentView: View {
                     showSettings: $showSettings,
                     onLoadHistoryItem: self.loadHistoryItem,
                     onPrepareNewSession: { self.prepareNewSessionInternal(saveCurrentSession: true) },
-                    onShowProofread: {
-                        self.showProofread = true
+                    onImportAudio: {
+                        self.showFilePicker = true
                     }
                 )
                 .transition(.move(edge: .leading))
@@ -234,9 +298,6 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(isPresented: $showProofread) {
-            ProofreadView(transcriptLines: $transcriptLines)
-        }
         .fileImporter(
             isPresented: $showFilePicker,
             allowedContentTypes: AudioFormatHandler.supportedFormats,
@@ -338,6 +399,7 @@ struct ContentView: View {
         audioPlayer = nil
         transcriptionTasks.removeAll()
         currentSummary = nil
+        currentSubtitle = nil
         if let currentId = historyManager.currentHistoryId {
             historyManager.deleteHistoryItem(id: currentId)
         }
@@ -361,6 +423,7 @@ struct ContentView: View {
                     audioPlayer?.stop()
                     audioPlayer = nil
                     currentSummary = nil
+                    currentSubtitle = nil
                     transcriptionTasks.removeAll()
                     
                     print("Starting recorder with isManual: \(self.modeIsManual)")
@@ -651,13 +714,15 @@ struct ContentView: View {
                 id: currentId,
                 lines: transcriptLines,
                 fullAudioURL: currentPlayingURL,
-                summary: currentSummary
+                summary: currentSummary,
+                subtitle: currentSubtitle
             )
         } else if !transcriptLines.isEmpty {
             historyManager.addHistoryItem(
                 lines: transcriptLines,
                 fullAudioURL: currentPlayingURL,
-                summary: currentSummary
+                summary: currentSummary,
+                subtitle: currentSubtitle
             )
         }
     }
@@ -673,6 +738,7 @@ struct ContentView: View {
         audioPlayer = nil
         isCancelling = false
         currentSummary = nil
+        currentSubtitle = nil
         historyManager.currentHistoryId = historyManager.startNewSession()
     }
 
@@ -686,6 +752,7 @@ struct ContentView: View {
         isCancelling = false
         
         currentSummary = historyItem.summary
+        currentSubtitle = historyItem.subtitle
         
         self.transcriptLines = historyItem.getTranscriptLines(documentsDirectory: historyManager.documentsDirectory)
 
@@ -696,10 +763,12 @@ struct ContentView: View {
         }
         
         if let url = self.currentPlayingURL {
+            Debug.log("📁 Loading history audio from: \(url.path)")
             do {
                 audioPlayer = try AVAudioPlayer(contentsOf: url)
                 audioPlayer?.delegate = audioPlayerDelegate
                 audioPlayer?.prepareToPlay()
+                Debug.log("✅ History audio loaded successfully")
             } catch {
                 print("❌ Failed to load history audio:", error.localizedDescription)
                 audioPlayer = nil
@@ -713,6 +782,25 @@ struct ContentView: View {
         if UIDevice.current.userInterfaceIdiom == .phone {
             withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
         }
+    }
+    
+    // MARK: - Share Functions
+    private func shareFullText() {
+        let text = transcriptLines.map { $0.text }.joined(separator: "\n\n")
+        let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        UIApplication.shared.windows.first?.rootViewController?.present(av, animated: true)
+    }
+    
+    private func shareSummary() {
+        guard let summary = currentSummary else { return }
+        let av = UIActivityViewController(activityItems: [summary], applicationActivities: nil)
+        UIApplication.shared.windows.first?.rootViewController?.present(av, animated: true)
+    }
+    
+    private func shareSubtitle() {
+        guard let subtitle = currentSubtitle else { return }
+        let av = UIActivityViewController(activityItems: [subtitle], applicationActivities: nil)
+        UIApplication.shared.windows.first?.rootViewController?.present(av, animated: true)
     }
 }
 
@@ -735,9 +823,11 @@ struct SidebarView: View {
     @Binding var showSettings: Bool
     var onLoadHistoryItem: (HistoryItem) -> Void
     var onPrepareNewSession: () -> Void
-    var onShowProofread: () -> Void
+    var onImportAudio: () -> Void
     @ObservedObject private var historyManager = HistoryManager.shared
     @State private var selectedHistoryItem: UUID?
+    @State private var longPressedItem: HistoryItem?
+    @State private var showShareSheet = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -755,13 +845,11 @@ struct SidebarView: View {
                     activeMenuItem = .transcribe
                     closeSidebar()
                 })
-                SidebarMenuItem(icon: "text.badge.checkmark", text: "校正", type: .proofread, activeMenuItem: $activeMenuItem, action: { 
-                    activeMenuItem = .proofread
-                    onShowProofread()
-                    closeSidebar() 
+                SidebarMenuItem(icon: "square.and.arrow.down", text: "音声インポート", type: .importAudio, activeMenuItem: $activeMenuItem, action: { 
+                    onImportAudio()
+                    closeSidebar()
                 })
                 SidebarMenuItem(icon: "doc.on.doc", text: "コピー", type: .copy, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .copy; closeSidebar() })
-                SidebarMenuItem(icon: "arrow.down.circle", text: "音声DL", type: .audioDownload, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .audioDownload; closeSidebar() })
                 SidebarMenuItem(icon: "gearshape.fill", text: "設定", type: .settings, activeMenuItem: $activeMenuItem, action: {
                     showSettings = true
                     closeSidebar()
@@ -797,6 +885,12 @@ struct SidebarView: View {
                                     }
                                 }
                             )
+                            .onLongPressGesture {
+                                longPressedItem = item
+                                if let audioURL = item.getFullAudioURL(documentsDirectory: historyManager.documentsDirectory) {
+                                    shareAudioFile(audioURL)
+                                }
+                            }
                         }
                     }
                 }
@@ -811,6 +905,15 @@ struct SidebarView: View {
     private func closeSidebar() {
         if UIDevice.current.userInterfaceIdiom == .phone {
             withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
+        }
+    }
+    
+    private func shareAudioFile(_ url: URL) {
+        let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootVC = window.rootViewController {
+            rootVC.present(av, animated: true)
         }
     }
 }
@@ -855,8 +958,8 @@ struct HistoryRowView: View {
                         .font(.system(size: 13))
                         .foregroundColor(isSelected ? Color.textPrimary : Color.icon)
                     
-                    if let summary = item.summary, !summary.isEmpty {
-                        Text(summary)
+                    if let subtitle = item.subtitle, !subtitle.isEmpty {
+                        Text(subtitle)
                             .font(.system(size: 11))
                             .foregroundColor(Color.textSecondary)
                             .lineLimit(1)

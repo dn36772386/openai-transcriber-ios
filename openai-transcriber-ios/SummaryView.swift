@@ -3,7 +3,8 @@ import SwiftUI
 struct SummaryView: View {
     @Binding var transcriptLines: [TranscriptLine]
     @Binding var currentSummary: String?
-    var onSummaryGenerated: ((String) -> Void)?
+    @Binding var currentSubtitle: String?
+    var onSummaryGenerated: ((String, String) -> Void)?
     
     @State private var summaryText = "" 
     @State private var isLoading = false
@@ -69,6 +70,9 @@ struct SummaryView: View {
                 summaryText = summary
             }
         }
+        .onChange(of: currentSubtitle) { _, newValue in
+            // サブタイトルは別途管理
+        }
     }
     
     private func generateSummary() {
@@ -90,11 +94,22 @@ struct SummaryView: View {
         let prompt = UserDefaults.standard.string(forKey: "summarizePrompt") ?? 
             "以下の文章を簡潔に要約してください。重要なポイントを箇条書きで示してください："
         
+        // サブタイトル用のプロンプト
+        let subtitlePrompt = "\n\nまた、この内容を表す20文字以内の短いサブタイトルも生成してください。サブタイトルは「サブタイトル：」で始めてください。"
+        
         do {
-            let summary = try await GeminiClient.shared.summarize(text: fullText, prompt: prompt)
+            let result = try await GeminiClient.shared.summarize(text: fullText, prompt: prompt + subtitlePrompt)
+            
+            // サブタイトルを抽出
+            let lines = result.split(separator: "\n")
+            let subtitleLine = lines.first { $0.contains("サブタイトル：") }
+            let subtitle = subtitleLine?.replacingOccurrences(of: "サブタイトル：", with: "").trimmingCharacters(in: .whitespaces) ?? ""
+            let summary = result.replacingOccurrences(of: subtitleLine ?? "", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            
             summaryText = summary
-            currentSummary = summary  // Bindingを更新
-            onSummaryGenerated?(summary)  // コールバックを呼び出し
+            currentSummary = summary
+            currentSubtitle = subtitle
+            onSummaryGenerated?(summary, subtitle)
         } catch {
             errorMessage = error.localizedDescription
             showError = true

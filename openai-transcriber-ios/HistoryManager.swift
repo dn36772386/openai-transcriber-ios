@@ -45,7 +45,7 @@ class HistoryManager: ObservableObject {
         }
     }
 
-    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?, summary: String? = nil) {
+    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?, summary: String? = nil, subtitle: String? = nil) {
         guard !lines.isEmpty else {
             print("ℹ️ No transcript lines to save")
             return
@@ -55,7 +55,8 @@ class HistoryManager: ObservableObject {
             lines: lines,
             fullAudioURL: fullAudioURL,
             documentsDirectory: self.documentsDirectory,
-            summary: summary
+            summary: summary,
+            subtitle: subtitle
         )
 
         historyItems.insert(newItem, at: 0)
@@ -81,7 +82,8 @@ class HistoryManager: ObservableObject {
             lines: [],
             fullAudioURL: nil,
             documentsDirectory: self.documentsDirectory,
-            summary: nil
+            summary: nil,
+            subtitle: nil
         )
 
         historyItems.insert(newItem, at: 0)
@@ -98,7 +100,7 @@ class HistoryManager: ObservableObject {
         return newItem.id
     }
     
-    func updateHistoryItem(id: UUID, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?) {
+    func updateHistoryItem(id: UUID, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?, subtitle: String?) {
         guard !lines.isEmpty || fullAudioURL != nil || summary != nil else {
             print("⚠️ Update skipped: No data to save for ID \\(id)")
             return
@@ -106,7 +108,7 @@ class HistoryManager: ObservableObject {
         
         guard let index = historyItems.firstIndex(where: { $0.id == id }) else {
             print("⚠️ Update failed: History item with ID \\(id) not found. Adding as new.")
-            addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+            addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary, subtitle: subtitle)
             return
         }
         
@@ -120,7 +122,8 @@ class HistoryManager: ObservableObject {
             lines: lines,
             fullAudioURL: fullAudioURL,
             documentsDirectory: self.documentsDirectory,
-            summary: summary
+            summary: summary,
+            subtitle: subtitle
         )
         
         historyItems[index] = updatedItem
@@ -130,16 +133,16 @@ class HistoryManager: ObservableObject {
         print("📝 Updated history item: ID \\(id)")
     }
     
-    func saveOrUpdateCurrentSession(currentId: UUID?, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?) {
+    func saveOrUpdateCurrentSession(currentId: UUID?, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?, subtitle: String?) {
         guard !lines.isEmpty || fullAudioURL != nil || summary != nil else {
             print("ℹ️ No data to save")
             return
         }
         
         if let currentId = currentId {
-            updateHistoryItem(id: currentId, lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+            updateHistoryItem(id: currentId, lines: lines, fullAudioURL: fullAudioURL, summary: summary, subtitle: subtitle)
         } else {
-            addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+            addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary, subtitle: subtitle)
         }
     }
 
