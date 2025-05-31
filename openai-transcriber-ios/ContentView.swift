@@ -95,7 +95,6 @@ struct ContentView: View {
     @State private var editingSubtitleText = ""
     @State private var isGeneratingSummary = false
     
-    @State private var hasShownWelcomeGuide = UserDefaults.standard.bool(forKey: "hasShownWelcomeGuide")
     
     // タイトルタップ用の状態
     @State private var showTitleMenu = false
@@ -1323,8 +1322,7 @@ struct MainContentView: View {
                 onLineTapped: onLineTapped,
                 onRetranscribe: onRetranscribe
             )
-                .padding(.top, 10)
-                .padding(.horizontal, 10)
+            // パディングを削除してフラットに
             
             // 初回利用ガイド
             if transcriptLines.isEmpty && !UserDefaults.standard.bool(forKey: "hasShownWelcomeGuide") {

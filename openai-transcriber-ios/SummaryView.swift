@@ -52,12 +52,12 @@ struct SummaryView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("要約結果")
                             .font(.headline)
-                            .padding(.horizontal)
+                            .padding(.horizontal, 16)
                             .padding(.top)
                         
                         Text(summaryText)
                             .font(.system(size: 14))
-                            .padding(.horizontal)
+                            .padding(.horizontal, 16)
                             .textSelection(.enabled)
                         
                         Spacer(minLength: 50)
