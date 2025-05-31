@@ -167,6 +167,9 @@ struct ContentView: View {
                             selectedSummaryLevel: $selectedSummaryLevel
                         )
                         .tag(ContentTab.summary)
+                        .padding(.horizontal, 10)
+                        .padding(.top, 10)
+                        .padding(.bottom, 10)
                         .gesture(DragGesture()
                             .onEnded { value in
                                 if value.translation.width > 50 {
@@ -1353,6 +1356,9 @@ struct MainContentView: View {
                 onLineTapped: onLineTapped,
                 onRetranscribe: onRetranscribe
             )
+            .padding(.horizontal, 10)
+            .padding(.top, 10)
+            .padding(.bottom, 10)
         }
         .background(Color.appBackground.edgesIgnoringSafeArea(.all))
     }

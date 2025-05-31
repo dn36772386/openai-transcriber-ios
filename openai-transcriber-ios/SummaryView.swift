@@ -28,9 +28,6 @@ struct SummaryView: View {
         VStack(spacing: 0) {
             if summaryText.isEmpty && !isLoading {
                 EmptyStateView()
-                    .padding(.horizontal, 10)
-                    .padding(.top, 10)
-                    .padding(.bottom, 10)
             } else if isLoading {
                 VStack(spacing: 20) {
                     ProgressView()
@@ -50,9 +47,6 @@ struct SummaryView: View {
                     .foregroundColor(.red)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, 10)
-                .padding(.top, 10)
-                .padding(.bottom, 10)
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -69,15 +63,6 @@ struct SummaryView: View {
                         Spacer(minLength: 50)
                     }
                 }
-                .background(Color.cardBackground)
-                .cornerRadius(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.border, lineWidth: 1)
-                )
-                .padding(.horizontal, 10)
-                .padding(.top, 10)
-                .padding(.bottom, 10)
             }
             
             Spacer()

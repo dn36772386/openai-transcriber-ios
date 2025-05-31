@@ -10,6 +10,7 @@ struct TranscriptView: View {
     @State private var currentTappedLineId: UUID?
     @State private var selectedLineId: UUID?
     @State private var showActionSheet = false
+    @State private var recordingStartTime = Date()
     
     
     var body: some View {
@@ -32,22 +33,30 @@ struct TranscriptView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if lines.isEmpty && isRecording {
-                // 録音中の表示
-                VStack(spacing: 20) {
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.red)
-                        .symbolEffect(.pulse, options: .repeating)
-                    
-                    Text("録音中...")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                    
-                    Text("話し終わったら右上の ✓ をタップ")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                // 録音中の表示（文字起こしと同じレイアウト）
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .top, spacing: 12) {
+                        Text(recordingStartTime.formatted(.dateTime.hour().minute().second()))
+                            .font(.caption)
+                            .foregroundColor(.textSecondary)
+                            .frame(width: 65, alignment: .leading)
+                        
+                        Text("録音中です...")
+                            .font(.system(size: 14))
+                            .foregroundColor(.textPrimary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .overlay(
+                        Rectangle()
+                            .frame(height: 0.5)
+                            .foregroundColor(Color.border.opacity(0.5))
+                            .padding(.leading, 16),
+                        alignment: .bottom
+                    )
+                    Spacer()
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -87,15 +96,6 @@ struct TranscriptView: View {
                 }
             }
         }
-        .background(Color.cardBackground)
-        .cornerRadius(6)
-        .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.border, lineWidth: 1)
-        )
-        .padding(.horizontal, 10)
-        .padding(.top, 10)
-        .padding(.bottom, 10)
         .confirmationDialog(
             "アクション選択",
             isPresented: $showActionSheet,
@@ -107,6 +107,11 @@ struct TranscriptView: View {
                     onRetranscribe(line)
                 }
                 Button("キャンセル", role: .cancel) {}
+            }
+        }
+        .onChange(of: isRecording) { _, newValue in
+            if newValue {
+                recordingStartTime = Date()
             }
         }
     }
