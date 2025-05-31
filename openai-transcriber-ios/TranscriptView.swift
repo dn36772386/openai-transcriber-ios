@@ -6,6 +6,7 @@ struct TranscriptView: View {
     var onLineTapped: (URL) -> Void
     var onRetranscribe: (TranscriptLine) -> Void
     
+    @State private var currentTappedLineId: UUID?
     @State private var selectedLineId: UUID?
     @State private var showActionSheet = false
     
@@ -20,7 +21,15 @@ struct TranscriptView: View {
                             isPlaying: line.audioURL != nil && line.audioURL == currentPlayingURL,
                             onTap: {
                                 if let url = line.audioURL {
-                                    onLineTapped(url)
+                                    // 同じ行をタップした場合は停止、別の行なら再生
+                                    if currentTappedLineId == line.id && currentPlayingURL == url {
+                                        // 停止処理（ContentViewで実装）
+                                        onLineTapped(URL(fileURLWithPath: ""))  // 空のURLで停止を通知
+                                        currentTappedLineId = nil
+                                    } else {
+                                        onLineTapped(url)
+                                        currentTappedLineId = line.id
+                                    }
                                 }
                             },
                             onLongPress: {

@@ -106,6 +106,7 @@ struct ContentView: View {
                         .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
                     
                     // 既存のMainContentViewをswitch文で囲む
+                    TabView(selection: $selectedTab) {
                     switch selectedTab {
                     case .transcription:
                         MainContentView(
@@ -132,6 +133,16 @@ struct ContentView: View {
                             },
                             playNextSegmentCallback: self.playNextSegment
                         )
+                        .tag(ContentTab.transcription)
+                        .gesture(DragGesture()
+                            .onEnded { value in
+                                if value.translation.width < -50 {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        selectedTab = .summary
+                                    }
+                                }
+                            }
+                        )
                     case .summary:
                         SummaryView(
                             transcriptLines: $transcriptLines,
@@ -142,7 +153,19 @@ struct ContentView: View {
                                 self.currentSubtitle = subtitle
                             }
                         )
+                        .tag(ContentTab.summary)
+                        .gesture(DragGesture()
+                            .onEnded { value in
+                                if value.translation.width > 50 {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        selectedTab = .transcription
+                                    }
+                                }
+                            }
+                        )
                     }
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                      
                     // 下部の再生バー
                     if selectedTab == .transcription && (currentPlayingURL != nil || !transcriptLines.isEmpty) {
@@ -677,6 +700,14 @@ struct ContentView: View {
     private func playFrom(url: URL) {
         print("🛠 🎵 playFrom called with URL: \(url.lastPathComponent)")
         
+        // 空のURLの場合は停止処理
+        if url.path.isEmpty {
+            audioPlayer?.stop()
+            audioPlayer = nil
+            currentPlayingURL = nil
+            return
+        }
+        
         guard FileManager.default.fileExists(atPath: url.path) else {
             print("🛠 ❌ Audio file does not exist: \(url.path)")
             return
@@ -960,7 +991,7 @@ struct HistoryRowView: View {
                             .foregroundColor(.white)
                             .font(.system(size: 18))
                     }
-                    .frame(width: deleteButtonWidth, height: 44)
+                    .frame(width: deleteButtonWidth, height: 56)  // 2行分の高さに調整
                     .background(Color.red)
                 }
             }
@@ -978,16 +1009,18 @@ struct HistoryRowView: View {
                             .foregroundColor(Color.textSecondary)
                             .lineLimit(1)
                             .truncationMode(.tail)
-                    } else if !item.transcriptLines.isEmpty {
+                    } else {
                         Text("\(item.transcriptLines.count)件の文字起こし")
                             .font(.system(size: 11))
                             .foregroundColor(Color.textSecondary)
+                            .opacity(item.transcriptLines.isEmpty ? 0 : 1)
                     }
                 }
                 Spacer()
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .padding(.horizontal, 14)
+            .frame(minHeight: 44)  // 最小高さを確保して2行分のスペースを確保
             .background(isSelected ? Color.accent.opacity(0.12) : Color.sidebarBackground)
             .cornerRadius(4)
             .offset(x: offset)
