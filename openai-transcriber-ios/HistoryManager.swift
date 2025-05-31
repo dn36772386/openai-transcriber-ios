@@ -104,17 +104,18 @@ class HistoryManager: ObservableObject {
 
         self.currentHistoryId = newItem.id
         objectWillChange.send()
+        saveHistoryItemsToUserDefaults()  // 追加：保存を確実に
         return newItem.id
     }
     
     func updateHistoryItem(id: UUID, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?, subtitle: String?) {
         guard !lines.isEmpty || fullAudioURL != nil || summary != nil else {
-            print("⚠️ Update skipped: No data to save for ID \\(id)")
+            print("⚠️ Update skipped: No data to save for ID \(id)")
             return
         }
         
         guard let index = historyItems.firstIndex(where: { $0.id == id }) else {
-            print("⚠️ Update failed: History item with ID \\(id) not found. Adding as new.")
+            print("⚠️ Update failed: History item with ID \(id) not found. Adding as new.")
             addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary, subtitle: subtitle)
             return
         }
@@ -148,7 +149,7 @@ class HistoryManager: ObservableObject {
         objectWillChange.send()
         cleanupOrphanedAudioFiles()  // 孤立したファイルをクリーンアップ
         
-        print("📝 Updated history item: ID \\(id)")
+        print("📝 Updated history item: ID \(id)")
     }
     
     func saveOrUpdateCurrentSession(currentId: UUID?, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?, subtitle: String?) {
@@ -233,7 +234,7 @@ class HistoryManager: ObservableObject {
                 currentHistoryId = nil
             }
             saveHistoryItemsToUserDefaults()
-            print("🗑️ Deleted history item with ID: \\(id)")
+            print("🗑️ Deleted history item with ID: \(id)")
         }
     }
 

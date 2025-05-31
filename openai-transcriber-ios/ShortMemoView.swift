@@ -138,13 +138,16 @@ class ShortMemoRecorder: ObservableObject {
             try session.setActive(true)
             
             let url = FileManager.default.temporaryDirectory
-                .appendingPathComponent("memo_\(UUID().uuidString).m4a")
+                .appendingPathComponent("memo_\(UUID().uuidString).wav")
             
             let settings: [String: Any] = [
-                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVFormatIDKey: kAudioFormatLinearPCM,
                 AVSampleRateKey: 16_000,
                 AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+                AVEncoderBitRateKey: 16,
+                AVLinearPCMBitDepthKey: 16,
+                AVLinearPCMIsFloatKey: false,
+                AVLinearPCMIsBigEndianKey: false
             ]
             
             audioRecorder = try AVAudioRecorder(url: url, settings: settings)

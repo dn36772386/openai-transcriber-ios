@@ -33,7 +33,7 @@ final class OpenAIClient {
         form.appendField(name: "model",    value: "whisper-1")
         form.appendField(name: "language", value: "ja")
         // prompt は省略
-        try form.appendFile(url: url, fieldName: "file", filename: "audio.wav")
+        try form.appendFile(url: url, fieldName: "file", filename: url.lastPathComponent)
         let formData = try form.encode()
 
         // ── バックグラウンドセッションを取得 ─────────────────────
@@ -96,9 +96,19 @@ private struct MultipartFormData {
     mutating func appendFile(url: URL, fieldName: String, filename: String) throws {
         let header =
             "Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(filename)\"\r\n" +
-            "Content-Type: audio/wav\r\n\r\n"
+            "Content-Type: \(mimeType(for: url))\r\n\r\n"
         let data = try Data(contentsOf: url)
         parts.append(.init(header: header, body: data))
+    }
+    
+    private func mimeType(for url: URL) -> String {
+        switch url.pathExtension.lowercased() {
+        case "wav": return "audio/wav"
+        case "m4a": return "audio/mp4"
+        case "mp3": return "audio/mpeg"
+        case "flac": return "audio/flac"
+        default: return "audio/wav"
+        }
     }
 
     func encode() throws -> Data {

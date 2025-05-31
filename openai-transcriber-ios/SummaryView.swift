@@ -173,6 +173,9 @@ struct SummaryView: View {
             currentSummary = summary
             currentSubtitle = subtitle
             
+            // 要約生成フラグをリセット
+            isGeneratingSummary = false
+            
             // 要約結果を正しい履歴に保存
             if let targetId = summaryTargetHistoryId {
                 // 対象の履歴を更新（現在の履歴でない場合も正しく更新）
@@ -186,11 +189,11 @@ struct SummaryView: View {
         } catch {
             errorMessage = error.localizedDescription
             showError = true
+            isGeneratingSummary = false
         }
         
         isLoading = false
         summaryTargetHistoryId = nil
-        isGeneratingSummary = false
     }
 }
 
