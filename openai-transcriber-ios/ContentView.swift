@@ -615,9 +615,8 @@ struct ContentView: View {
             
             Debug.log("✅ Processing completed: \(result.segments.count) segments found")
             
-            let batchSize = 5  // 5セグメントずつ処理
-            var processedCount = 0
-
+            let delayBetweenRequests: UInt64 = 150_000_000  // 0.15秒（約6.6リクエスト/秒）
+            
             for (index, segment) in result.segments.enumerated() {
                 let startDate = Date(timeIntervalSinceNow: -result.totalDuration + segment.startTime)
                 
@@ -635,17 +634,25 @@ struct ContentView: View {
                 self.transcriptLines.append(newLine)
                 self.transcriptionTasks[segment.url] = newLine.id // ✅ OK
                 
-                try client.transcribeInBackground(
-                    url: segment.url,
-                    started: startDate
-                )
-                
-                processedCount += 1
-                // バッチごとに長めの遅延
-                if processedCount % batchSize == 0 {
-                    print("⏸ Pausing after batch of \(batchSize) segments...")
-                    try await Task.sleep(nanoseconds: 2_000_000_000) // 2秒の遅延
+                // レート制限を考慮してリトライ
+                var retryCount = 0
+                while retryCount < 3 {
+                    do {
+                        try client.transcribeInBackground(
+                            url: segment.url,
+                            started: startDate
+                        )
+                        break // 成功したらループを抜ける
+                    } catch let error as NSError where error.code == 429 {
+                        // レート制限エラーの場合は待機してリトライ
+                        retryCount += 1
+                        print("⏸ Rate limit hit, retrying... (attempt \(retryCount)/3)")
+                        try await Task.sleep(nanoseconds: delayBetweenRequests * 2) // 2倍の待機
+                    }
                 }
+                
+                // 次のリクエストまで少し待機
+                try await Task.sleep(nanoseconds: delayBetweenRequests)
             }
             
             showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除

@@ -8,6 +8,11 @@ import UIKit
 /// * 1 クラス = 1 エンドポイントのシンプル実装
 final class OpenAIClient {
 
+    // レート制限管理（シンプルなアプローチ）
+    private static var lastRequestTime: Date = Date.distantPast
+    private static let minRequestInterval: TimeInterval = 0.12 // 120ms = 8.3 req/s
+    private static let requestLock = NSLock()
+    
     // MARK: - Public API
     /// バックグラウンドセッションを使ってアップロードを開始 (戻り値なし)
     /// - Parameters:
@@ -15,6 +20,24 @@ final class OpenAIClient {
     ///   - started: セグメントの開始時刻
     @MainActor
     func transcribeInBackground(url: URL, started: Date) throws {
+        
+        // レート制限チェック
+        Self.requestLock.lock()
+        defer { Self.requestLock.unlock() }
+        
+        let now = Date()
+        let timeSinceLastRequest = now.timeIntervalSince(Self.lastRequestTime)
+        
+        if timeSinceLastRequest < Self.minRequestInterval {
+            let waitTime = Self.minRequestInterval - timeSinceLastRequest
+            throw NSError(
+                domain: "OpenAIClient",
+                code: 429,
+                userInfo: [NSLocalizedDescriptionKey: "レート制限: \(Int(waitTime * 1000))ms後に再試行してください"]
+            )
+        }
+        
+        Self.lastRequestTime = now
         Debug.log("WhisperQueue ▶︎ Enqueuing background task for:", url.lastPathComponent)
 
         // ── 0 byte／極小ファイルは送信しない ─────────────────────

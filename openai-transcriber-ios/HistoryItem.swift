@@ -79,9 +79,9 @@ struct HistoryItem: Identifiable, Codable {
                     }
                     try FileManager.default.copyItem(at: sourceFullAudioURL, to: destinationFullAudioURL)
                     tempFullAudioFileName = uniqueFullAudioFileName // 一時変数に格納
-                    print("✅ Saved full audio to: \\(destinationFullAudioURL.path)")
+                    print("✅ Saved full audio to: \(destinationFullAudioURL.path)")
                 } catch {
-                    print("❌ Error copying full audio from \\(sourceFullAudioURL.path) to \\(destinationFullAudioURL.path): \\(error)")
+                    print("❌ Error copying full audio from \(sourceFullAudioURL.path) to \(destinationFullAudioURL.path): \(error)")
                 }
             }
         }

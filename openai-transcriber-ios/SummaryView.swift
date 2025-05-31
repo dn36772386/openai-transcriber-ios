@@ -187,11 +187,11 @@ struct SummaryView: View {
         // 文字数に応じた動的な最小トークン数
         let dynamicMinTokens: Int
         if charCount <= 1000 {
-            // 1000文字以下：最小1500トークン
-            dynamicMinTokens = 1500
-        } else if charCount <= 5000 {
-            // 5000文字以下：最小3000トークン
+            // 1000文字以下：最小3000トークン（思考トークン対策）
             dynamicMinTokens = 3000
+        } else if charCount <= 5000 {
+            // 5000文字以下：最小5000トークン
+            dynamicMinTokens = 5000
         } else {
             // それ以上：設定値を使用
             dynamicMinTokens = UserDefaults.standard.integer(forKey: "minTokenLimit") > 0
