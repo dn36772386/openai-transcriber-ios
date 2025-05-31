@@ -1,5 +1,11 @@
 import SwiftUI
 
+enum SummaryLevel: String, CaseIterable {
+    case heavy = "しっかり要約"
+    case standard = "標準的な要約"
+    case light = "軽い要約"
+}
+
 struct SummaryView: View {
     @Binding var transcriptLines: [TranscriptLine]
     @Binding var currentSummary: String?
@@ -10,6 +16,8 @@ struct SummaryView: View {
     @State private var isLoading = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showSummaryOptions = false
+    @State private var selectedSummaryLevel: SummaryLevel = .standard
     
     var body: some View {
         VStack(spacing: 0) {
@@ -37,10 +45,10 @@ struct SummaryView: View {
             
             // 要約生成ボタン
             if !transcriptLines.isEmpty {
-                Button(action: generateSummary) {
+                Button(action: { showSummaryOptions = true }) {
                     HStack {
                         Image(systemName: "doc.text.magnifyingglass")
-                        Text("要約を生成")
+                        Text(isLoading ? "要約生成中..." : "要約を生成")
                     }
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
@@ -73,6 +81,47 @@ struct SummaryView: View {
         .onChange(of: currentSubtitle) { _, newValue in
             // サブタイトルは別途管理
         }
+        .confirmationDialog(
+            "要約レベルを選択",
+            isPresented: $showSummaryOptions,
+            titleVisibility: .visible
+        ) {
+            ForEach(SummaryLevel.allCases, id: \.self) { level in
+                Button(level.rawValue) {
+                    selectedSummaryLevel = level
+                    generateSummary()
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("どの程度要約しますか？")
+        }
+    }
+    
+    private func getSummaryRatio(for level: SummaryLevel) -> Int {
+        switch level {
+        case .heavy:
+            return UserDefaults.standard.integer(forKey: "heavySummaryRatio") > 0 
+                ? UserDefaults.standard.integer(forKey: "heavySummaryRatio") 
+                : 30
+        case .standard:
+            return UserDefaults.standard.integer(forKey: "standardSummaryRatio") > 0 
+                ? UserDefaults.standard.integer(forKey: "standardSummaryRatio") 
+                : 60
+        case .light:
+            return UserDefaults.standard.integer(forKey: "lightSummaryRatio") > 0 
+                ? UserDefaults.standard.integer(forKey: "lightSummaryRatio") 
+                : 80
+        }
+    }
+    
+    private func getSummaryPrompt(for level: SummaryLevel, ratio: Int) -> String {
+        let basePrompt = UserDefaults.standard.string(forKey: "summarizePrompt") ?? 
+            "以下の文章を簡潔に要約してください。重要なポイントを箇条書きで示してください："
+        
+        let ratioInstruction = "\n\n要約の長さは元の文章の約\(ratio)%程度にしてください。"
+        
+        return basePrompt + ratioInstruction
     }
     
     private func generateSummary() {
@@ -90,9 +139,9 @@ struct SummaryView: View {
             .map { "\($0.time.formatted(.dateTime.hour().minute().second())): \($0.text)" }
             .joined(separator: "\n")
         
-        // プロンプトを取得
-        let prompt = UserDefaults.standard.string(forKey: "summarizePrompt") ?? 
-            "以下の文章を簡潔に要約してください。重要なポイントを箇条書きで示してください："
+        // 選択されたレベルに応じたプロンプトを生成
+        let ratio = getSummaryRatio(for: selectedSummaryLevel)
+        let prompt = getSummaryPrompt(for: selectedSummaryLevel, ratio: ratio)
         
         // サブタイトル用のプロンプト
         let subtitlePrompt = "\n\nまた、この内容を表す20文字以内の短いサブタイトルも生成してください。サブタイトルは「サブタイトル：」で始めてください。"

@@ -12,6 +12,11 @@ struct SettingsView: View {
     @State private var silenceWindow: Double = UserDefaults.standard.double(forKey: "silenceWindow") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "silenceWindow")
     @State private var minSegmentDuration: Double = UserDefaults.standard.double(forKey: "minSegmentDuration") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "minSegmentDuration")
     @State private var geminiMaxTokens: Int = UserDefaults.standard.integer(forKey: "geminiMaxTokens") == 0 ? 8192 : UserDefaults.standard.integer(forKey: "geminiMaxTokens")
+    
+    // 要約レベルの圧縮率設定
+    @State private var heavySummaryRatio: Int = UserDefaults.standard.integer(forKey: "heavySummaryRatio") == 0 ? 30 : UserDefaults.standard.integer(forKey: "heavySummaryRatio")
+    @State private var standardSummaryRatio: Int = UserDefaults.standard.integer(forKey: "standardSummaryRatio") == 0 ? 60 : UserDefaults.standard.integer(forKey: "standardSummaryRatio")
+    @State private var lightSummaryRatio: Int = UserDefaults.standard.integer(forKey: "lightSummaryRatio") == 0 ? 80 : UserDefaults.standard.integer(forKey: "lightSummaryRatio")
 
     var body: some View {
         NavigationView {
@@ -113,6 +118,53 @@ struct SettingsView: View {
                 
                 // 要約設定を最下部に移動
                 Section {
+                    VStack(alignment: .leading, spacing: 15) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("しっかり要約")
+                                Spacer()
+                                Text("\(heavySummaryRatio)%")
+                                    .foregroundColor(.secondary)
+                            }
+                            Slider(value: Binding(
+                                get: { Double(heavySummaryRatio) },
+                                set: { heavySummaryRatio = Int($0) }
+                            ), in: 10...50, step: 5)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("標準的な要約")
+                                Spacer()
+                                Text("\(standardSummaryRatio)%")
+                                    .foregroundColor(.secondary)
+                            }
+                            Slider(value: Binding(
+                                get: { Double(standardSummaryRatio) },
+                                set: { standardSummaryRatio = Int($0) }
+                            ), in: 40...70, step: 5)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("軽い要約")
+                                Spacer()
+                                Text("\(lightSummaryRatio)%")
+                                    .foregroundColor(.secondary)
+                            }
+                            Slider(value: Binding(
+                                get: { Double(lightSummaryRatio) },
+                                set: { lightSummaryRatio = Int($0) }
+                            ), in: 70...90, step: 5)
+                        }
+                    }
+                } header: {
+                    Text("要約レベル設定")
+                } footer: {
+                    Text("各要約レベルの圧縮率を設定します")
+                }
+                
+                Section {
                     VStack(alignment: .leading) {
                         Text("要約プロンプト")
                             .font(.caption)
@@ -146,6 +198,11 @@ struct SettingsView: View {
                         UserDefaults.standard.set(silenceWindow, forKey: "silenceWindow")
                         UserDefaults.standard.set(minSegmentDuration, forKey: "minSegmentDuration")
                         UserDefaults.standard.set(geminiMaxTokens, forKey: "geminiMaxTokens")
+                        
+                        // 要約レベルの保存
+                        UserDefaults.standard.set(heavySummaryRatio, forKey: "heavySummaryRatio")
+                        UserDefaults.standard.set(standardSummaryRatio, forKey: "standardSummaryRatio")
+                        UserDefaults.standard.set(lightSummaryRatio, forKey: "lightSummaryRatio")
                         
                         dismiss()
                     }
