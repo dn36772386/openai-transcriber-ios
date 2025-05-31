@@ -34,7 +34,7 @@ struct SummaryView: View {
                             .padding(.top)
                         
                         Text(summaryText)
-                            .font(.body)
+                            .font(.system(size: 14))
                             .padding(.horizontal)
                             .textSelection(.enabled)
                         

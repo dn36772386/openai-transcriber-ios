@@ -47,7 +47,7 @@ enum ContentTab {
 
 // MARK: - Sidebar Enum
 enum SidebarMenuItemType: CaseIterable {
-    case transcribe, copy, importAudio, settings
+    case transcribe, shortMemo, importAudio, copy, settings
 }
 
 // MARK: - Content View Wrapper (iOS 15+ Compatibility)
@@ -72,9 +72,9 @@ struct ContentView: View {
     @StateObject private var audioPlayerDelegate = AudioPlayerDelegateWrapper()
     @State private var showPermissionAlert = false
     @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone
-    @State private var modeIsManual = false
     @State private var activeMenuItem: SidebarMenuItemType? = .transcribe
     @State private var showSettings = false
+    @State private var showShortMemo = false
     @State private var transcriptLines: [TranscriptLine] = []
     @State private var currentPlayingURL: URL?
     @State private var audioPlayer: AVAudioPlayer?
@@ -110,7 +110,6 @@ struct ContentView: View {
                     switch selectedTab {
                     case .transcription:
                         MainContentView(
-                            modeIsManual: $modeIsManual,
                             isRecording: $recorder.isRecording,
                             transcriptLines: $transcriptLines,
                             audioPlayerURL: $currentPlayingURL,
@@ -219,15 +218,6 @@ struct ContentView: View {
                                 }
                             }
                             
-                            if !recorder.isRecording {
-                                Toggle("", isOn: $modeIsManual)
-                                    .labelsHidden()
-                                    .tint(Color.accent)
-                                Text(modeIsManual ? "manual" : "auto")
-                                    .font(.caption)
-                                    .foregroundColor(Color.textSecondary)
-                            }
-
                             if recorder.isRecording {
                                 Button {
                                     finishRecording()
@@ -302,6 +292,7 @@ struct ContentView: View {
                     showSidebar: $showSidebar,
                     activeMenuItem: $activeMenuItem,
                     showSettings: $showSettings,
+                    showShortMemo: $showShortMemo,
                     onLoadHistoryItem: self.loadHistoryItem,
                     onPrepareNewSession: { self.prepareNewSessionInternal(saveCurrentSession: true) },
                     onImportAudio: {
@@ -321,6 +312,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showShortMemo) { ShortMemoView() }
         .fileImporter(
             isPresented: $showFilePicker,
             allowedContentTypes: AudioFormatHandler.supportedFormats,
@@ -451,8 +443,8 @@ struct ContentView: View {
                     // 録音開始時に履歴を作成
                     historyManager.currentHistoryId = historyManager.startNewSession()
                     
-                    print("Starting recorder with isManual: \(self.modeIsManual)")
-                    try recorder.start(isManual: self.modeIsManual)
+                    print("Starting recorder")
+                    try recorder.start(isManual: false)  // 常に自動モードで開始
                 } catch {
                     print("[Recorder] start failed:", error.localizedDescription)
                 }
@@ -860,6 +852,7 @@ struct SidebarView: View {
     @Binding var showSidebar: Bool
     @Binding var activeMenuItem: SidebarMenuItemType?
     @Binding var showSettings: Bool
+    @Binding var showShortMemo: Bool
     var onLoadHistoryItem: (HistoryItem) -> Void
     var onPrepareNewSession: () -> Void
     var onImportAudio: () -> Void
@@ -888,6 +881,11 @@ struct SidebarView: View {
                         return
                     }
                     activeMenuItem = .transcribe
+                    closeSidebar()
+                })
+                SidebarMenuItem(icon: "note.text", text: "ショートメモ", type: .shortMemo, activeMenuItem: $activeMenuItem, action: {
+                    activeMenuItem = .shortMemo
+                    showShortMemo = true
                     closeSidebar()
                 })
                 SidebarMenuItem(icon: "square.and.arrow.down", text: "音声インポート", type: .importAudio, activeMenuItem: $activeMenuItem, action: { 
@@ -1261,7 +1259,6 @@ struct CompactAudioPlayerView: View {
 
 // MARK: - Main Content View
 struct MainContentView: View {
-    @Binding var modeIsManual: Bool
     @Binding var isRecording: Bool
     @Binding var transcriptLines: [TranscriptLine]
     @Binding var audioPlayerURL: URL?
