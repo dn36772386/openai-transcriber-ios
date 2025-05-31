@@ -991,7 +991,7 @@ struct HistoryRowView: View {
                             .foregroundColor(.white)
                             .font(.system(size: 18))
                     }
-                    .frame(width: deleteButtonWidth, height: 56)  // 2行分の高さに調整
+                    .frame(width: deleteButtonWidth, height: 44)  // 2行分の高さに調整
                     .background(Color.red)
                 }
             }
