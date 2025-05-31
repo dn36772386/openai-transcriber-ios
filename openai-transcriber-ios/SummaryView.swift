@@ -18,6 +18,7 @@ struct SummaryView: View {
     @State private var errorMessage = ""
     @State private var showSummaryOptions = false
     @State private var selectedSummaryLevel: SummaryLevel = .standard
+    @State private var summaryTargetHistoryId: UUID? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -89,12 +90,19 @@ struct SummaryView: View {
             ForEach(SummaryLevel.allCases, id: \.self) { level in
                 Button(level.rawValue) {
                     selectedSummaryLevel = level
+                    // 要約開始時に現在の履歴IDを保存
+                    summaryTargetHistoryId = HistoryManager.shared.currentHistoryId
                     generateSummary()
                 }
             }
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text("どの程度要約しますか？")
+        }
+        .onChange(of: HistoryManager.shared.currentHistoryId) { _, newId in
+            // 履歴が切り替わったら要約をリセット
+            summaryText = ""
+            currentSummary = nil
         }
     }
     
@@ -158,6 +166,16 @@ struct SummaryView: View {
             summaryText = summary
             currentSummary = summary
             currentSubtitle = subtitle
+            
+            // 要約結果を正しい履歴に保存
+            if let targetId = summaryTargetHistoryId {
+                // 対象の履歴を更新（現在の履歴でない場合も正しく更新）
+                if let item = HistoryManager.shared.historyItems.first(where: { $0.id == targetId }) {
+                    let lines = item.getTranscriptLines(audioStorageDirectory: HistoryManager.shared.audioStorageDirectory)
+                    let fullAudioURL = item.getFullAudioURL(audioStorageDirectory: HistoryManager.shared.audioStorageDirectory)
+                    HistoryManager.shared.updateHistoryItem(id: targetId, lines: lines, fullAudioURL: fullAudioURL, summary: summary, subtitle: subtitle)
+                }
+            }
             onSummaryGenerated?(summary, subtitle)
         } catch {
             errorMessage = error.localizedDescription
@@ -165,6 +183,7 @@ struct SummaryView: View {
         }
         
         isLoading = false
+        summaryTargetHistoryId = nil
     }
 }
 

@@ -121,16 +121,26 @@ class HistoryManager: ObservableObject {
         
         let existingItem = historyItems[index]
         
+        // 既存の要約とサブタイトルを保持（nilでない場合）
+        let finalSummary = summary ?? existingItem.summary
+        let finalSubtitle = subtitle ?? existingItem.subtitle
+        
+        // linesが空の場合は既存のlinesを保持
+        let finalLines = lines.isEmpty ? existingItem.getTranscriptLines(audioStorageDirectory: self.audioStorageDirectory) : lines
+        
+        // fullAudioURLがnilの場合は既存のものを保持
+        let finalFullAudioURL = fullAudioURL ?? existingItem.getFullAudioURL(audioStorageDirectory: self.audioStorageDirectory)
+        
         deleteAssociatedFiles(for: existingItem)
         
         let updatedItem = HistoryItem(
             id: id,
             date: existingItem.date,
-            lines: lines,
-            fullAudioURL: fullAudioURL,
+            lines: finalLines,
+            fullAudioURL: finalFullAudioURL,
             audioStorageDirectory: self.audioStorageDirectory,
-            summary: summary,
-            subtitle: subtitle
+            summary: finalSummary,
+            subtitle: finalSubtitle
         )
         
         historyItems[index] = updatedItem

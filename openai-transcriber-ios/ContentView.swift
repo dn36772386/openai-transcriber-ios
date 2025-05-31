@@ -92,6 +92,7 @@ struct ContentView: View {
     @State private var currentSubtitle: String? = nil
     @State private var isEditingSubtitle = false
     @State private var editingSubtitleText = ""
+    @State private var isImportingAudio = false
     
     private let client = OpenAIClient()
     
@@ -458,6 +459,24 @@ struct ContentView: View {
     
     private func processImportedFileWithFormatSupport(_ url: URL) {
         Debug.log("⚙️ --- processImportedFileWithFormatSupport 開始: \(url.lastPathComponent) ---") // ログ追加
+        
+        // 音声インポート時は常に新規セッションを作成
+        if isImportingAudio {
+            // 現在のセッションを保存
+            saveOrUpdateCurrentSession()
+            
+            // 新規セッションを準備
+            transcriptLines.removeAll()
+            currentPlayingURL = nil
+            audioPlayer?.stop()
+            audioPlayer = nil
+            currentSummary = nil
+            currentSubtitle = nil
+            
+            // 新規履歴を作成
+            historyManager.currentHistoryId = historyManager.startNewSession()
+            isImportingAudio = false
+        }
 
         Debug.log("⚙️ セキュリティスコープアクセス開始試行") // ログ追加
         let shouldStopAccessing = url.startAccessingSecurityScopedResource()
@@ -542,11 +561,6 @@ struct ContentView: View {
     @MainActor // ◀︎◀︎ @MainActor を追加
     private func performSilenceSplitting(_ url: URL, originalURL: URL) async {
         do {
-            // ファイル処理開始時に履歴を作成
-            if historyManager.currentHistoryId == nil {
-                historyManager.currentHistoryId = historyManager.startNewSession()
-            }
-            
             Debug.log("🎵 Processing file: \(url.lastPathComponent)")
             Debug.log("🎵 Original file: \(originalURL.lastPathComponent)")
             
