@@ -11,6 +11,7 @@ struct SummaryView: View {
     @Binding var currentSummary: String?
     @Binding var currentSubtitle: String?
     var onSummaryGenerated: ((String, String) -> Void)?
+    @Binding var isGeneratingSummary: Bool
     
     @State private var summaryText = "" 
     @State private var isLoading = false
@@ -92,6 +93,7 @@ struct SummaryView: View {
                     selectedSummaryLevel = level
                     // 要約開始時に現在の履歴IDを保存
                     summaryTargetHistoryId = HistoryManager.shared.currentHistoryId
+                    isGeneratingSummary = true
                     generateSummary()
                 }
             }
@@ -103,6 +105,10 @@ struct SummaryView: View {
             // 履歴が切り替わったら要約をリセット
             summaryText = ""
             currentSummary = nil
+            if isGeneratingSummary {
+                // 要約生成中に履歴が切り替わったらフラグをリセット
+                isGeneratingSummary = false
+            }
         }
     }
     
@@ -184,6 +190,7 @@ struct SummaryView: View {
         
         isLoading = false
         summaryTargetHistoryId = nil
+        isGeneratingSummary = false
     }
 }
 

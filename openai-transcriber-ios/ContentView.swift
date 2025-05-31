@@ -92,7 +92,7 @@ struct ContentView: View {
     @State private var currentSubtitle: String? = nil
     @State private var isEditingSubtitle = false
     @State private var editingSubtitleText = ""
-    @State private var isImportingAudio = false
+    @State private var isGeneratingSummary = false
     
     private let client = OpenAIClient()
     
@@ -151,7 +151,8 @@ struct ContentView: View {
                             onSummaryGenerated: { summary, subtitle in 
                                 self.currentSummary = summary
                                 self.currentSubtitle = subtitle
-                            }
+                            },
+                            isGeneratingSummary: $isGeneratingSummary
                         )
                         .tag(ContentTab.summary)
                         .gesture(DragGesture()
@@ -297,6 +298,8 @@ struct ContentView: View {
                     onLoadHistoryItem: self.loadHistoryItem,
                     onPrepareNewSession: { self.prepareNewSessionInternal(saveCurrentSession: true) },
                     onImportAudio: {
+                        // 音声インポートは新規セッションとして扱う
+                        self.prepareNewSessionInternal(saveCurrentSession: true)
                         self.showFilePicker = true
                     }
                 )
@@ -395,6 +398,14 @@ struct ContentView: View {
     
     private func startRecording() {
         guard !recorder.isRecording else { return }
+        
+        // 要約生成中かチェック
+        if isGeneratingSummary {
+            // 要約生成中は録音開始を制限
+            Debug.log("⚠️ 要約生成中のため録音開始を制限")
+            return
+        }
+        
         requestMicrophonePermission()
     }
 
@@ -460,22 +471,10 @@ struct ContentView: View {
     private func processImportedFileWithFormatSupport(_ url: URL) {
         Debug.log("⚙️ --- processImportedFileWithFormatSupport 開始: \(url.lastPathComponent) ---") // ログ追加
         
-        // 音声インポート時は常に新規セッションを作成
-        if isImportingAudio {
-            // 現在のセッションを保存
-            saveOrUpdateCurrentSession()
-            
-            // 新規セッションを準備
-            transcriptLines.removeAll()
-            currentPlayingURL = nil
-            audioPlayer?.stop()
-            audioPlayer = nil
-            currentSummary = nil
-            currentSubtitle = nil
-            
-            // 新規履歴を作成
+        // 音声インポートは必ず新規セッションとして扱う（prepareNewSessionInternalで既に処理済み）
+        // 現在の履歴IDがない場合のみ新規作成
+        if historyManager.currentHistoryId == nil {
             historyManager.currentHistoryId = historyManager.startNewSession()
-            isImportingAudio = false
         }
 
         Debug.log("⚙️ セキュリティスコープアクセス開始試行") // ログ追加

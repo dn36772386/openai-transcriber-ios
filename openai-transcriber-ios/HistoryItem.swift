@@ -16,18 +16,24 @@ struct TranscriptLine: Identifiable, Equatable {
     func toTranscriptLineData(audioStorageDirectory: URL, historyItemId: UUID) -> HistoryItem.TranscriptLineData {
         var segmentFileName: String? = nil
         if let sourceURL = self.audioURL {
-            // セグメントごとにユニークなファイル名を生成 (履歴アイテムIDとセグメントIDを使用)
-            let fileName = "segment_\(historyItemId.uuidString)_\(self.id.uuidString).\(sourceURL.pathExtension.isEmpty ? "wav" : sourceURL.pathExtension)"
-            let destinationURL = audioStorageDirectory.appendingPathComponent(fileName)
-            do {
-                // コピー先に同名ファイルが存在する場合は上書きを試みる (またはエラー処理)
-                if FileManager.default.fileExists(atPath: destinationURL.path) {
-                    try FileManager.default.removeItem(at: destinationURL)
+            // 既にDocuments内のファイルの場合はコピーしない
+            if sourceURL.path.contains(audioStorageDirectory.path) {
+                // 既にDocuments内なのでファイル名だけ取得
+                segmentFileName = sourceURL.lastPathComponent
+            } else {
+                // セグメントごとにユニークなファイル名を生成 (履歴アイテムIDとセグメントIDを使用)
+                let fileName = "segment_\(historyItemId.uuidString)_\(self.id.uuidString).\(sourceURL.pathExtension.isEmpty ? "wav" : sourceURL.pathExtension)"
+                let destinationURL = audioStorageDirectory.appendingPathComponent(fileName)
+                do {
+                    // コピー先に同名ファイルが存在する場合は上書きを試みる (またはエラー処理)
+                    if FileManager.default.fileExists(atPath: destinationURL.path) {
+                        try FileManager.default.removeItem(at: destinationURL)
+                    }
+                    try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+                    segmentFileName = fileName
+                } catch {
+                    print("❌ Error copying segment audio \(sourceURL.path) to \(destinationURL.path): \(error)")
                 }
-                try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
-                segmentFileName = fileName
-            } catch {
-                print("❌ Error copying segment audio \(sourceURL.path) to \(destinationURL.path): \(error)")
             }
         }
         return HistoryItem.TranscriptLineData(id: self.id, time: self.time, text: self.text, audioSegmentFileName: segmentFileName)
@@ -61,17 +67,22 @@ struct HistoryItem: Identifiable, Codable {
         // fullAudioFileName を先に初期化 (self.id を使用するため)
         var tempFullAudioFileName: String? = nil
         if let sourceFullAudioURL = fullAudioURL {
-            let uniqueFullAudioFileName = "full_session_\(self.id.uuidString).\(sourceFullAudioURL.pathExtension.isEmpty ? "wav" : sourceFullAudioURL.pathExtension)"
-            let destinationFullAudioURL = audioStorageDirectory.appendingPathComponent(uniqueFullAudioFileName)
-            do {
-                if FileManager.default.fileExists(atPath: destinationFullAudioURL.path) {
-                    try FileManager.default.removeItem(at: destinationFullAudioURL)
+            // 既にDocuments内のファイルの場合はコピーしない
+            if sourceFullAudioURL.path.contains(audioStorageDirectory.path) {
+                tempFullAudioFileName = sourceFullAudioURL.lastPathComponent
+            } else {
+                let uniqueFullAudioFileName = "full_session_\(self.id.uuidString).\(sourceFullAudioURL.pathExtension.isEmpty ? "wav" : sourceFullAudioURL.pathExtension)"
+                let destinationFullAudioURL = audioStorageDirectory.appendingPathComponent(uniqueFullAudioFileName)
+                do {
+                    if FileManager.default.fileExists(atPath: destinationFullAudioURL.path) {
+                        try FileManager.default.removeItem(at: destinationFullAudioURL)
+                    }
+                    try FileManager.default.copyItem(at: sourceFullAudioURL, to: destinationFullAudioURL)
+                    tempFullAudioFileName = uniqueFullAudioFileName // 一時変数に格納
+                    print("✅ Saved full audio to: \\(destinationFullAudioURL.path)")
+                } catch {
+                    print("❌ Error copying full audio from \\(sourceFullAudioURL.path) to \\(destinationFullAudioURL.path): \\(error)")
                 }
-                try FileManager.default.copyItem(at: sourceFullAudioURL, to: destinationFullAudioURL)
-                tempFullAudioFileName = uniqueFullAudioFileName // 一時変数に格納
-                print("✅ Saved full audio to: \\(destinationFullAudioURL.path)")
-            } catch {
-                print("❌ Error copying full audio from \\(sourceFullAudioURL.path) to \\(destinationFullAudioURL.path): \\(error)")
             }
         }
         self.fullAudioFileName = tempFullAudioFileName // プロパティに代入

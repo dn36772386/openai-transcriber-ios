@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Combine
 
 struct ShortMemoView: View {
     @StateObject private var memoRecorder = ShortMemoRecorder()
@@ -8,6 +9,7 @@ struct ShortMemoView: View {
     @State private var memoLines: [MemoLine] = []
     @State private var showError = false
     @State private var errorMessage = ""
+    @Environment(\.dismiss) private var dismiss
     
     struct MemoLine: Identifiable {
         let id = UUID()
@@ -74,8 +76,17 @@ struct ShortMemoView: View {
         .onReceive(memoRecorder.$transcribedText) { text in
             if !text.isEmpty {
                 memoLines.append(MemoLine(time: Date(), text: text))
-                saveMemoToHistory()
+                memoRecorder.transcribedText = "" // リセット
             }
+        }
+        .onReceive(memoRecorder.$error) { error in
+            if let error = error {
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+        }
+        .onTapGesture {
+            saveMemoToHistory()
         }
     }
     
@@ -112,10 +123,13 @@ struct ShortMemoView: View {
 class ShortMemoRecorder: ObservableObject {
     @Published var isProcessing = false
     @Published var transcribedText = ""
+    @Published var error: Error?
     
     private var audioRecorder: AVAudioRecorder?
     private var recordingURL: URL?
     private let openAIClient = OpenAIClient()
+    private var transcriptionTask: UUID?
+    private var cancellable: AnyCancellable?
     
     func startRecording() {
         let session = AVAudioSession.sharedInstance()
@@ -140,6 +154,12 @@ class ShortMemoRecorder: ObservableObject {
         } catch {
             print("Failed to start recording: \(error)")
         }
+        
+        // 文字起こし結果の通知を受信
+        cancellable = NotificationCenter.default.publisher(for: .transcriptionDidFinish)
+            .sink { [weak self] notification in
+                self?.handleTranscriptionResult(notification: notification)
+            }
     }
     
     func stopRecording() {
@@ -148,6 +168,7 @@ class ShortMemoRecorder: ObservableObject {
         guard let url = recordingURL else { return }
         
         isProcessing = true
+        transcriptionTask = UUID()
         
         Task {
             do {
@@ -155,18 +176,31 @@ class ShortMemoRecorder: ObservableObject {
                 try await MainActor.run {
                     try openAIClient.transcribeInBackground(url: url, started: Date())
                 }
-                
-                // 文字起こし結果を待つ（簡易実装）
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-                    self?.isProcessing = false
-                    // 実際にはBackgroundSessionManagerからの通知を受け取る
-                }
             } catch {
                 await MainActor.run {
                     self.isProcessing = false
+                    self.error = error
                     print("Transcription failed: \(error)")
                 }
             }
+        }
+    }
+    
+    private func handleTranscriptionResult(notification: Notification) {
+        guard let url = notification.object as? URL,
+              url == recordingURL else { return }
+        
+        DispatchQueue.main.async {
+            self.isProcessing = false
+            
+            if let error = notification.userInfo?["error"] as? Error {
+                self.error = error
+            } else if let text = notification.userInfo?["text"] as? String {
+                self.transcribedText = text
+            }
+            
+            // 一時ファイルを削除
+            try? FileManager.default.removeItem(at: url)
         }
     }
 }
