@@ -17,9 +17,27 @@ final class AudioEngineRecorder: ObservableObject {
     weak var delegate: AudioEngineRecorderDelegate?
 
     // MARK: ––––– Private –––––
-    private let silenceWindow   = 0.5
+    // UserDefaultsから設定を読み込むように変更
+    private var silenceWindow: Double {
+        let value = UserDefaults.standard.double(forKey: "silenceWindow")
+        return value > 0 ? value : 0.5
+    }
+    
     private let minSegmentBytes = 12_288
-    private let silenceThreshold: Float = 0.01 // ◀︎◀︎ 無音と判定するRMS値の閾値（要調整）
+    
+    private var silenceThreshold: Float {
+        let value = UserDefaults.standard.float(forKey: "silenceThreshold")
+        return value > 0 ? value : 0.01
+    }
+    
+    // 最小セグメント時間を追加
+    private var minSegmentDuration: Double {
+        let value = UserDefaults.standard.double(forKey: "minSegmentDuration")
+        return value > 0 ? value : 0.5
+    }
+
+    // 設定値のログ出力フラグ（static）
+    private static var hasLoggedSettings = false
 
     private var isSpeaking  = false
     private var silenceStart: Date?
@@ -168,7 +186,13 @@ final class AudioEngineRecorder: ObservableObject {
         let rms = buffer.rmsMagnitude() // RMS値を取得
         let now = Date()
 
-        Debug.log(String(format: "🎙️ RMS = %.5f", rms)) // ログ出力
+        // 初回のみ設定値をログ出力（static変数を外部に移動）
+        if !AudioEngineRecorder.hasLoggedSettings {
+            Debug.log("🎛️ Audio Settings - Threshold: \(silenceThreshold), Window: \(silenceWindow)s, MinDuration: \(minSegmentDuration)s")
+            AudioEngineRecorder.hasLoggedSettings = true
+        }
+
+        Debug.log(String(format: "🎙️ RMS = %.5f (threshold: %.5f)", rms, silenceThreshold))
 
         // 閾値を超えたら「発話中」とみなす
         let isVoice = rms > silenceThreshold
@@ -198,7 +222,14 @@ final class AudioEngineRecorder: ObservableObject {
             if silenceStart == nil { silenceStart = now }
             // 無音が一定時間続いたらセグメントを確定
             if let s0 = silenceStart, now.timeIntervalSince(s0) > silenceWindow {
-                finalizeSegment()
+                // セグメントの長さをチェック
+                let segmentDuration = now.timeIntervalSince(startDate)
+                if segmentDuration >= minSegmentDuration {
+                    finalizeSegment()
+                } else {
+                    Debug.log("⏩ Segment too short (\(String(format: "%.2f", segmentDuration))s < \(minSegmentDuration)s), discarding")
+                    resetState()
+                }
                 isSpeaking = false
             }
         }
@@ -252,11 +283,15 @@ final class AudioEngineRecorder: ObservableObject {
         let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size]
                     as? NSNumber)?.intValue ?? 0
         
-        print("📊 Segment finalized: \(url.lastPathComponent), size: \(bytes) bytes")
+        // セグメントの時間長を計算
+        let segmentDuration = Date().timeIntervalSince(startDate)
+        
+        print("📊 Segment finalized: \(url.lastPathComponent), size: \(bytes) bytes, duration: \(String(format: "%.2f", segmentDuration))s")
 
-        if bytes < minSegmentBytes {
+        // バイト数と時間長の両方でチェック
+        if bytes < minSegmentBytes || segmentDuration < minSegmentDuration {
             try? FileManager.default.removeItem(at: url)
-            print("🗑️ Segment too small, deleted: \(url.lastPathComponent)")
+            print("🗑️ Segment too small/short, deleted: \(url.lastPathComponent)")
             resetState()
             return
         }

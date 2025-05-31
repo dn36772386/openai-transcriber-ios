@@ -7,8 +7,13 @@ struct SettingsView: View {
     @State private var summarizePrompt = UserDefaults.standard.string(forKey: "summarizePrompt") ?? 
         "以下の文章を簡潔に要約してください。重要なポイントを箇条書きで示してください："
     
+    // 無音設定パラメーター
+    @State private var silenceThreshold: Float = UserDefaults.standard.float(forKey: "silenceThreshold") == 0 ? 0.01 : UserDefaults.standard.float(forKey: "silenceThreshold")
+    @State private var silenceWindow: Double = UserDefaults.standard.double(forKey: "silenceWindow") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "silenceWindow")
+    @State private var minSegmentDuration: Double = UserDefaults.standard.double(forKey: "minSegmentDuration") == 0 ? 0.5 : UserDefaults.standard.double(forKey: "minSegmentDuration")
+
     var body: some View {
-        NavigationView {  // ⭐️ NavigationStackをNavigationViewに変更
+        NavigationView {
             Form {
                 Section("OpenAI API") {
                     SecureField("OpenAI APIキー", text: $openAIKey)
@@ -28,7 +33,7 @@ struct SettingsView: View {
                         }
                 }
                 
-                Section {  // ⭐️ iOS 15互換の文法に変更
+                Section {
                     VStack(alignment: .leading) {
                         Text("要約プロンプト")
                             .font(.caption)
@@ -44,18 +49,84 @@ struct SettingsView: View {
                 } footer: {
                     Text("文書を要約する際のプロンプトを設定します")
                 }
+                
+                // 新規追加：録音設定セクション
+                Section {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("無音判定閾値")
+                            Spacer()
+                            Text(String(format: "%.3f", silenceThreshold))
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: $silenceThreshold, in: 0.001...0.05, step: 0.001)
+                        Text("音声の大きさの閾値（小さいほど敏感）")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("無音判定時間")
+                            Spacer()
+                            Text(String(format: "%.1f秒", silenceWindow))
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: $silenceWindow, in: 0.3...2.0, step: 0.1)
+                        Text("この時間無音が続くとセグメントを区切る")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("最小セグメント長")
+                            Spacer()
+                            Text(String(format: "%.1f秒", minSegmentDuration))
+                                .foregroundColor(.secondary)
+                        }
+                        Slider(value: $minSegmentDuration, in: 0.3...3.0, step: 0.1)
+                        Text("これより短いセグメントは破棄される")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Button("デフォルトに戻す") {
+                        silenceThreshold = 0.01
+                        silenceWindow = 0.5
+                        minSegmentDuration = 0.5
+                    }
+                    .foregroundColor(.accentColor)
+                    
+                } header: {
+                    Text("録音設定（自動モード）")
+                } footer: {
+                    Text("自動モードでの音声区切りの設定を調整します。マニュアルモードでは適用されません。")
+                }
             }
             .navigationTitle("設定")
-            .navigationBarTitleDisplayMode(.inline)  // ⭐️ 追加（オプション）
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
+                        // APIキーの保存
                         KeychainHelper.shared.save(apiKey: openAIKey.trimmingCharacters(in: .whitespaces))
                         KeychainHelper.shared.saveGeminiKey(geminiKey.trimmingCharacters(in: .whitespaces))
+                        
+                        // プロンプトの保存
                         UserDefaults.standard.set(summarizePrompt, forKey: "summarizePrompt")
+                        
+                        // 録音設定の保存
+                        UserDefaults.standard.set(silenceThreshold, forKey: "silenceThreshold")
+                        UserDefaults.standard.set(silenceWindow, forKey: "silenceWindow")
+                        UserDefaults.standard.set(minSegmentDuration, forKey: "minSegmentDuration")
+                        
                         dismiss()
                     }
-                    .disabled(openAIKey.trimmingCharacters(in: .whitespaces).isEmpty)  // ⭐️ 既存と同じ条件を追加
+                    .disabled(openAIKey.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }

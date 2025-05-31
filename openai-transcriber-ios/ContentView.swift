@@ -89,21 +89,23 @@ struct ContentView: View {
     @State private var formatAlertMessage = ""
     @State private var selectedTab: ContentTab = .transcription
     @State private var currentSummary: String? = nil
-
+    @State private var showProofread = false
+    
     private let client = OpenAIClient()
     
     var body: some View {
         ZStack(alignment: .leading) {
             NavigationView {
                 VStack(spacing: 0) {
-                    // ⭐️ タブビューを追加
+                    // メインコンテンツ
+                    // タブビューを追加
                     ContentTabView(selectedTab: $selectedTab)
                         .background(Color.white)
                         .shadow(color: Color.black.opacity(0.1), radius: 1, x: 0, y: 1)
-                    // ⭐️ 既存のMainContentViewをswitch文で囲む
+                    
+                    // 既存のMainContentViewをswitch文で囲む
                     switch selectedTab {
                     case .transcription:
-                    // メインコンテンツ
                         MainContentView(
                             modeIsManual: $modeIsManual,
                             isRecording: $recorder.isRecording,
@@ -113,7 +115,7 @@ struct ContentView: View {
                             onLineTapped: self.playFrom,
                             onRetranscribe: { line in
                                 if let index = self.transcriptLines.firstIndex(where: { $0.id == line.id }),
-                                let audioURL = line.audioURL {
+                                   let audioURL = line.audioURL {
                                     self.transcriptLines[index].text = "…再文字起こし中…"
                                     self.transcriptionTasks[audioURL] = line.id
                                     Task { @MainActor in
@@ -129,24 +131,13 @@ struct ContentView: View {
                             playNextSegmentCallback: self.playNextSegment
                         )
                     case .summary:
-                        //SummaryView(transcriptLines: $transcriptLines)
                         SummaryView(
                             transcriptLines: $transcriptLines,
                             currentSummary: $currentSummary,
-                            onSummaryGenerated: { summary in
-                                self.currentSummary = summary
-                                if let currentId = historyManager.currentHistoryId {
-                                    historyManager.updateHistoryItem(
-                                        id: currentId,
-                                        lines: transcriptLines,
-                                        fullAudioURL: currentPlayingURL,
-                                        summary: summary
-                                    )
-                                }
-                            }
+                            onSummaryGenerated: { summary in self.currentSummary = summary }
                         )
                     }
-
+                     
                     // 下部の再生バー
                     if selectedTab == .transcription && (currentPlayingURL != nil || !transcriptLines.isEmpty) {
                         CompactAudioPlayerView(
@@ -225,10 +216,9 @@ struct ContentView: View {
                     activeMenuItem: $activeMenuItem,
                     showSettings: $showSettings,
                     onLoadHistoryItem: self.loadHistoryItem,
-                    onPrepareNewSession: { 
-                        self.prepareNewTranscriptionSession(saveCurrentSession: true)
-                        // 明示的に新規セッションのためIDをリセット
-                        self.historyManager.currentHistoryId = nil
+                    onPrepareNewSession: { self.prepareNewSessionInternal(saveCurrentSession: true) },
+                    onShowProofread: {
+                        self.showProofread = true
                     }
                 )
                 .transition(.move(edge: .leading))
@@ -244,6 +234,9 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showProofread) {
+            ProofreadView(transcriptLines: $transcriptLines)
+        }
         .fileImporter(
             isPresented: $showFilePicker,
             allowedContentTypes: AudioFormatHandler.supportedFormats,
@@ -280,8 +273,8 @@ struct ContentView: View {
                     .foregroundColor(.secondary)
             }
             .padding(40)
-            .allowsHitTesting(false)  // タップを無効化
-            .disabled(true)           // インタラクションを無効化
+            .allowsHitTesting(false)
+            .disabled(true)
         }
         .alert("フォーマットエラー", isPresented: $showFormatAlert) {
             Button("OK", role: .cancel) {}
@@ -322,60 +315,17 @@ struct ContentView: View {
     }
 
     // MARK: - Recording Methods
-
+    
     private func startRecording() {
         guard !recorder.isRecording else { return }
         requestMicrophonePermission()
-    }
-
-    private func handlePermissionResult(_ granted: Bool) {
-        DispatchQueue.main.async {
-            if granted {
-                do {
-                    self.isCancelling = false
-                    
-                    // 新規セッションの場合のみ準備（既存セッションは保持）
-                    if self.historyManager.currentHistoryId == nil {
-                        self.prepareNewTranscriptionSession(saveCurrentSession: true)
-                        
-                        // 録音開始時に即座に履歴を作成（空でも作成）
-                        let newHistoryId = self.historyManager.createEmptyHistoryItem()
-                        self.historyManager.currentHistoryId = newHistoryId
-                    }
-                    
-                    self.transcriptionTasks.removeAll()
-                    print("Starting recorder with isManual: \\(self.modeIsManual)")
-                    try self.recorder.start(isManual: self.modeIsManual)
-                } catch {
-                    print("[Recorder] start failed:", error.localizedDescription)
-                }
-            } else {
-                self.showPermissionAlert = true
-            }
-        }
     }
 
     private func finishRecording() {
         Debug.log("✅ finish tapped")
         isCancelling = false
         recorder.stop()
-        
-        // 常に現在のセッションを更新（新規作成はしない）
-        if let currentId = historyManager.currentHistoryId {
-            historyManager.updateHistoryItem(
-                id: currentId,
-                lines: transcriptLines,
-                fullAudioURL: currentPlayingURL,
-                summary: currentSummary
-            )
-        } else {
-            // currentHistoryIdがない場合のみ新規作成（通常はあり得ない）
-            historyManager.addHistoryItem(
-                lines: transcriptLines,
-                fullAudioURL: currentPlayingURL,
-                summary: currentSummary
-            )
-        }
+        saveOrUpdateCurrentSession()
     }
 
     private func cancelRecording() {
@@ -387,23 +337,40 @@ struct ContentView: View {
         audioPlayer?.stop()
         audioPlayer = nil
         transcriptionTasks.removeAll()
-    }
-
-    // 新規セッションを明示的に開始する場合のメソッドを追加
-    private func startNewSession() {
-        prepareNewTranscriptionSession(saveCurrentSession: true)
+        currentSummary = nil
+        if let currentId = historyManager.currentHistoryId {
+            historyManager.deleteHistoryItem(id: currentId)
+        }
         historyManager.currentHistoryId = nil
     }
-
-    // サイドバーから新規セッションを明示的に開始する場合
-    // private func startNewTranscriptionSession() {
-    //     prepareNewTranscriptionSession(saveCurrentSession: true)
-    //     historyManager.currentHistoryId = nil  // 明示的にリセット
-    // }
 
     private func requestMicrophonePermission() {
         AVAudioApplication.requestRecordPermission { granted in
             handlePermissionResult(granted)
+        }
+    }
+
+    private func handlePermissionResult(_ granted: Bool) {
+        DispatchQueue.main.async {
+            if granted {
+                do {
+                    isCancelling = false
+                    historyManager.currentHistoryId = nil
+                    transcriptLines.removeAll()
+                    currentPlayingURL = nil
+                    audioPlayer?.stop()
+                    audioPlayer = nil
+                    currentSummary = nil
+                    transcriptionTasks.removeAll()
+                    
+                    print("Starting recorder with isManual: \(self.modeIsManual)")
+                    try recorder.start(isManual: self.modeIsManual)
+                } catch {
+                    print("[Recorder] start failed:", error.localizedDescription)
+                }
+            } else {
+                showPermissionAlert = true
+            }
         }
     }
 
@@ -415,6 +382,13 @@ struct ContentView: View {
         Debug.log("⚙️ セキュリティスコープアクセス開始試行") // ログ追加
         let shouldStopAccessing = url.startAccessingSecurityScopedResource()
         Debug.log("⚙️ セキュリティスコープアクセス開始結果: \(shouldStopAccessing)") // ログ追加
+
+        defer {
+            if shouldStopAccessing {
+                url.stopAccessingSecurityScopedResource()
+                Debug.log("⚙️ セキュリティスコープアクセス停止 (defer)") // ログ追加
+            }
+        }
 
         let tempDir = FileManager.default.temporaryDirectory
         let localURL = tempDir.appendingPathComponent(url.lastPathComponent)
@@ -428,17 +402,8 @@ struct ContentView: View {
             }
             try FileManager.default.copyItem(at: url, to: localURL)
             Debug.log("⚙️ ファイルコピー成功") // ログ追加
-            // コピー完了後にセキュリティスコープを解放
-            if shouldStopAccessing {
-                url.stopAccessingSecurityScopedResource()
-                Debug.log("⚙️ セキュリティスコープアクセス停止 (コピー直後)") // ログ追加
-            }
         } catch {
             Debug.log("❌ ファイルコピー失敗: \(error.localizedDescription)") // ログ追加
-            if shouldStopAccessing {
-                url.stopAccessingSecurityScopedResource()
-                Debug.log("⚙️ セキュリティスコープアクセス停止 (エラー時)") // ログ追加
-            }
             Task { @MainActor in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showFormatError("ファイルのコピーに失敗しました: \(error.localizedDescription)")
@@ -497,7 +462,10 @@ struct ContentView: View {
     @MainActor // ◀︎◀︎ @MainActor を追加
     private func performSilenceSplitting(_ url: URL, originalURL: URL) async {
         do {
-            prepareNewTranscriptionSession(saveCurrentSession: true) // ◀︎◀︎ MainActor.run を削除
+            // ファイル処理開始時に履歴を作成
+            if historyManager.currentHistoryId == nil {
+                historyManager.currentHistoryId = historyManager.startNewSession()
+            }
             
             let result = try await fileProcessor.processFile(at: url)
             let originalFileName = originalURL.lastPathComponent
@@ -533,24 +501,14 @@ struct ContentView: View {
             
         } catch {
             showProcessingProgress = false // ◀︎◀︎ MainActor.run を削除
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    showFormatError("処理エラー: \(error.localizedDescription)")
-                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                showFormatError("処理エラー: \(error.localizedDescription)")
+            }
         }
     }
     
     private func showFormatError(_ message: String) {
-        let detailedMessage: String
-        if message.contains("コピーに失敗") {
-            detailedMessage = "ファイルへのアクセス権限がありません。別のファイルを選択してください。"
-        } else if message.contains("音声トラックが見つかりません") {
-            detailedMessage = "選択したファイルに音声データが含まれていません。音声ファイルを選択してください。"
-        } else if message.contains("サポートされていない") {
-            detailedMessage = "このファイル形式はサポートされていません。WAV、MP3、M4A、MP4などのファイルを選択してください。"
-        } else {
-            detailedMessage = message
-        }
-        formatAlertMessage = detailedMessage
+        formatAlertMessage = message
         showFormatAlert = true
     }
 
@@ -564,6 +522,11 @@ struct ContentView: View {
             return
         }
         print("🎧 Segment file path:", url.path)
+
+        // 初回セグメント時に履歴を作成
+        if historyManager.currentHistoryId == nil {
+            historyManager.currentHistoryId = historyManager.startNewSession()
+        }
 
         if self.currentPlayingURL == nil { self.currentPlayingURL = url }
 
@@ -600,7 +563,7 @@ struct ContentView: View {
         } else if let text = notification.userInfo?["text"] as? String {
             self.transcriptLines[index].text = text
         } else {
-             self.transcriptLines[index].text = "⚠️ 不明なエラー"
+            self.transcriptLines[index].text = "⚠️ 不明なエラー"
         }
         self.transcriptionTasks.removeValue(forKey: originalURL)
     }
@@ -681,64 +644,51 @@ struct ContentView: View {
     
     // MARK: - Session Management
     
-    private func prepareNewTranscriptionSession(saveCurrentSession: Bool = true) {
-        if saveCurrentSession && (!transcriptLines.isEmpty || currentPlayingURL != nil) {
-            if let currentId = historyManager.currentHistoryId {
-                historyManager.updateHistoryItem(
-                    id: currentId,
-                    lines: transcriptLines,
-                    fullAudioURL: currentPlayingURL,
-                    summary: currentSummary
-                )
-            } else {
-                historyManager.addHistoryItem(
-                    lines: transcriptLines,
-                    fullAudioURL: currentPlayingURL,
-                    summary: currentSummary
-                )
-            }
+    // 現在のセッションを保存または更新する
+    private func saveOrUpdateCurrentSession() {
+        if let currentId = historyManager.currentHistoryId {
+            historyManager.updateHistoryItem(
+                id: currentId,
+                lines: transcriptLines,
+                fullAudioURL: currentPlayingURL,
+                summary: currentSummary
+            )
+        } else if !transcriptLines.isEmpty {
+            historyManager.addHistoryItem(
+                lines: transcriptLines,
+                fullAudioURL: currentPlayingURL,
+                summary: currentSummary
+            )
         }
-        
+    }
+    
+    // 新しい文字起こしセッションの準備（内部処理用）
+    private func prepareNewSessionInternal(saveCurrentSession: Bool = true) {
+        if saveCurrentSession {
+            saveOrUpdateCurrentSession()
+        }
         transcriptLines.removeAll()
         currentPlayingURL = nil
         audioPlayer?.stop()
         audioPlayer = nil
         isCancelling = false
         currentSummary = nil
-        // historyManager.currentHistoryId = nil は削除（IDは保持する）
+        historyManager.currentHistoryId = historyManager.startNewSession()
     }
 
     private func loadHistoryItem(_ historyItem: HistoryItem) {
-        // 現在のセッションを保存（ただし、同じ履歴を読み込む場合は保存しない）
-        if historyManager.currentHistoryId != historyItem.id {
-            if !transcriptLines.isEmpty || currentPlayingURL != nil {
-                if let currentId = historyManager.currentHistoryId {
-                    historyManager.updateHistoryItem(
-                        id: currentId,
-                        lines: transcriptLines,
-                        fullAudioURL: currentPlayingURL,
-                        summary: currentSummary
-                    )
-                } else {
-                    historyManager.addHistoryItem(
-                        lines: transcriptLines,
-                        fullAudioURL: currentPlayingURL,
-                        summary: currentSummary
-                    )
-                }
-            }
-        }
+        saveOrUpdateCurrentSession()
         
-        // 履歴データを読み込み
         transcriptLines.removeAll()
         currentPlayingURL = nil
         audioPlayer?.stop()
         audioPlayer = nil
         isCancelling = false
+        
         currentSummary = historyItem.summary
         
         self.transcriptLines = historyItem.getTranscriptLines(documentsDirectory: historyManager.documentsDirectory)
-        
+
         if let fullAudio = historyItem.getFullAudioURL(documentsDirectory: historyManager.documentsDirectory) {
             self.currentPlayingURL = fullAudio
         } else if let firstSegment = self.transcriptLines.first?.audioURL {
@@ -757,7 +707,6 @@ struct ContentView: View {
             }
         }
         
-        // 現在の履歴IDを設定
         historyManager.currentHistoryId = historyItem.id
         selectedTab = .transcription
         
@@ -786,6 +735,7 @@ struct SidebarView: View {
     @Binding var showSettings: Bool
     var onLoadHistoryItem: (HistoryItem) -> Void
     var onPrepareNewSession: () -> Void
+    var onShowProofread: () -> Void
     @ObservedObject private var historyManager = HistoryManager.shared
     @State private var selectedHistoryItem: UUID?
 
@@ -800,15 +750,16 @@ struct SidebarView: View {
             VStack(alignment: .leading, spacing: 5) {
                 SidebarMenuItem(icon: "mic", text: "文字起こし", type: .transcribe, activeMenuItem: $activeMenuItem, action: {
                     if activeMenuItem == .transcribe {
-                        // 既に文字起こしタブの場合は新規セッションを開始
                         onPrepareNewSession()
-                        // 明示的に新規セッションのためIDをリセット
-                        historyManager.currentHistoryId = nil
                     }
                     activeMenuItem = .transcribe
                     closeSidebar()
                 })
-                SidebarMenuItem(icon: "text.badge.checkmark", text: "校正", type: .proofread, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .proofread; closeSidebar() })
+                SidebarMenuItem(icon: "text.badge.checkmark", text: "校正", type: .proofread, activeMenuItem: $activeMenuItem, action: { 
+                    activeMenuItem = .proofread
+                    onShowProofread()
+                    closeSidebar() 
+                })
                 SidebarMenuItem(icon: "doc.on.doc", text: "コピー", type: .copy, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .copy; closeSidebar() })
                 SidebarMenuItem(icon: "arrow.down.circle", text: "音声DL", type: .audioDownload, activeMenuItem: $activeMenuItem, action: { activeMenuItem = .audioDownload; closeSidebar() })
                 SidebarMenuItem(icon: "gearshape.fill", text: "設定", type: .settings, activeMenuItem: $activeMenuItem, action: {
@@ -826,39 +777,26 @@ struct SidebarView: View {
                         .font(.system(size: 14))
                         .foregroundColor(Color.textSecondary)
                     Spacer()
-                    Button {
-                        historyManager.clearAllHistory()
-                    } label: {
-                        Image(systemName: "trash").foregroundColor(Color.icon)
-                    }
-                    .buttonStyle(PlainButtonStyle())
                 }
                 .padding(.horizontal, 14).padding(.vertical, 6)
 
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(historyManager.historyItems) { item in
-                            HStack {
-                                Text(item.date.toLocaleString())
-                                    .font(.system(size: 13)).foregroundColor(Color.icon)
-                                Spacer()
-                                if selectedHistoryItem == item.id {
-                                    Button {
-                                        historyManager.deleteHistoryItem(id: item.id)
-                                    } label: {
-                                        Image(systemName: "trash.fill").foregroundColor(Color.danger)
+                            HistoryRowView(
+                                item: item,
+                                isSelected: selectedHistoryItem == item.id,
+                                onTap: {
+                                    selectedHistoryItem = item.id
+                                    onLoadHistoryItem(item)
+                                },
+                                onDelete: {
+                                    historyManager.deleteHistoryItem(id: item.id)
+                                    if selectedHistoryItem == item.id {
+                                        selectedHistoryItem = nil
                                     }
-                                    .buttonStyle(PlainButtonStyle())
                                 }
-                            }
-                            .padding(.vertical, 8).padding(.horizontal, 14)
-                            .background(selectedHistoryItem == item.id ? Color.accent.opacity(0.12) : Color.clear)
-                            .cornerRadius(4)
-                            .onTapGesture { 
-                                selectedHistoryItem = item.id 
-                                onLoadHistoryItem(item)
-                            }
-                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            )
                         }
                     }
                 }
@@ -874,6 +812,107 @@ struct SidebarView: View {
         if UIDevice.current.userInterfaceIdiom == .phone {
             withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
         }
+    }
+}
+
+// 新しい HistoryRowView コンポーネント
+struct HistoryRowView: View {
+    let item: HistoryItem
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onDelete: () -> Void
+    
+    @State private var offset: CGFloat = 0
+    @State private var isDeletable = false
+    @GestureState private var isDragging = false
+    
+    private let deleteButtonWidth: CGFloat = 70
+    
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            // 削除ボタン背景
+            HStack {
+                Spacer()
+                Button(action: {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        onDelete()
+                    }
+                }) {
+                    VStack {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18))
+                    }
+                    .frame(width: deleteButtonWidth, height: 44)
+                    .background(Color.red)
+                }
+            }
+            
+            // メインコンテンツ
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.date.toLocaleString())
+                        .font(.system(size: 13))
+                        .foregroundColor(isSelected ? Color.textPrimary : Color.icon)
+                    
+                    if let summary = item.summary, !summary.isEmpty {
+                        Text(summary)
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.textSecondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    } else if !item.transcriptLines.isEmpty {
+                        Text("\(item.transcriptLines.count)件の文字起こし")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.textSecondary)
+                    }
+                }
+                Spacer()
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
+            .background(isSelected ? Color.accent.opacity(0.12) : Color.sidebarBackground)
+            .cornerRadius(4)
+            .offset(x: offset)
+            .gesture(
+                DragGesture()
+                    .updating($isDragging) { _, state, _ in
+                        state = true
+                    }
+                    .onChanged { value in
+                        if value.translation.width < 0 {
+                            offset = max(value.translation.width, -deleteButtonWidth)
+                            isDeletable = value.translation.width < -30
+                        } else if isDeletable {
+                            offset = max(-deleteButtonWidth, min(0, value.translation.width - deleteButtonWidth))
+                        }
+                    }
+                    .onEnded { value in
+                        withAnimation(.spring(response: 0.3)) {
+                            if value.translation.width < -30 {
+                                offset = -deleteButtonWidth
+                                isDeletable = true
+                            } else {
+                                offset = 0
+                                isDeletable = false
+                            }
+                        }
+                    }
+            )
+            .onTapGesture {
+                if isDeletable {
+                    withAnimation(.spring(response: 0.3)) {
+                        offset = 0
+                        isDeletable = false
+                    }
+                } else {
+                    onTap()
+                }
+            }
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .clipShape(Rectangle())
     }
 }
 
@@ -963,11 +1002,9 @@ struct CompactAudioPlayerView: View {
         .onChange(of: url) { _, newURL in
             resetPlayer(url: newURL) 
         }
-        .onChange(of: player?.isPlaying) { oldValue, newValue in
-             print("DEBUG: player.isPlaying changed from \\(oldValue?.description ?? "nil") to \\(newValue?.description ?? "nil"). isEditingSlider: \\(isEditingSlider)")
+        .onChange(of: player?.isPlaying) { _, newValue in
              if !isEditingSlider {
                 isPlaying = newValue ?? false
-                print("DEBUG: isPlaying set to \\(isPlaying)")
              }
         }
     }
@@ -1072,6 +1109,48 @@ struct CompactAudioPlayerView: View {
     }
 }
 
+// MARK: - Main Content View
+struct MainContentView: View {
+    @Binding var modeIsManual: Bool
+    @Binding var isRecording: Bool
+    @Binding var transcriptLines: [TranscriptLine]
+    @Binding var audioPlayerURL: URL?
+    @Binding var audioPlayer: AVAudioPlayer?
+    let onLineTapped: (URL) -> Void
+    let onRetranscribe: (TranscriptLine) -> Void
+    let playNextSegmentCallback: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TranscriptView(
+                lines: $transcriptLines,
+                currentPlayingURL: audioPlayerURL,
+                onLineTapped: onLineTapped,
+                onRetranscribe: onRetranscribe
+            )
+                .padding(.top, 10)
+                .padding(.horizontal, 10)
+        }
+        .background(Color.appBackground.edgesIgnoringSafeArea(.all))
+    }
+}
+
+// MARK: - Audio Player Delegate Wrapper
+class AudioPlayerDelegateWrapper: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    var onPlaybackFinished: (() -> Void)?
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Debug.log("🏁 AVAudioPlayerDelegate: Playback finished (success: \(flag))")
+        DispatchQueue.main.async {
+            self.onPlaybackFinished?()
+        }
+    }
+    
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        Debug.log("❌ AVAudioPlayerDelegate: Decode error: \(error?.localizedDescription ?? "Unknown")")
+    }
+}
+
 // MARK: - Enhanced File Picker View
 @available(iOS 16.0, *)
 struct EnhancedFilePickerButton: View {
@@ -1162,67 +1241,4 @@ struct SupportedFormatsView: View {
             return "doc"
         }
     }
-}
-/**
-// MARK: - View Modifiers for Compatibility
-struct InteractionDisabler: ViewModifier {
-    func body(content: Content) -> some View {
-        // ⚠️ 注: 'interactionDisabled' でエラーが出る場合、
-        //    プロジェクトの iOS Deployment Target が 16.0 未満になっている
-        //    可能性が高いです。16.0 以上に設定すれば、元のコード
-        //    (if #available ... .interactionDisabled(true))
-        //    が動作するはずです。
-        //    ここではビルドエラーを回避するため、常に 'allowsHitTesting' を使用します。
-        content
-            .allowsHitTesting(false)
-    }
-}
-*/
-
-
-// MARK: - Main Content View
-struct MainContentView: View {
-    @Binding var modeIsManual: Bool
-    @Binding var isRecording: Bool
-    @Binding var transcriptLines: [TranscriptLine]
-    @Binding var audioPlayerURL: URL?
-    @Binding var audioPlayer: AVAudioPlayer?
-    let onLineTapped: (URL) -> Void
-    let onRetranscribe: (TranscriptLine) -> Void
-    let playNextSegmentCallback: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            TranscriptView(
-                lines: $transcriptLines,
-                currentPlayingURL: audioPlayerURL,
-                onLineTapped: onLineTapped,
-                onRetranscribe: onRetranscribe
-            )
-            .padding(.top, 10)
-            .padding(.horizontal, 10)
-        }
-        .background(Color.appBackground.edgesIgnoringSafeArea(.all))
-    }
-}
-
-// MARK: - Audio Player Delegate Wrapper
-class AudioPlayerDelegateWrapper: NSObject, ObservableObject, AVAudioPlayerDelegate {
-    var onPlaybackFinished: (() -> Void)?
-    
-    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        Debug.log("🏁 AVAudioPlayerDelegate: Playback finished (success: \(flag))")
-        DispatchQueue.main.async {
-            self.onPlaybackFinished?()
-        }
-    }
-    
-    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
-        Debug.log("❌ AVAudioPlayerDelegate: Decode error: \(error?.localizedDescription ?? "Unknown")")
-    }
-}
-
-// MARK: - Preview (Optional)
-#Preview {
-    ContentViewWrapper()
 }

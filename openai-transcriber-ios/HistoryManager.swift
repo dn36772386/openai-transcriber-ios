@@ -6,7 +6,7 @@ class HistoryManager: ObservableObject {
     private let maxHistoryItems = 10
 
     @Published var historyItems: [HistoryItem] = []
-    @Published var currentHistoryId: UUID? = nil  // 現在編集中の履歴ID
+    @Published var currentHistoryId: UUID? = nil
 
     var documentsDirectory: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -45,67 +45,75 @@ class HistoryManager: ObservableObject {
         }
     }
 
-    // 空の履歴アイテムを作成して即座にIDを返す
-    func createEmptyHistoryItem() -> UUID {
-        let newId = UUID()
-        let emptyItem = HistoryItem(
-            id: newId,
+    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?, summary: String? = nil) {
+        guard !lines.isEmpty else {
+            print("ℹ️ No transcript lines to save")
+            return
+        }
+        
+        let newItem = HistoryItem(
+            lines: lines,
+            fullAudioURL: fullAudioURL,
+            documentsDirectory: self.documentsDirectory,
+            summary: summary
+        )
+
+        historyItems.insert(newItem, at: 0)
+        print("➕ Added new history item: ID \(newItem.id), Date: \(newItem.date)")
+
+        while historyItems.count > maxHistoryItems {
+            let oldItem = historyItems.removeLast()
+            print("🗑️ Deleting old history item: \(oldItem.id)")
+            deleteAssociatedFiles(for: oldItem)
+        }
+        
+        // 一時ファイルの削除は行わない（現在のセッション中は保持する必要があるため）
+        // cleanupTemporaryFiles メソッドを別途呼び出すこと
+
+        saveHistoryItemsToUserDefaults()
+        objectWillChange.send()
+    }
+    
+    func startNewSession() -> UUID {
+        let newItem = HistoryItem(
+            id: UUID(),
             date: Date(),
             lines: [],
             fullAudioURL: nil,
             documentsDirectory: self.documentsDirectory,
             summary: nil
         )
-        historyItems.insert(emptyItem, at: 0)
-        // 最大数制限のチェック
-        while historyItems.count > maxHistoryItems {
-            let oldItem = historyItems.removeLast()
-            print("🗑️ Deleting old history item: \(oldItem.id)")
-            deleteAssociatedFiles(for: oldItem)
-        }
-        saveHistoryItemsToUserDefaults()
-        objectWillChange.send()
-        print("📝 Created empty history item: ID \(newId)")
-        return newId
-    }
 
-    // addHistoryItemを修正（空でも保存）
-    func addHistoryItem(lines: [TranscriptLine], fullAudioURL: URL?, summary: String? = nil) {
-        // guard削除 - 空でも保存する
-        let newItem = HistoryItem(
-            id: UUID(),
-            date: Date(),
-            lines: lines,
-            fullAudioURL: fullAudioURL,
-            documentsDirectory: self.documentsDirectory,
-            summary: summary
-        )
         historyItems.insert(newItem, at: 0)
-        print("➕ Added new history item: ID \(newItem.id), Date: \(newItem.date)")
+        print("➕ Started new history item: ID \\(newItem.id)")
+
         while historyItems.count > maxHistoryItems {
             let oldItem = historyItems.removeLast()
-            print("🗑️ Deleting old history item: \(oldItem.id)")
+            print("🗑️ Deleting old history item (due to new session): \\(oldItem.id)")
             deleteAssociatedFiles(for: oldItem)
         }
-        currentHistoryId = nil  // 新規作成時はIDをリセット
-        saveHistoryItemsToUserDefaults()
-        objectWillChange.send()
-    }
 
-    // 履歴を更新するメソッド（重複を防ぐ）
+        self.currentHistoryId = newItem.id
+        objectWillChange.send()
+        return newItem.id
+    }
+    
     func updateHistoryItem(id: UUID, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?) {
-        guard let index = historyItems.firstIndex(where: { $0.id == id }) else {
-            // 存在しない場合は新規作成（通常はあり得ない）
-            print("⚠️ History item not found, creating new: \(id)")
-            let _ = addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+        guard !lines.isEmpty || fullAudioURL != nil || summary != nil else {
+            print("⚠️ Update skipped: No data to save for ID \\(id)")
             return
         }
+        
+        guard let index = historyItems.firstIndex(where: { $0.id == id }) else {
+            print("⚠️ Update failed: History item with ID \\(id) not found. Adding as new.")
+            addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+            return
+        }
+        
         let existingItem = historyItems[index]
         
-        // 既存のファイルを削除
         deleteAssociatedFiles(for: existingItem)
         
-        // 新しいHistoryItemを作成（既存のID、日付で初期化）
         let updatedItem = HistoryItem(
             id: id,
             date: existingItem.date,
@@ -119,7 +127,20 @@ class HistoryManager: ObservableObject {
         saveHistoryItemsToUserDefaults()
         objectWillChange.send()
         
-        print("📝 Updated history item: ID \(id)")
+        print("📝 Updated history item: ID \\(id)")
+    }
+    
+    func saveOrUpdateCurrentSession(currentId: UUID?, lines: [TranscriptLine], fullAudioURL: URL?, summary: String?) {
+        guard !lines.isEmpty || fullAudioURL != nil || summary != nil else {
+            print("ℹ️ No data to save")
+            return
+        }
+        
+        if let currentId = currentId {
+            updateHistoryItem(id: currentId, lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+        } else {
+            addHistoryItem(lines: lines, fullAudioURL: fullAudioURL, summary: summary)
+        }
     }
 
     // 一時ファイルをクリーンアップする専用メソッド
@@ -187,12 +208,11 @@ class HistoryManager: ObservableObject {
         if let index = historyItems.firstIndex(where: { $0.id == id }) {
             let itemToDelete = historyItems.remove(at: index)
             deleteAssociatedFiles(for: itemToDelete)
-            // 削除する履歴が現在表示中の場合はリセット
             if currentHistoryId == id {
                 currentHistoryId = nil
             }
             saveHistoryItemsToUserDefaults()
-            print("🗑️ Deleted history item with ID: \(id)")
+            print("🗑️ Deleted history item with ID: \\(id)")
         }
     }
 

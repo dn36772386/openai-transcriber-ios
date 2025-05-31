@@ -2,9 +2,9 @@ import SwiftUI
 
 struct TranscriptView: View {
     @Binding var lines: [TranscriptLine]
-    var currentPlayingURL: URL?  // この行を追加
+    var currentPlayingURL: URL?
     var onLineTapped: (URL) -> Void
-    var onRetranscribe: (TranscriptLine) -> Void  // 追加
+    var onRetranscribe: (TranscriptLine) -> Void
     
     @State private var selectedLineId: UUID?
     @State private var showActionSheet = false
@@ -17,7 +17,7 @@ struct TranscriptView: View {
                         TranscriptLineRow(
                             line: line,
                             isSelected: selectedLineId == line.id,
-                            isPlaying: line.audioURL == currentPlayingURL,  // ⭐️ 追加
+                            isPlaying: line.audioURL != nil && line.audioURL == currentPlayingURL,
                             onTap: {
                                 if let url = line.audioURL {
                                     onLineTapped(url)
@@ -62,7 +62,7 @@ struct TranscriptView: View {
 struct TranscriptLineRow: View {
     let line: TranscriptLine
     let isSelected: Bool
-    let isPlaying: Bool  // ⭐️ 追加
+    let isPlaying: Bool
     let onTap: () -> Void
     let onLongPress: () -> Void
     
@@ -75,14 +75,14 @@ struct TranscriptLineRow: View {
             
             Text(line.text)
                 .font(.system(size: 14))
-                .foregroundColor(isPlaying ? .blue : (isSelected ? .white : .textPrimary))  // ⭐️ 修正
+                .foregroundColor(isPlaying ? .blue : (isSelected ? .white : .textPrimary))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .multilineTextAlignment(.leading)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(
-            isPlaying ? Color.blue.opacity(0.1) :  // ⭐️ 追加
+            isPlaying ? Color.blue.opacity(0.1) :
             (isSelected ? Color.blue : Color.clear)
         )
         .onTapGesture { onTap() }

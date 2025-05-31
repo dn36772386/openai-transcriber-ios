@@ -52,15 +52,13 @@ final class GeminiClient {
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-//        let (data, response) = try await URLSession.shared.data(for: request)
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 120          // タイムアウト 60 秒
+        config.timeoutIntervalForRequest = 120          // タイムアウト 120 秒
         config.waitsForConnectivity = true             // 回線が戻るまで待つ
         let session = URLSession(configuration: config)
 
         // ここでリクエストを送信
         let (data, response) = try await session.data(for: request)
-
 
         guard let httpResponse = response as? HTTPURLResponse,
               (200...299).contains(httpResponse.statusCode) else {

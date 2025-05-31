@@ -50,16 +50,10 @@ struct HistoryItem: Identifiable, Codable {
         var audioSegmentFileName: String? // 個別セグメントのファイル名 (Documents内)
     }
 
-    init(id: UUID = UUID(), 
-         date: Date = Date(), 
-         lines: [TranscriptLine], 
-         fullAudioURL: URL?, 
-         documentsDirectory: URL,
-         summary: String? = nil) {
-        
+    init(id: UUID = UUID(), date: Date = Date(), lines: [TranscriptLine], fullAudioURL: URL?, documentsDirectory: URL, summary: String? = nil) {
         self.id = id
         self.date = date
-        self.summary = summary  // 要約を設定
+        self.summary = summary
 
         // 1. セッション全体の音声ファイルをDocumentsにコピーし、ファイル名を保存
         // fullAudioFileName を先に初期化 (self.id を使用するため)
@@ -73,9 +67,9 @@ struct HistoryItem: Identifiable, Codable {
                 }
                 try FileManager.default.copyItem(at: sourceFullAudioURL, to: destinationFullAudioURL)
                 tempFullAudioFileName = uniqueFullAudioFileName // 一時変数に格納
-                print("✅ Saved full audio to: \(destinationFullAudioURL.path)")
+                print("✅ Saved full audio to: \\(destinationFullAudioURL.path)")
             } catch {
-                print("❌ Error copying full audio from \(sourceFullAudioURL.path) to \(destinationFullAudioURL.path): \(error)")
+                print("❌ Error copying full audio from \\(sourceFullAudioURL.path) to \\(destinationFullAudioURL.path): \\(error)")
             }
         }
         self.fullAudioFileName = tempFullAudioFileName // プロパティに代入
@@ -84,7 +78,8 @@ struct HistoryItem: Identifiable, Codable {
         // transcriptLines を初期化 (self.id と documentsDirectory を使用)
         self.transcriptLines = lines.map { line in
             // lineからTranscriptLineDataを生成し、その際に音声ファイルもコピーする
-            line.toTranscriptLineData(documentsDirectory: documentsDirectory, historyItemId: id)
+            
+            line.toTranscriptLineData(documentsDirectory: documentsDirectory, historyItemId: id) // self.id を id に変更
         }
     }
 

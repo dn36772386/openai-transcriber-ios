@@ -5,14 +5,14 @@ final class KeychainHelper {
     static let shared = KeychainHelper()
     private let service = Bundle.main.bundleIdentifier ?? "openai.transcriber"
     private let account = "OPENAI_API_KEY"
-    private let geminiAccount = "GEMINI_API_KEY"  // ⭐️ ここに移動
+    private let geminiAccount = "GEMINI_API_KEY"
 
     // 保存
     func save(apiKey: String) {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                     kSecAttrService as String: service,
                                     kSecAttrAccount as String: account]
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(query as CFDictionary)               // 既存削除
         var add = query
         add[kSecValueData as String] = Data(apiKey.utf8)
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
@@ -25,7 +25,7 @@ final class KeychainHelper {
                                     kSecAttrService as String: service,
                                     kSecAttrAccount as String: account,
                                     kSecReturnData as String: true,
-                                    kSecMatchLimit as String: kSecMatchLimitOne]
+                                    kSecMatchLimit as String: kSecMatchLimitOne]   // ← 追加
         var item: CFTypeRef?
         guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
               let data = item as? Data,
@@ -34,7 +34,7 @@ final class KeychainHelper {
         return key
     }
     
-    // ⭐️ Gemini関連のメソッドはextensionなしで直接クラス内に記述
+    // Gemini関連のメソッドはextensionなしで直接クラス内に記述
     func saveGeminiKey(_ apiKey: String) {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                     kSecAttrService as String: service,

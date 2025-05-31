@@ -30,9 +30,22 @@ final class AudioFileProcessor: ObservableObject {
     @Published var isProcessing = false
     @Published var progress: Double = 0.0
     
-    private let silenceThreshold: Float = 0.01  // RMS閾値
-    private let silenceWindow: TimeInterval = 0.5  // 無音判定時間
-    private let minSegmentDuration: TimeInterval = 0.5  // 最小セグメント長
+    // UserDefaultsから設定を読み込むように変更
+    private var silenceThreshold: Float {
+        let value = UserDefaults.standard.float(forKey: "silenceThreshold")
+        return value > 0 ? value : 0.01
+    }
+    
+    private var silenceWindow: TimeInterval {
+        let value = UserDefaults.standard.double(forKey: "silenceWindow")
+        return value > 0 ? value : 0.5
+    }
+    
+    private var minSegmentDuration: TimeInterval {
+        let value = UserDefaults.standard.double(forKey: "minSegmentDuration")
+        return value > 0 ? value : 0.5
+    }
+    
     private let maxSegmentDuration: TimeInterval = 300.0  // 最大セグメント長（5分）
     private let outputFormat: AVAudioFormat
     
@@ -62,11 +75,17 @@ final class AudioFileProcessor: ObservableObject {
             }
         }
         
+        // 設定値をログ出力
+        print("📊 Processing with settings:")
+        print("   - Silence threshold: \(silenceThreshold)")
+        print("   - Silence window: \(silenceWindow)s")
+        print("   - Min segment duration: \(minSegmentDuration)s")
+        
         // セキュリティスコープドリソースアクセス
-        //guard url.startAccessingSecurityScopedResource() else {
-        //    throw ProcessingError.fileNotFound
-        //}
-        //defer { url.stopAccessingSecurityScopedResource() }
+        guard url.startAccessingSecurityScopedResource() else {
+            throw ProcessingError.fileNotFound
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
         
         // フォーマット検証
         let validation = await AudioFormatHandler.validateFormat(url: url)
@@ -132,6 +151,7 @@ final class AudioFileProcessor: ObservableObject {
             
             // 発話検出ロジック
             if isSpeech {
+                // 発話開始
                 if currentSegmentStart == nil {
                     currentSegmentStart = currentTime
                     currentSegmentFrames = []
@@ -139,31 +159,7 @@ final class AudioFileProcessor: ObservableObject {
                 }
                 currentSegmentFrames.append(buffer)
                 lastSpeechTime = currentTime
-                // ★ 最大セグメント長チェック
-                if let segmentStart = currentSegmentStart {
-                    let segmentDuration = currentTime - segmentStart
-                    if segmentDuration >= maxSegmentDuration {
-                        print("⏱️ Max duration reached, forcing split at \(currentTime)s")
-                        if let segmentURL = try await saveSegment(
-                            frames: currentSegmentFrames,
-                            inputFormat: inputFormat,
-                            startTime: segmentStart,
-                            duration: segmentDuration,
-                            needsConversion: needsConversion,
-                            converter: converter
-                        ) {
-                            segments.append((
-                                url: segmentURL,
-                                startTime: segmentStart,
-                                duration: segmentDuration
-                            ))
-                            print("💾 Saved max-duration segment: \(segmentStart)s - \(currentTime)s")
-                        }
-                        // 新しいセグメントを開始
-                        currentSegmentStart = currentTime
-                        currentSegmentFrames = [buffer] // 現バッファを新セグメントに含める
-                    }
-                }
+                
             } else if let segmentStart = currentSegmentStart {
                 // 無音検出
                 let silenceDuration = currentTime - lastSpeechTime

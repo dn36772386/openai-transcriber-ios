@@ -125,22 +125,6 @@ final class AudioFormatHandler {
     static func validateFormat(url: URL) async -> ValidationResult {
         let fileExtension = url.pathExtension.lowercased()
         
-        // ファイルの存在確認
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            Debug.log("❌ [validateFormat] ファイルが存在しません: \(url.path)")
-            return ValidationResult(isValid: false, formatInfo: nil, 
-                                  error: "ファイルが見つかりません: \(url.lastPathComponent)")
-        }
-        // ファイルサイズの確認
-        if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
-           let fileSize = attributes[.size] as? Int64 {
-            Debug.log("📊 [validateFormat] ファイルサイズ: \(fileSize) bytes")
-            if fileSize == 0 {
-                return ValidationResult(isValid: false, formatInfo: nil, 
-                                      error: "ファイルが空です")
-            }
-        }
-        
         // 拡張子からフォーマット情報を取得
         guard let formatInfo = formatDetails[fileExtension] else {
             return ValidationResult(isValid: false, formatInfo: nil, error: "サポートされていないファイル形式です: .\(fileExtension)")
@@ -149,30 +133,30 @@ final class AudioFormatHandler {
         // ファイルが実際に音声として読み込めるか確認
         do {
             let _ = try AVAudioFile(forReading: url)
-            Debug.log("✅ [validateFormat] AVAudioFile成功: \(url.lastPathComponent)")
+            print("✅ [validateFormat] AVAudioFile successfully read \(url.lastPathComponent)")
             return ValidationResult(isValid: true, formatInfo: formatInfo, error: nil)
-        } catch let error as NSError {
-            Debug.log("⚠️ [validateFormat] AVAudioFile失敗 - domain: \(error.domain), code: \(error.code)")
-            Debug.log("⚠️ [validateFormat] エラー詳細: \(error.localizedDescription)")
-            // AVAssetで再試行（より詳細なログ付き）
+        } catch {
+            print("⚠️ [validateFormat] AVAudioFile failed for \(url.lastPathComponent): \(error.localizedDescription)") // ◀︎◀︎ エラー内容を記録
+            // AVAssetで再試行（動画ファイルの場合）
             let asset = AVAsset(url: url)
-            do {
-                let audioTracks = try await asset.loadTracks(withMediaType: .audio)
-                Debug.log("📊 [validateFormat] AVAsset音声トラック数: \(audioTracks.count)")
+            do { // 🔽 try を使うために do-catch を追加
+                let audioTracks = try await asset.loadTracks(withMediaType: .audio) // ◀︎◀︎ try を追加
+                
                 if !audioTracks.isEmpty {
+                    print("✅ [validateFormat] AVAsset found audio tracks for \(url.lastPathComponent)")
                     return ValidationResult(isValid: true, formatInfo: formatInfo, error: nil)
                 } else {
-                    Debug.log("⚠️ [validateFormat] AVAssetに音声トラックなし")
-                    let videoTracks = try await asset.loadTracks(withMediaType: .video)
-                    Debug.log("📊 [validateFormat] AVAssetビデオトラック数: \(videoTracks.count)")
+                    print("⚠️ [validateFormat] AVAsset found no audio tracks for \(url.lastPathComponent)")
+                    let videoTracks = try await asset.loadTracks(withMediaType: .video) // ◀︎◀︎ try を追加
                     if videoTracks.isEmpty {
                         return ValidationResult(isValid: false, formatInfo: formatInfo, error: "音声トラックもビデオトラックも見つかりません")
                     } else {
+                        // 動画のみのファイルでも音声トラックがなければエラー（要件に応じて変更）
                         return ValidationResult(isValid: false, formatInfo: formatInfo, error: "音声トラックが見つかりません (ビデオのみ)")
                     }
                 }
-            } catch {
-                Debug.log("❌ [validateFormat] AVAsset.loadTracks失敗: \(error)")
+            } catch { // ◀︎◀︎ エラーハンドリングを追加
+                print("⚠️ [validateFormat] AVAsset failed for \(url.lastPathComponent): \(error.localizedDescription)") // ◀︎◀︎ エラー内容を記録
                 return ValidationResult(isValid: false, formatInfo: formatInfo, error: "ファイルを開けません (AVAsset): \(error.localizedDescription)")
             }
         }
