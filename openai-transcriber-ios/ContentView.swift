@@ -102,6 +102,7 @@ struct ContentView: View {
     @State private var completedSegmentsCount = 0
     @State private var failedSegmentsCount = 0
     @State private var segmentErrors: [String] = []
+    @State private var isProcessingSegment = false
     
     
     // タイトルタップ用の状態
@@ -138,6 +139,7 @@ struct ContentView: View {
                             transcriptLines: $transcriptLines,
                             audioPlayerURL: $currentPlayingURL,
                             audioPlayer: $audioPlayer,
+                            isProcessingSegment: $isProcessingSegment,
                             onLineTapped: self.playFrom,
                             onRetranscribe: { line in
                                 if let index = self.transcriptLines.firstIndex(where: { $0.id == line.id }),
@@ -750,6 +752,7 @@ struct ContentView: View {
         let newLine = TranscriptLine(id: UUID(), time: start, text: "…文字起こし中…", audioURL: url)
         self.transcriptLines.append(newLine)
         self.transcriptionTasks[url] = newLine.id
+        self.isProcessingSegment = true
 
         Task { @MainActor in
             do {
@@ -785,36 +788,54 @@ struct ContentView: View {
             failedSegmentsCount += 1
             segmentErrors.append("セグメント\(index + 1): \(error.localizedDescription)")
         } else if let text = notification.userInfo?["text"] as? String {
-            // 話者情報付きテキストを処理
-            if selectedAPIType == .deepgram && text.contains(":") {
-                // 話者情報が含まれている場合は分離
-                let lines = text.components(separatedBy: .newlines)
-                for line in lines {
-                    if let colonIndex = line.firstIndex(of: ":"),
-                       line.distance(from: line.startIndex, to: colonIndex) <= 10 {
-                        let speaker = String(line[..<colonIndex]).trimmingCharacters(in: .whitespaces)
-                        let content = String(line[line.index(after: colonIndex)...]).trimmingCharacters(in: .whitespaces)
-                        if !content.isEmpty {
-                            self.transcriptLines[index].text = content
-                            self.transcriptLines[index].speaker = speaker
-                            break
-                        }
+            // Deepgramのutterancesを個別のTranscriptLineとして処理
+            if selectedAPIType == .deepgram,
+               let utterances = notification.userInfo?["utterances"] as? [[String: Any]],
+               !utterances.isEmpty {
+                
+                // 元の行の情報を保存
+                let originalLine = self.transcriptLines[index]
+                
+                // 元の行を削除
+                self.transcriptLines.remove(at: index)
+                
+                // 各utteranceを個別のTranscriptLineとして追加
+                for (utteranceIndex, utteranceData) in utterances.enumerated() {
+                    if let transcript = utteranceData["transcript"] as? String,
+                       !transcript.trimmingCharacters(in: .whitespaces).isEmpty {
+                        
+                        let speaker = utteranceData["speaker"] as? Int
+                        let speakerName = speaker != nil ? "話者\(speaker! + 1)" : nil
+                        
+                        let newLine = TranscriptLine(
+                            id: UUID(),
+                            time: originalLine.time,
+                            text: transcript.trimmingCharacters(in: .whitespaces),
+                            audioURL: originalURL,
+                            speaker: speakerName
+                        )
+                        
+                        self.transcriptLines.insert(newLine, at: index + utteranceIndex)
                     }
                 }
-                // 話者情報がない場合はそのまま設定
-                if self.transcriptLines[index].text == "…文字起こし中…" {
-                    self.transcriptLines[index].text = text
-                }
+                
+                completedSegmentsCount += 1
             } else {
+                // OpenAIまたはDeepgramでutterancesがない場合の通常処理
                 self.transcriptLines[index].text = text
+                completedSegmentsCount += 1
             }
-            completedSegmentsCount += 1
         } else {
             self.transcriptLines[index].text = "⚠️ 不明なエラー"
             failedSegmentsCount += 1
             segmentErrors.append("セグメント\(index + 1): 不明なエラー")
         }
         self.transcriptionTasks.removeValue(forKey: originalURL)
+        
+        // 処理中のタスクがなくなったら録音中フラグをリセット
+        if transcriptionTasks.isEmpty {
+            isProcessingSegment = false
+        }
         
         // すべて完了したかチェック
         if (completedSegmentsCount + failedSegmentsCount) == pendingSegmentsCount && pendingSegmentsCount > 0 {
@@ -1537,6 +1558,7 @@ struct MainContentView: View {
     @Binding var transcriptLines: [TranscriptLine]
     @Binding var audioPlayerURL: URL?
     @Binding var audioPlayer: AVAudioPlayer?
+    @Binding var isProcessingSegment: Bool
     let onLineTapped: (URL) -> Void
     let onRetranscribe: (TranscriptLine) -> Void
     let playNextSegmentCallback: () -> Void
@@ -1548,7 +1570,8 @@ struct MainContentView: View {
                 currentPlayingURL: audioPlayerURL,
                 isRecording: isRecording,
                 onLineTapped: onLineTapped,
-                onRetranscribe: onRetranscribe
+                onRetranscribe: onRetranscribe,
+                isProcessingSegment: $isProcessingSegment
             )
             .padding(.horizontal, 10)
             .padding(.top, 10)

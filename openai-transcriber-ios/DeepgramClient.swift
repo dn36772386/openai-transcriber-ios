@@ -57,7 +57,7 @@ final class DeepgramClient {
         // リクエストを作成
         let apiKey = try fetchAPIKey()
         var req = URLRequest(
-            url: URL(string: "https://api.deepgram.com/v1/listen?model=nova-2&language=ja&punctuate=true&diarize=true&smart_format=true")!
+            url: URL(string: "https://api.deepgram.com/v1/listen?model=nova-2&language=ja&punctuate=true&diarize=true&smart_format=true&utterances=true")!
         )
         req.httpMethod = "POST"
         req.setValue("Token \(apiKey)", forHTTPHeaderField: "Authorization")

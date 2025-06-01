@@ -122,9 +122,19 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
                     resultText = response.text
                 case .deepgram:
                     let response = try JSONDecoder().decode(DeepgramResponse.self, from: data)
+                    
+                    // デバッグログ
+                    print("📊 Deepgram Response Debug:")
+                    print("  - Utterances count: \(response.results.utterances?.count ?? 0)")
+                    print("  - Channels count: \(response.results.channels.count)")
+                    if let utterances = response.results.utterances {
+                        print("  - Speakers: \(Set(utterances.compactMap { $0.speaker }))")
+                    }
+                    
                     // 話者分離された発話を統合
                     if let utterances = response.results.utterances, !utterances.isEmpty {
-                        resultText = processDeepgramUtterances(utterances)
+                        // processDeepgramUtterancesを使わず、最初の発話のみを使用
+                        resultText = utterances.first?.transcript ?? ""
                     } else {
                         // フォールバック: 通常の文字起こし結果
                         resultText = response.results.channels.first?.alternatives.first?.transcript
@@ -147,7 +157,9 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
             userInfo: [
                 "text": resultText as Any,
                 "error": taskError as Any,
-                "startTime": metadata.startTime
+                "startTime": metadata.startTime,
+                "apiType": metadata.apiType as Any,
+                "utterances": (metadata.apiType == .deepgram ? (data != nil ? try? JSONDecoder().decode(DeepgramResponse.self, from: data!).results.utterances : nil) : nil) as Any
             ]
         )
         
@@ -173,21 +185,6 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
             self.backgroundCompletionHandler = nil
         }
     }
-}
-
-// Deepgramの発話を処理する補助メソッド
-private func processDeepgramUtterances(_ utterances: [DeepgramResponse.Utterance]) -> String {
-    let sortedUtterances = utterances.sorted { $0.start < $1.start }
-    
-    var processedLines: [(speaker: String, text: String)] = []
-    
-    for utterance in sortedUtterances {
-        let speakerLabel = "話者\(utterance.speaker ?? 0)"
-        processedLines.append((speaker: speakerLabel, text: utterance.transcript))
-    }
-    
-    // 話者情報付きのテキストを生成
-    return processedLines.map { "\($0.speaker): \($0.text)" }.joined(separator: "\n")
 }
 
 // OpenAIWhisperResponse構造体

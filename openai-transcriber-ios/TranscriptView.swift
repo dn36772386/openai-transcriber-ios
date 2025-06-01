@@ -6,6 +6,7 @@ struct TranscriptView: View {
     var isRecording: Bool
     var onLineTapped: (URL) -> Void
     var onRetranscribe: (TranscriptLine) -> Void
+    @Binding var isProcessingSegment: Bool
     
     @State private var currentTappedLineId: UUID?
     @State private var selectedLineId: UUID?
@@ -33,7 +34,7 @@ struct TranscriptView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if lines.isEmpty && isRecording {
-                // 録音中の表示（文字起こしと同じレイアウト）
+                // 最初の録音中の表示
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .top, spacing: 12) {
                         Text(recordingStartTime.formatted(.dateTime.hour().minute().second()))
@@ -88,7 +89,31 @@ struct TranscriptView: View {
                             }
                         }
                     }
-                    .onChange(of: lines.count) { _, _ in
+                    
+                    // 録音中で処理待ちのセグメントがない場合、録音中表示を追加
+                    if isRecording && !isProcessingSegment {
+                        TranscriptLineRow(
+                            line: TranscriptLine(
+                                id: UUID(),
+                                time: Date(),
+                                text: "録音中です...",
+                                audioURL: nil
+                            ),
+                            isSelected: false,
+                            isPlaying: false,
+                            onTap: {},
+                            onLongPress: {}
+                        )
+                        .opacity(0.7)
+                        .onAppear {
+                            // 新しい録音中行が表示されたらスクロール
+                            withAnimation {
+                                proxy.scrollTo(lines.last?.id, anchor: .bottom)
+                            }
+                        }
+                    }
+                }
+                .onChange(of: lines.count) { _, _ in
                         if let last = lines.last { 
                             proxy.scrollTo(last.id, anchor: .bottom) 
                         }
