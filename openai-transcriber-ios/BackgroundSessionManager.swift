@@ -133,21 +133,33 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
                     let response = try JSONDecoder().decode(DeepgramResponse.self, from: data)
                     
                     // デバッグログ
-                print("📊 Deepgram Response Debug:")
-                print("  - Utterances count: \(response.results.utterances?.count ?? 0)")
-                print("  - Channels count: \(response.results.channels.count)")
-                if let firstChannel = response.results.channels.first,
-                   let firstAlt = firstChannel.alternatives.first {
-                    print("  - First transcript: \(firstAlt.transcript)")
-                    print("  - Confidence: \(firstAlt.confidence)")
-                }
-                
-                if let utterances = response.results.utterances {
-                    print("  - Speakers: \(Set(utterances.compactMap { $0.speaker }).map { $0 + 1 })")
-                }
+                    print("📊 Deepgram Response Debug:")
+                    print("  - Utterances count: \(response.results.utterances?.count ?? 0)")
+                    print("  - Channels count: \(response.results.channels.count)")
+                    if let firstChannel = response.results.channels.first,
+                       let firstAlt = firstChannel.alternatives.first {
+                        print("  - First transcript: \(firstAlt.transcript)")
+                        print("  - Confidence: \(firstAlt.confidence)")
+                    }
+                    
+                    // utterancesをresponseから取得
+                    let utterances = response.results.utterances
+                    
+                    if let utterances = utterances {
+                        print("  - Speakers: \(Set(utterances.compactMap { $0.speaker }).map { $0 + 1 })")
+                    }
+                    
+                    // utterancesがない場合、wordsから話者情報を抽出
+                    if utterances == nil || utterances!.isEmpty {
+                        if let words = response.results.channels.first?.alternatives.first?.words,
+                           !words.isEmpty {
+                            print("📊 Attempting to extract speaker info from words...")
+                            // wordsベースの処理を追加（後述）
+                        }
+                    }
                     
                     // 話者分離された発話を統合
-                    if let utterances = response.results.utterances, !utterances.isEmpty {
+                    if let utterances = utterances, !utterances.isEmpty {
                         // すべてのutterancesを連結
                         resultText = utterances.map { $0.transcript }.joined(separator: " ")
                         print("✅ [Deepgram] Using utterances: \(utterances.count) items")

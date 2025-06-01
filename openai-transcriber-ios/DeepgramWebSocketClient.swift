@@ -51,6 +51,7 @@ final class DeepgramWebSocketClient: NSObject, ObservableObject {
             URLQueryItem(name: "language", value: "ja"),
             URLQueryItem(name: "punctuate", value: "true"),
             URLQueryItem(name: "diarize", value: "true"),
+            URLQueryItem(name: "utterances", value: "true"),
             URLQueryItem(name: "smart_format", value: "true"),
             URLQueryItem(name: "encoding", value: "linear16"),
             URLQueryItem(name: "sample_rate", value: "16000"),

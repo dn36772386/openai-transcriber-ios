@@ -475,8 +475,8 @@ struct ContentView: View {
                     do {
                         try await deepgramWebSocket.connect()
                         // トランスクリプトのコールバック設定
-                        deepgramWebSocket.onTranscript = { [weak self] line in
-                            self?.transcriptLines.append(line)
+                        deepgramWebSocket.onTranscript = { line in
+                            self.transcriptLines.append(line)
                         }
                         deepgramWebSocket.onError = { error in
                             print("❌ Deepgram WebSocket error: \(error)")
@@ -589,9 +589,9 @@ struct ContentView: View {
                     if selectedAPIType == .deepgram {
                         // RecorderProxyの設定を変更
                         proxy.onSegment = nil  // セグメント処理を無効化
-                        proxy.onAudioBuffer = { [weak self] audioData in
+                        proxy.onAudioBuffer = { audioData in
                             // WebSocketに音声データを送信
-                            self?.deepgramWebSocket.sendAudioData(audioData)
+                            self.deepgramWebSocket.sendAudioData(audioData)
                         }
                         try recorder.start(isManual: false, isStreaming: true)
                     } else {
@@ -683,10 +683,17 @@ struct ContentView: View {
             }
 
             do {
-                Debug.log("⚙️ Task内: extractAudio/performSilenceSplitting 呼び出し開始") // ログ追加
-                let processedURL = try await AudioFormatHandler.extractAudio(from: localURL)
-                await performSilenceSplitting(processedURL, originalURL: localURL)
-                Debug.log("⚙️ Task内: extractAudio/performSilenceSplitting 終了") // ログ追加
+                Debug.log("⚙️ Task内: extractAudio/performSilenceSplitting 呼び出し開始")
+                
+                // Deepgramの場合は分割せずにそのまま送る
+                if selectedAPIType == .deepgram {
+                    await performDirectUpload(localURL)
+                } else {
+                    // OpenAIの場合は従来通り分割処理
+                    let processedURL = try await AudioFormatHandler.extractAudio(from: localURL)
+                    await performSilenceSplitting(processedURL, originalURL: localURL)
+                }
+                Debug.log("⚙️ Task内: extractAudio/performSilenceSplitting 終了")
             } catch {
                 Debug.log("❌ Task内: extractAudio/performSilenceSplitting 失敗: \(error.localizedDescription)") // ログ追加
                 await MainActor.run {
@@ -1748,3 +1755,44 @@ struct SupportedFormatsView: View {
         }
     }
 }
+
+    @MainActor
+    private func performDirectUpload(_ url: URL) async {
+        // プログレス表示
+        showProcessingProgress = true
+        defer { showProcessingProgress = false }
+        
+        print("🎵 Direct upload for Deepgram: \(url.lastPathComponent)")
+        
+        // ファイルサイズの確認
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            let fileSize = attributes[.size] as? NSNumber ?? 0
+            print("📊 File size: \(fileSize.int64Value / 1024 / 1024) MB")
+        } catch {
+            print("❌ Failed to get file size: \(error)")
+        }
+        
+        // 単一のTranscriptLineを作成
+        let newLine = TranscriptLine(
+            id: UUID(),
+            time: Date(),
+            text: "…文字起こし中… [\(url.lastPathComponent)]",
+            audioURL: url
+        )
+        self.transcriptLines.append(newLine)
+        self.transcriptionTasks[url] = newLine.id
+        
+        // バックグラウンドでアップロード
+        do {
+            try deepgramClient.transcribeInBackground(url: url, started: Date())
+        } catch {
+            print("❌ Failed to start Deepgram upload: \(error)")
+            if let index = self.transcriptLines.firstIndex(where: { $0.id == newLine.id }) {
+                self.transcriptLines[index].text = "⚠️ アップロードエラー: \(error.localizedDescription)"
+            }
+            self.transcriptionTasks.removeValue(forKey: url)
+        }
+    }
+
+    // MARK: - Audio Playback Methods

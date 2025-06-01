@@ -36,20 +36,26 @@ final class DeepgramClient {
         // ファイルサイズチェック
         let attr  = try FileManager.default.attributesOfItem(atPath: url.path)
         let bytes = (attr[.size] as? NSNumber)?.intValue ?? 0
-        let maxBytes = 2 * 1024 * 1024 * 1024  // 2GB (Deepgramの制限)
+        let maxBytes = 1 * 1024 * 1024 * 1024  // 1GB
         guard bytes >= 100 && bytes <= maxBytes else {
             throw NSError(domain: "Deepgram", code: -3,
                           userInfo: [NSLocalizedDescriptionKey:
-                                     "Audio size invalid (\(bytes) bytes) – must be between 100B and 2GB"])
+                                     "Audio size invalid (\(bytes) bytes) – must be between 100B and 1GB"])
         }
 
-        // 音声データを読み込む
-        let audioData = try Data(contentsOf: url)
-        
-        // 一時ファイルに保存（バックグラウンドセッション用）
-        let tempDir = FileManager.default.temporaryDirectory
-        let tempURL = tempDir.appendingPathComponent("deepgram_upload_\(UUID().uuidString).wav")
-        try audioData.write(to: tempURL)
+        // MP3などの場合はそのまま使用
+        let tempURL: URL
+        if url.pathExtension.lowercased() == "mp3" || 
+           url.pathExtension.lowercased() == "m4a" ||
+           url.pathExtension.lowercased() == "flac" {
+            // オリジナルファイルをそのまま使用
+            tempURL = url
+        } else {
+            // それ以外の場合はコピー
+            let tempDir = FileManager.default.temporaryDirectory
+            tempURL = tempDir.appendingPathComponent("deepgram_upload_\(UUID().uuidString).\(url.pathExtension)")
+            try FileManager.default.copyItem(at: url, to: tempURL)
+        }
 
         // バックグラウンドセッションを取得
         let session = BackgroundSessionManager.shared.backgroundSession
@@ -127,6 +133,7 @@ struct DeepgramResponse: Decodable {
         let end: Double
         let confidence: Double
         let speaker: Int?
+        let punctuated_word: String?
     }
     
     struct Utterance: Decodable {
