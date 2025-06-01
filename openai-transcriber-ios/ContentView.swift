@@ -675,6 +675,14 @@ struct ContentView: View {
             Debug.log("⚙️ Task内: メタデータ取得試行") // ログ追加
             if let metadata = await AudioFormatHandler.getAudioMetadata(from: url) {
                 Debug.log("📊 Audio Metadata: \(metadata.formattedDuration)") // ログ追加
+                
+                // Deepgramの場合、ファイルサイズチェック
+                if selectedAPIType == .deepgram && metadata.fileSize > 1_000_000_000 {
+                    await MainActor.run {
+                        showFormatError("ファイルサイズが1GBを超えています")
+                    }
+                    return
+                }
             }
 
             await MainActor.run {
@@ -687,7 +695,16 @@ struct ContentView: View {
                 
                 // Deepgramの場合は分割せずにそのまま送る
                 if selectedAPIType == .deepgram {
-                    await performDirectUpload(localURL)
+                    // Deepgramの場合、MP3/M4A/FLACファイルは元のURLを使用
+                    let supportedExtensions = ["mp3", "m4a", "flac"]
+                    if supportedExtensions.contains(url.pathExtension.lowercased()) {
+                        Debug.log("⚙️ Deepgram: Using original file without conversion")
+                        // セキュリティスコープを維持したまま元のURLを使用
+                        await performDirectUpload(url)
+                    } else {
+                        // その他の形式はlocalURLを使用
+                        await performDirectUpload(localURL)
+                    }
                 } else {
                     // OpenAIの場合は従来通り分割処理
                     let processedURL = try await AudioFormatHandler.extractAudio(from: localURL)
@@ -744,6 +761,14 @@ struct ContentView: View {
                 self.transcriptLines.append(newLine)
                 self.transcriptionTasks[segment.url] = newLine.id
                 
+                // 直前の文字起こし結果を取得（最大200文字程度）
+                let previousTranscript: String? = {
+                    guard transcriptLines.count > 1 else { return nil }
+                    let recentLines = transcriptLines.suffix(3).map { $0.text }
+                    let combined = recentLines.joined(separator: " ")
+                    return String(combined.suffix(200))
+                }()
+                
                 // レート制限を考慮してリトライ
                 var retryCount = 0
                 while retryCount < 3 {
@@ -752,7 +777,8 @@ struct ContentView: View {
                         case .openai:
                             try openAIClient.transcribeInBackground(
                                 url: segment.url,
-                                started: startDate
+                                started: startDate,
+                                previousTranscript: previousTranscript
                             )
                         case .deepgram:
                             try deepgramClient.transcribeInBackground(
@@ -811,11 +837,23 @@ struct ContentView: View {
         self.transcriptionTasks[url] = newLine.id
         self.isProcessingSegment = true
 
+        // 直前の文字起こし結果を取得（最大200文字程度）
+        let previousTranscript: String? = {
+            guard transcriptLines.count > 1 else { return nil }
+            let recentLines = transcriptLines.suffix(3).map { $0.text }
+            let combined = recentLines.joined(separator: " ")
+            return String(combined.suffix(200))
+        }()
+
         Task { @MainActor in
             do {
                 switch selectedAPIType {
                 case .openai:
-                    try openAIClient.transcribeInBackground(url: url, started: start)
+                    try openAIClient.transcribeInBackground(
+                        url: url, 
+                        started: start, 
+                        previousTranscript: previousTranscript
+                    )
                 case .deepgram:
                     try deepgramClient.transcribeInBackground(url: url, started: start)
                 }
@@ -1177,6 +1215,60 @@ struct ContentView: View {
     private func showFormatError(_ message: String) {
         formatAlertMessage = message
         showFormatAlert = true
+    }
+    
+    // MARK: - Deepgram Direct Upload
+    @MainActor
+    private func performDirectUpload(_ url: URL) async {
+        // プログレス表示
+        showProcessingProgress = true
+        defer { showProcessingProgress = false }
+        
+        print("🎵 Direct upload for Deepgram: \(url.lastPathComponent)")
+        
+        // セキュリティスコープが必要な場合の処理
+        let needsSecurityScope = !url.path.contains("/tmp/")
+        if needsSecurityScope {
+            guard url.startAccessingSecurityScopedResource() else {
+                showFormatError("ファイルへのアクセス権限がありません")
+                return
+            }
+        }
+        
+        // ファイルサイズの確認
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            let fileSize = attributes[.size] as? NSNumber ?? 0
+            print("📊 File size: \(fileSize.int64Value / 1024 / 1024) MB")
+        } catch {
+            print("❌ Failed to get file size: \(error)")
+        }
+        
+        // 単一のTranscriptLineを作成
+        let newLine = TranscriptLine(
+            id: UUID(),
+            time: Date(),
+            text: "…文字起こし中… [\(url.lastPathComponent)]",
+            audioURL: url
+        )
+        self.transcriptLines.append(newLine)
+        self.transcriptionTasks[url] = newLine.id
+        
+        // バックグラウンドでアップロード
+        do {
+            try deepgramClient.transcribeInBackground(url: url, started: Date())
+        } catch {
+            print("❌ Failed to start Deepgram upload: \(error)")
+            if let index = self.transcriptLines.firstIndex(where: { $0.id == newLine.id }) {
+                self.transcriptLines[index].text = "⚠️ アップロードエラー: \(error.localizedDescription)"
+            }
+            self.transcriptionTasks.removeValue(forKey: url)
+        }
+        
+        // セキュリティスコープの解放
+        if needsSecurityScope {
+            url.stopAccessingSecurityScopedResource()
+        }
     }
 }
 
@@ -1755,44 +1847,3 @@ struct SupportedFormatsView: View {
         }
     }
 }
-
-    @MainActor
-    private func performDirectUpload(_ url: URL) async {
-        // プログレス表示
-        showProcessingProgress = true
-        defer { showProcessingProgress = false }
-        
-        print("🎵 Direct upload for Deepgram: \(url.lastPathComponent)")
-        
-        // ファイルサイズの確認
-        do {
-            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-            let fileSize = attributes[.size] as? NSNumber ?? 0
-            print("📊 File size: \(fileSize.int64Value / 1024 / 1024) MB")
-        } catch {
-            print("❌ Failed to get file size: \(error)")
-        }
-        
-        // 単一のTranscriptLineを作成
-        let newLine = TranscriptLine(
-            id: UUID(),
-            time: Date(),
-            text: "…文字起こし中… [\(url.lastPathComponent)]",
-            audioURL: url
-        )
-        self.transcriptLines.append(newLine)
-        self.transcriptionTasks[url] = newLine.id
-        
-        // バックグラウンドでアップロード
-        do {
-            try deepgramClient.transcribeInBackground(url: url, started: Date())
-        } catch {
-            print("❌ Failed to start Deepgram upload: \(error)")
-            if let index = self.transcriptLines.firstIndex(where: { $0.id == newLine.id }) {
-                self.transcriptLines[index].text = "⚠️ アップロードエラー: \(error.localizedDescription)"
-            }
-            self.transcriptionTasks.removeValue(forKey: url)
-        }
-    }
-
-    // MARK: - Audio Playback Methods

@@ -45,13 +45,22 @@ final class DeepgramClient {
 
         // MP3などの場合はそのまま使用
         let tempURL: URL
-        if url.pathExtension.lowercased() == "mp3" || 
-           url.pathExtension.lowercased() == "m4a" ||
-           url.pathExtension.lowercased() == "flac" {
-            // オリジナルファイルをそのまま使用
-            tempURL = url
+        let supportedFormatsWithoutConversion = ["mp3", "m4a", "flac", "opus", "ogg", "webm"]
+        let fileExtension = url.pathExtension.lowercased()
+        
+        if supportedFormatsWithoutConversion.contains(fileExtension) {
+            // セキュリティスコープ内のファイルかチェック
+            if url.path.contains("/tmp/") || url.path.contains("/Documents/") {
+                // 既に一時ディレクトリまたはドキュメントディレクトリにある
+                tempURL = url
+            } else {
+                // セキュリティスコープ外のファイルはコピーが必要
+                let tempDir = FileManager.default.temporaryDirectory
+                tempURL = tempDir.appendingPathComponent("deepgram_upload_\(UUID().uuidString).\(fileExtension)")
+                try FileManager.default.copyItem(at: url, to: tempURL)
+            }
         } else {
-            // それ以外の場合はコピー
+            // 変換が必要な形式（WAV等）はコピー
             let tempDir = FileManager.default.temporaryDirectory
             tempURL = tempDir.appendingPathComponent("deepgram_upload_\(UUID().uuidString).\(url.pathExtension)")
             try FileManager.default.copyItem(at: url, to: tempURL)

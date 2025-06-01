@@ -20,8 +20,9 @@ final class OpenAIClient {
     /// - Parameters:
     ///   - url: 音声ファイルのURL
     ///   - started: セグメントの開始時刻
+    ///   - previousTranscript: 直前のセグメントの文字起こし結果（オプション）
     @MainActor
-    func transcribeInBackground(url: URL, started: Date) throws {
+    func transcribeInBackground(url: URL, started: Date, previousTranscript: String? = nil) throws {
         
         // レート制限チェック
         Self.requestLock.lock()
@@ -72,7 +73,11 @@ final class OpenAIClient {
         var form = MultipartFormData(boundary: boundary)
         form.appendField(name: "model",    value: "whisper-1")
         form.appendField(name: "language", value: "ja")
-        // prompt は省略
+        
+        // 直前の文字起こし結果をプロンプトとして追加
+        if let prompt = previousTranscript {
+            form.appendField(name: "prompt", value: prompt)
+        }
         try form.appendFile(url: url, fieldName: "file", filename: url.lastPathComponent)
         let formData = try form.encode()
 
