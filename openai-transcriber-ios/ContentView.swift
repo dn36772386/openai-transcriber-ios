@@ -790,6 +790,55 @@ struct ContentView: View {
         } else if let text = notification.userInfo?["text"] as? String {
             // Deepgramのutterancesを個別のTranscriptLineとして処理
             if selectedAPIType == .deepgram,
+               let words = notification.userInfo?["words"] as? [[String: Any]],
+               !words.isEmpty {
+                // wordsから話者ごとにテキストを分割
+                print("🎙️ Processing \(words.count) words from Deepgram")
+                
+                // 元の行を削除
+                self.transcriptLines.remove(at: index)
+                
+                // 話者ごとにテキストをグループ化
+                var speakerSegments: [(speaker: Int, text: String, start: Double)] = []
+                var currentSpeaker: Int? = nil
+                var currentText: [String] = []
+                var segmentStart: Double = 0
+                
+                for word in words {
+                    if let speaker = word["speaker"] as? Int,
+                       let text = word["word"] as? String,
+                       let start = word["start"] as? Double {
+                        
+                        if currentSpeaker != speaker && !currentText.isEmpty {
+                            // 話者が変わったら新しいセグメントを作成
+                            speakerSegments.append((speaker: currentSpeaker ?? 0, text: currentText.joined(separator: " "), start: segmentStart))
+                            currentText = []
+                            segmentStart = start
+                        }
+                        currentSpeaker = speaker
+                        currentText.append(text)
+                    }
+                }
+                
+                // 最後のセグメントを追加
+                if !currentText.isEmpty {
+                    speakerSegments.append((speaker: currentSpeaker ?? 0, text: currentText.joined(separator: " "), start: segmentStart))
+                }
+                
+                // 各セグメントをTranscriptLineとして追加
+                for segment in speakerSegments {
+                    let newLine = TranscriptLine(
+                        id: UUID(),
+                        time: (notification.userInfo?["startTime"] as? Date ?? Date()).addingTimeInterval(segment.start),
+                        text: segment.text,
+                        audioURL: originalURL,
+                        speaker: "話者\(segment.speaker + 1)"
+                    )
+                    self.transcriptLines.append(newLine)
+                }
+                
+                completedSegmentsCount += 1
+            } else if selectedAPIType == .deepgram,
                let utterances = notification.userInfo?["utterances"] as? [DeepgramResponse.Utterance],
                 !utterances.isEmpty {
                  
@@ -798,12 +847,11 @@ struct ContentView: View {
                 
                 // 元の行を削除
                 self.transcriptLines.remove(at: index)
-                
-                // 各utteranceを個別のTranscriptLineとして追加
-                for utterance in utterances {
-                    let transcript = utterance.transcript
-                    if !transcript.trimmingCharacters(in: .whitespaces).isEmpty {
-                        let speakerName = utterance.speaker != nil ? "話者\(utterance.speaker! + 1)" : nil
+                     // 各utteranceを個別のTranscriptLineとして追加
+            for utterance in utterances {
+                let transcript = utterance.transcript
+                if !transcript.trimmingCharacters(in: .whitespaces).isEmpty {
+                    let speakerName = utterance.speaker != nil ? "話者\((utterance.speaker ?? 0) + 1)" : nil
                          
                         let newLine = TranscriptLine(
                             id: UUID(),

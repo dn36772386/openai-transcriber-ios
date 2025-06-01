@@ -87,6 +87,24 @@ struct TranscriptView: View {
                                 )
                                 .id(line.id)
                             }
+                            
+                            // 録音中で処理待ちのセグメントがない場合、録音中表示を追加
+                            if isRecording && !isProcessingSegment {
+                                TranscriptLineRow(
+                                    line: TranscriptLine(
+                                        id: UUID(),
+                                        time: Date(),
+                                        text: "録音中です...",
+                                        audioURL: nil
+                                    ),
+                                    isSelected: false,
+                                    isPlaying: false,
+                                    onTap: {},
+                                    onLongPress: {}
+                                )
+                                .opacity(0.7)
+                                .id("recording-indicator")
+                            }
                         }
                     }
                     .onChange(of: lines.count) { _, _ in
@@ -96,26 +114,10 @@ struct TranscriptView: View {
                             }
                         }
                     }
-                    
-                    // 録音中で処理待ちのセグメントがない場合、録音中表示を追加
-                    if isRecording && !isProcessingSegment {
-                        TranscriptLineRow(
-                            line: TranscriptLine(
-                                id: UUID(),
-                                time: Date(),
-                                text: "録音中です...",
-                                audioURL: nil
-                            ),
-                            isSelected: false,
-                            isPlaying: false,
-                            onTap: {},
-                            onLongPress: {}
-                        )
-                        .opacity(0.7)
-                        .onAppear {
-                            // 新しい録音中行が表示されたらスクロール
+                    .onChange(of: isRecording) { _, newValue in
+                        if newValue && !isProcessingSegment {
                             withAnimation {
-                                proxy.scrollTo(lines.last?.id, anchor: .bottom)
+                                proxy.scrollTo("recording-indicator", anchor: .bottom)
                             }
                         }
                     }
