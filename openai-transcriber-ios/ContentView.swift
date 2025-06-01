@@ -73,7 +73,9 @@ struct ContentView: View {
     @StateObject private var recorder = AudioEngineRecorder()
     @StateObject private var audioPlayerDelegate = AudioPlayerDelegateWrapper()
     @State private var showPermissionAlert = false
-    @State private var showSidebar = UIDevice.current.userInterfaceIdiom != .phone
+    // iPad miniなど小さいiPadでは初期状態でサイドバーを非表示に
+    @State private var showSidebar = UIDevice.current.userInterfaceIdiom == .pad && 
+                                     UIScreen.main.bounds.width > 768
     @State private var activeMenuItem: SidebarMenuItemType? = .transcribe
     @State private var showSettings = false
     @State private var showShortMemo = false
@@ -365,7 +367,7 @@ struct ContentView: View {
             }
 
             // Sidebar background overlay for phone
-            if showSidebar && UIDevice.current.userInterfaceIdiom == .phone {
+            if showSidebar {
                 Color.black.opacity(0.35)
                     .edgesIgnoringSafeArea(.all)
                     .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false } }
@@ -1384,15 +1386,17 @@ struct SidebarView: View {
             }
             Spacer()
         }
-        .frame(width: 240)
+        .frame(width: {
+            // iPad miniなど小さいデバイスでは幅を狭く
+            let screenWidth = UIScreen.main.bounds.width
+            return screenWidth < 768 ? 200 : 240
+        }())
         .background(Color.sidebarBackground)
         .edgesIgnoringSafeArea(UIDevice.current.userInterfaceIdiom == .phone ? .vertical : [])
     }
 
     private func closeSidebar() {
-        if UIDevice.current.userInterfaceIdiom == .phone {
-            withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
-        }
+        withAnimation(.easeInOut(duration: 0.2)) { showSidebar = false }
     }
     
     private func shareAudioFile(_ url: URL) {
