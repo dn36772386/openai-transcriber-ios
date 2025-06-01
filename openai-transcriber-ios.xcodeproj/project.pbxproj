@@ -22,6 +22,7 @@
 		1856C80C2DE1E86600D0868F /* BackgroundSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1856C80B2DE1E86600D0868F /* BackgroundSessionManager.swift */; };
 		185D0B882DEAD1E7003E4BDA /* ProofreadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D0B862DEAD1E7003E4BDA /* ProofreadView.swift */; };
 		185D0B8B2DEAF8AA003E4BDA /* ShortMemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D0B8A2DEAF8AA003E4BDA /* ShortMemoView.swift */; };
+		185D0B8F2DEBD7AC003E4BDA /* DeepgramClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D0B8E2DEBD7AC003E4BDA /* DeepgramClient.swift */; };
 		1860716E2DD8B02B00D3461D /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716D2DD8B02500D3461D /* AudioRecorder.swift */; };
 		186071702DD8B2BD00D3461D /* OpenAIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1860716F2DD8B2BD00D3461D /* OpenAIClient.swift */; };
 		186071772DD8BF2700D3461D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 186071752DD8BF2700D3461D /* SettingsView.swift */; };
@@ -74,6 +75,7 @@
 		185D0B862DEAD1E7003E4BDA /* ProofreadView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProofreadView.swift; sourceTree = "<group>"; };
 		185D0B892DEAE4B7003E4BDA /* log.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = log.txt; sourceTree = "<group>"; };
 		185D0B8A2DEAF8AA003E4BDA /* ShortMemoView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ShortMemoView.swift; sourceTree = "<group>"; };
+		185D0B8E2DEBD7AC003E4BDA /* DeepgramClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeepgramClient.swift; sourceTree = "<group>"; };
 		1860716D2DD8B02500D3461D /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		1860716F2DD8B2BD00D3461D /* OpenAIClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OpenAIClient.swift; sourceTree = "<group>"; };
 		186071752DD8BF2700D3461D /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -139,6 +141,7 @@
 		1806C1792DD373640066C50F /* openai-transcriber-ios */ = {
 			isa = PBXGroup;
 			children = (
+				185D0B8E2DEBD7AC003E4BDA /* DeepgramClient.swift */,
 				185D0B8A2DEAF8AA003E4BDA /* ShortMemoView.swift */,
 				185D0B862DEAD1E7003E4BDA /* ProofreadView.swift */,
 				180D01B82DE30CDD000C9E53 /* ContentTabView.swift */,
@@ -337,6 +340,7 @@
 				186071822DD96F4900D3461D /* AVAudioPCMBuffer+RMS.swift in Sources */,
 				186071782DD8BF2700D3461D /* KeychainHelper.swift in Sources */,
 				180D01BC2DE30CDD000C9E53 /* GeminiClient.swift in Sources */,
+				185D0B8F2DEBD7AC003E4BDA /* DeepgramClient.swift in Sources */,
 				186071802DD8D83F00D3461D /* RecorderProxy.swift in Sources */,
 				185D0B882DEAD1E7003E4BDA /* ProofreadView.swift in Sources */,
 				180D01BB2DE30CDD000C9E53 /* ContentTabView.swift in Sources */,

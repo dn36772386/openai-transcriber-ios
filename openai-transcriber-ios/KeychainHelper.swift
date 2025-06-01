@@ -6,6 +6,7 @@ final class KeychainHelper {
     private let service = Bundle.main.bundleIdentifier ?? "openai.transcriber"
     private let account = "OPENAI_API_KEY"
     private let geminiAccount = "GEMINI_API_KEY"
+    private let deepgramAccount = "DEEPGRAM_API_KEY"
 
     // 保存
     func save(apiKey: String) {
@@ -50,6 +51,31 @@ final class KeychainHelper {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                     kSecAttrService as String: service,
                                     kSecAttrAccount as String: geminiAccount,
+                                    kSecReturnData as String: true,
+                                    kSecMatchLimit as String: kSecMatchLimitOne]
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data,
+              let key = String(data: data, encoding: .utf8),
+              !key.isEmpty else { return nil }
+        return key
+    }
+    
+    func saveDeepgramKey(_ apiKey: String) {
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                    kSecAttrService as String: service,
+                                    kSecAttrAccount as String: deepgramAccount]
+        SecItemDelete(query as CFDictionary)
+        var add = query
+        add[kSecValueData as String] = Data(apiKey.utf8)
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        SecItemAdd(add as CFDictionary, nil)
+    }
+    
+    func deepgramApiKey() -> String? {
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                    kSecAttrService as String: service,
+                                    kSecAttrAccount as String: deepgramAccount,
                                     kSecReturnData as String: true,
                                     kSecMatchLimit as String: kSecMatchLimitOne]
         var item: CFTypeRef?

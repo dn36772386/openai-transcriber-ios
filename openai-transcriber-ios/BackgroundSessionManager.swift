@@ -2,6 +2,12 @@ import Foundation
 import UIKit
 import UserNotifications
 
+// APIタイプを定義
+enum APIType {
+    case openai
+    case deepgram
+}
+
 // バックグラウンドアップロードを管理するシングルトンクラス
 class BackgroundSessionManager: NSObject {
     static let shared = BackgroundSessionManager()
@@ -11,8 +17,8 @@ class BackgroundSessionManager: NSObject {
     
     // 各タスクIDに対応するレスポンスデータを保持
     private var responseDataStore = [Int: Data]()
-    // 各タスクIDに対応するメタデータ（元のファイルURL、開始時刻、一時ファイルURL）を保持
-    private var taskMetadataStore = [Int: (originalURL: URL, startTime: Date, tempFileURL: URL)]()
+    // 各タスクIDに対応するメタデータ（元のファイルURL、開始時刻、一時ファイルURL、APIタイプ）を保持
+    private var taskMetadataStore = [Int: (originalURL: URL, startTime: Date, tempFileURL: URL, apiType: APIType)]()
     
     // リトライ回数を管理
     private var retryCountStore = [Int: Int]()
@@ -36,9 +42,9 @@ class BackgroundSessionManager: NSObject {
     }
     
     // タスク情報を登録
-    func registerBackgroundTask(taskId: Int, url: URL, startTime: Date, tempURL: URL) {
+    func registerBackgroundTask(taskId: Int, url: URL, startTime: Date, tempURL: URL, apiType: APIType = .openai) {
         print("🔵 [\(taskId)] Registering task metadata.")
-        self.taskMetadataStore[taskId] = (url, startTime, tempURL)
+        self.taskMetadataStore[taskId] = (url, startTime, tempURL, apiType)
     }
     
     // 内部処理: タスクIDに対応するストアと一時ファイルを削除
@@ -75,6 +81,8 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
         let data = self.responseDataStore[taskId]
         let httpResponse = task.response as? HTTPURLResponse
         
+        // APIタイプに応じてレスポンスを解析
+        let apiType = metadata.apiType
         var resultText: String?
         var taskError: Error? = error
         
@@ -106,11 +114,23 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
             }
             
             taskError = NSError(domain: "HTTPError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMsg])
-        } else if let data = data {
+        } else if let data = data, !data.isEmpty {
             do {
-                let whisperResp = try JSONDecoder().decode(WhisperResp.self, from: data)
-                resultText = whisperResp.text
-                print("✅ [\(taskId)] Success: \(resultText ?? "")")
+                switch apiType {
+                case .openai:
+                    let response = try JSONDecoder().decode(WhisperResp.self, from: data)
+                    resultText = response.text
+                case .deepgram:
+                    let response = try JSONDecoder().decode(DeepgramResponse.self, from: data)
+                    // 話者分離された発話を統合
+                    if let utterances = response.results.utterances, !utterances.isEmpty {
+                        resultText = processDeepgramUtterances(utterances)
+                    } else {
+                        // フォールバック: 通常の文字起こし結果
+                        resultText = response.results.channels.first?.alternatives.first?.transcript
+                    }
+                }
+                print("✅ [\(taskId)] API Response parsed successfully")
             } catch let decodeError {
                 print("❌ [\(taskId)] JSON Decode Error: \(decodeError)")
                 taskError = decodeError
@@ -155,10 +175,28 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
     }
 }
 
-// WhisperResponse構造体
-struct WhisperResp: Decodable {
+// Deepgramの発話を処理する補助メソッド
+private func processDeepgramUtterances(_ utterances: [DeepgramResponse.Utterance]) -> String {
+    let sortedUtterances = utterances.sorted { $0.start < $1.start }
+    
+    var processedLines: [(speaker: String, text: String)] = []
+    
+    for utterance in sortedUtterances {
+        let speakerLabel = "話者\(utterance.speaker ?? 0)"
+        processedLines.append((speaker: speakerLabel, text: utterance.transcript))
+    }
+    
+    // 話者情報付きのテキストを生成
+    return processedLines.map { "\($0.speaker): \($0.text)" }.joined(separator: "\n")
+}
+
+// OpenAIWhisperResponse構造体
+struct OpenAIWhisperResponse: Decodable {
     let text: String
 }
+
+// WhisperResp構造体（後方互換性のため）
+typealias WhisperResp = OpenAIWhisperResponse
 
 // MARK: - Notification Methods
 

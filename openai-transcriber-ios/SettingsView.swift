@@ -1,11 +1,20 @@
 import SwiftUI
 
+enum TranscriptionAPI: String, CaseIterable {
+    case openai = "OpenAI Whisper"
+    case deepgram = "Deepgram"
+    
+    var id: String { self.rawValue }
+}
+
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var openAIKey = KeychainHelper.shared.apiKey() ?? ""
     @State private var geminiKey = KeychainHelper.shared.geminiApiKey() ?? ""
+    @State private var deepgramKey = KeychainHelper.shared.deepgramApiKey() ?? ""
     @State private var summarizePrompt = UserDefaults.standard.string(forKey: "summarizePrompt") ?? 
         "以下の文章を簡潔に要約してください。重要なポイントを箇条書きで示してください："
+    @State private var selectedAPI = TranscriptionAPI(rawValue: UserDefaults.standard.string(forKey: "selectedTranscriptionAPI") ?? TranscriptionAPI.openai.rawValue) ?? .openai
     
     // 無音設定パラメーター
     @State private var silenceThreshold: Float = UserDefaults.standard.float(forKey: "silenceThreshold") == 0 ? 0.01 : UserDefaults.standard.float(forKey: "silenceThreshold")
@@ -24,6 +33,37 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                // 文字起こしAPI選択セクション
+                Section("文字起こしAPI") {
+                    Picker("使用するAPI", selection: $selectedAPI) {
+                        ForEach(TranscriptionAPI.allCases, id: \.self) { api in
+                            Text(api.rawValue).tag(api)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    // 選択されたAPIの説明
+                    VStack(alignment: .leading, spacing: 8) {
+                        switch selectedAPI {
+                        case .openai:
+                            Text("OpenAI Whisper")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("高精度な文字起こし。話者分離はサポートされません。")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        case .deepgram:
+                            Text("Deepgram Nova")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("リアルタイム処理と話者分離をサポート。")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                
                 Section("OpenAI API") {
                     SecureField("OpenAI APIキー", text: $openAIKey)
                         .textInputAutocapitalization(.never)
@@ -39,6 +79,15 @@ struct SettingsView: View {
                         .disableAutocorrection(true)
                         .onAppear {
                             geminiKey = KeychainHelper.shared.geminiApiKey() ?? ""
+                        }
+                }
+                
+                Section("Deepgram API") {
+                    SecureField("Deepgram APIキー", text: $deepgramKey)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .onAppear {
+                            deepgramKey = KeychainHelper.shared.deepgramApiKey() ?? ""
                         }
                 }
                 
@@ -220,6 +269,10 @@ struct SettingsView: View {
                         // APIキーの保存
                         KeychainHelper.shared.save(apiKey: openAIKey.trimmingCharacters(in: .whitespaces))
                         KeychainHelper.shared.saveGeminiKey(geminiKey.trimmingCharacters(in: .whitespaces))
+                        KeychainHelper.shared.saveDeepgramKey(deepgramKey.trimmingCharacters(in: .whitespaces))
+                        
+                        // 選択されたAPIを保存
+                        UserDefaults.standard.set(selectedAPI.rawValue, forKey: "selectedTranscriptionAPI")
                         
                         // プロンプトの保存
                         UserDefaults.standard.set(summarizePrompt, forKey: "summarizePrompt")
@@ -240,7 +293,10 @@ struct SettingsView: View {
                         
                         dismiss()
                     }
-                    .disabled(openAIKey.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(
+                        (selectedAPI == .openai && openAIKey.trimmingCharacters(in: .whitespaces).isEmpty) ||
+                        (selectedAPI == .deepgram && deepgramKey.trimmingCharacters(in: .whitespaces).isEmpty)
+                    )
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }

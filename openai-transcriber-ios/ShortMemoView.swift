@@ -106,7 +106,8 @@ struct ShortMemoView: View {
                 id: UUID(),
                 time: memo.time,
                 text: memo.text,
-                audioURL: nil
+                audioURL: nil,
+                speaker: nil
             )
         }
         

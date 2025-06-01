@@ -7,9 +7,10 @@ struct TranscriptLine: Identifiable, Equatable {
     var time: Date
     var text: String
     var audioURL: URL?
+    var speaker: String? // 話者情報を追加
 
     static func == (lhs: TranscriptLine, rhs: TranscriptLine) -> Bool {
-        lhs.id == rhs.id && lhs.time == rhs.time && lhs.text == rhs.text && lhs.audioURL == rhs.audioURL
+        lhs.id == rhs.id && lhs.time == rhs.time && lhs.text == rhs.text && lhs.audioURL == rhs.audioURL && lhs.speaker == rhs.speaker
     }
 
     // HistoryItem.TranscriptLineDataへの変換メソッド (オプション)
@@ -36,7 +37,7 @@ struct TranscriptLine: Identifiable, Equatable {
                 }
             }
         }
-        return HistoryItem.TranscriptLineData(id: self.id, time: self.time, text: self.text, audioSegmentFileName: segmentFileName)
+        return HistoryItem.TranscriptLineData(id: self.id, time: self.time, text: self.text, audioSegmentFileName: segmentFileName, speaker: self.speaker)
     }
 }
 
@@ -55,6 +56,7 @@ struct HistoryItem: Identifiable, Codable {
         var time: Date
         var text: String
         var audioSegmentFileName: String? // 個別セグメントのファイル名 (Documents内)
+        var speaker: String? // 話者情報を追加
     }
 
     init(id: UUID = UUID(), date: Date = Date(), lines: [TranscriptLine], fullAudioURL: URL?, audioStorageDirectory: URL, summary: String? = nil, subtitle: String? = nil) {
@@ -109,7 +111,7 @@ struct HistoryItem: Identifiable, Codable {
                 }
             }
             // TranscriptLineのイニシャライザがidを要求する場合
-            return TranscriptLine(id: data.id, time: data.time, text: data.text, audioURL: url)
+            return TranscriptLine(id: data.id, time: data.time, text: data.text, audioURL: url, speaker: data.speaker)
         }
     }
     

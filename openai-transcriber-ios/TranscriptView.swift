@@ -127,10 +127,23 @@ struct TranscriptLineRow: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Text(line.time.formatted(.dateTime.hour().minute().second()))
-                .font(.caption)
-                .foregroundColor(.textSecondary)
-                .frame(width: 65, alignment: .leading)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(line.time.formatted(.dateTime.hour().minute().second()))
+                    .font(.caption)
+                    .foregroundColor(.textSecondary)
+                
+                // 話者情報の表示
+                if let speaker = line.speaker, !speaker.isEmpty {
+                    Text(speaker)
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(4)
+                }
+            }
+            .frame(width: 65, alignment: .leading)
             
             Text(line.text)
                 .font(.system(size: 14))

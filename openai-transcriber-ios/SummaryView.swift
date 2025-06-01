@@ -269,9 +269,13 @@ struct SummaryView: View {
     private func performSummary() async {
         isLoading = true
         
-        // 全ての文字起こしテキストを結合
+        // 全ての文字起こしテキストを結合（スピーカー情報を含む）
         let fullText = transcriptLines
-            .map { "\($0.time.formatted(.dateTime.hour().minute().second())): \($0.text)" }
+            .map { line in
+                let timestamp = line.time.formatted(.dateTime.hour().minute().second())
+                let speaker = line.speaker != nil ? "[\(line.speaker!)] " : ""
+                return "\(timestamp): \(speaker)\(line.text)"
+            }
             .joined(separator: "\n")
         
         // テキストが長すぎる場合の警告

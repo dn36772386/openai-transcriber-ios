@@ -109,7 +109,14 @@ struct ContentView: View {
     @State private var titleText = "Transcriber"
     @State private var isTitlePressed = false
     
-    private let client = OpenAIClient()
+    // OpenAI Client と Deepgram Client
+    private let openAIClient = OpenAIClient()
+    private let deepgramClient = DeepgramClient()
+    
+    // 現在選択されているAPIタイプを取得
+    private var selectedAPIType: TranscriptionAPI {
+        TranscriptionAPI(rawValue: UserDefaults.standard.string(forKey: "selectedTranscriptionAPI") ?? TranscriptionAPI.openai.rawValue) ?? .openai
+    }
     
     var body: some View {
         ZStack(alignment: .leading) {
@@ -139,7 +146,12 @@ struct ContentView: View {
                                     self.transcriptionTasks[audioURL] = line.id
                                     Task { @MainActor in
                                         do {
-                                            try self.client.transcribeInBackground(url: audioURL, started: line.time)
+                                            switch self.selectedAPIType {
+                                            case .openai:
+                                                try self.openAIClient.transcribeInBackground(url: audioURL, started: line.time)
+                                            case .deepgram:
+                                                try self.deepgramClient.transcribeInBackground(url: audioURL, started: line.time)
+                                            }
                                         } catch {
                                             self.transcriptLines[index].text = "⚠️ 再文字起こしエラー: \(error.localizedDescription)"
                                             self.transcriptionTasks.removeValue(forKey: audioURL)
@@ -677,10 +689,18 @@ struct ContentView: View {
                 var retryCount = 0
                 while retryCount < 3 {
                     do {
-                        try client.transcribeInBackground(
-                            url: segment.url,
-                            started: startDate
-                        )
+                        switch selectedAPIType {
+                        case .openai:
+                            try openAIClient.transcribeInBackground(
+                                url: segment.url,
+                                started: startDate
+                            )
+                        case .deepgram:
+                            try deepgramClient.transcribeInBackground(
+                                url: segment.url,
+                                started: startDate
+                            )
+                        }
                         break // 成功したらループを抜ける
                     } catch let error as NSError where error.code == 429 {
                         // レート制限エラーの場合は待機してリトライ
@@ -733,7 +753,12 @@ struct ContentView: View {
 
         Task { @MainActor in
             do {
-                try client.transcribeInBackground(url: url, started: start)
+                switch selectedAPIType {
+                case .openai:
+                    try openAIClient.transcribeInBackground(url: url, started: start)
+                case .deepgram:
+                    try deepgramClient.transcribeInBackground(url: url, started: start)
+                }
             } catch {
                 print("❌ Failed to start background task: \(error.localizedDescription)")
                 if let lineId = self.transcriptionTasks[url],
@@ -760,7 +785,29 @@ struct ContentView: View {
             failedSegmentsCount += 1
             segmentErrors.append("セグメント\(index + 1): \(error.localizedDescription)")
         } else if let text = notification.userInfo?["text"] as? String {
-            self.transcriptLines[index].text = text
+            // 話者情報付きテキストを処理
+            if selectedAPIType == .deepgram && text.contains(":") {
+                // 話者情報が含まれている場合は分離
+                let lines = text.components(separatedBy: .newlines)
+                for line in lines {
+                    if let colonIndex = line.firstIndex(of: ":"),
+                       line.distance(from: line.startIndex, to: colonIndex) <= 10 {
+                        let speaker = String(line[..<colonIndex]).trimmingCharacters(in: .whitespaces)
+                        let content = String(line[line.index(after: colonIndex)...]).trimmingCharacters(in: .whitespaces)
+                        if !content.isEmpty {
+                            self.transcriptLines[index].text = content
+                            self.transcriptLines[index].speaker = speaker
+                            break
+                        }
+                    }
+                }
+                // 話者情報がない場合はそのまま設定
+                if self.transcriptLines[index].text == "…文字起こし中…" {
+                    self.transcriptLines[index].text = text
+                }
+            } else {
+                self.transcriptLines[index].text = text
+            }
             completedSegmentsCount += 1
         } else {
             self.transcriptLines[index].text = "⚠️ 不明なエラー"
