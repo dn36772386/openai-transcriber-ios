@@ -790,35 +790,33 @@ struct ContentView: View {
         } else if let text = notification.userInfo?["text"] as? String {
             // Deepgramのutterancesを個別のTranscriptLineとして処理
             if selectedAPIType == .deepgram,
-               let utterances = notification.userInfo?["utterances"] as? [[String: Any]],
-               !utterances.isEmpty {
-                
-                // 元の行の情報を保存
+               let utterances = notification.userInfo?["utterances"] as? [DeepgramResponse.Utterance],
+                !utterances.isEmpty {
+                 
+                 // 元の行の情報を保存
                 let originalLine = self.transcriptLines[index]
                 
                 // 元の行を削除
                 self.transcriptLines.remove(at: index)
                 
                 // 各utteranceを個別のTranscriptLineとして追加
-                for (utteranceIndex, utteranceData) in utterances.enumerated() {
-                    if let transcript = utteranceData["transcript"] as? String,
-                       !transcript.trimmingCharacters(in: .whitespaces).isEmpty {
-                        
-                        let speaker = utteranceData["speaker"] as? Int
-                        let speakerName = speaker != nil ? "話者\(speaker! + 1)" : nil
-                        
+                for utterance in utterances {
+                    let transcript = utterance.transcript
+                    if !transcript.trimmingCharacters(in: .whitespaces).isEmpty {
+                        let speakerName = utterance.speaker != nil ? "話者\(utterance.speaker! + 1)" : nil
+                         
                         let newLine = TranscriptLine(
                             id: UUID(),
-                            time: originalLine.time,
+                            time: notification.userInfo?["startTime"] as? Date ?? Date(),
                             text: transcript.trimmingCharacters(in: .whitespaces),
                             audioURL: originalURL,
                             speaker: speakerName
                         )
-                        
-                        self.transcriptLines.insert(newLine, at: index + utteranceIndex)
-                    }
-                }
-                
+                         
+                        self.transcriptLines.append(newLine)
+                     }
+                 }
+                 
                 completedSegmentsCount += 1
             } else {
                 // OpenAIまたはDeepgramでutterancesがない場合の通常処理

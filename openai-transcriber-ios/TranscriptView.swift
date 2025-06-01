@@ -89,6 +89,13 @@ struct TranscriptView: View {
                             }
                         }
                     }
+                    .onChange(of: lines.count) { _, _ in
+                        if let last = lines.last { 
+                            withAnimation {
+                                proxy.scrollTo(last.id, anchor: .bottom)
+                            }
+                        }
+                    }
                     
                     // 録音中で処理待ちのセグメントがない場合、録音中表示を追加
                     if isRecording && !isProcessingSegment {
@@ -110,12 +117,6 @@ struct TranscriptView: View {
                             withAnimation {
                                 proxy.scrollTo(lines.last?.id, anchor: .bottom)
                             }
-                        }
-                    }
-                }
-                .onChange(of: lines.count) { _, _ in
-                        if let last = lines.last { 
-                            proxy.scrollTo(last.id, anchor: .bottom) 
                         }
                     }
                 }

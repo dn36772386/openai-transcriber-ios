@@ -150,19 +150,28 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
             taskError = NSError(domain: "AppError", code: -1, userInfo: [NSLocalizedDescriptionKey: "データが受信できませんでした。"])
         }
         
-        // 通知センターを使ってメインアプリに結果を通知
-        NotificationCenter.default.post(
-            name: .transcriptionDidFinish,
-            object: metadata.originalURL,
-            userInfo: [
-                "text": resultText as Any,
-                "error": taskError as Any,
-                "startTime": metadata.startTime,
-                "apiType": metadata.apiType as Any,
-                "utterances": (metadata.apiType == .deepgram ? (data != nil ? try? JSONDecoder().decode(DeepgramResponse.self, from: data!).results.utterances : nil) : nil) as Any
-            ]
-        )
+        // Deepgramの場合、utterancesを含める
+        var userInfo: [String: Any] = [
+            "text": resultText as Any,
+            "error": taskError as Any,
+            "startTime": metadata.startTime,
+            "apiType": metadata.apiType as Any
+        ]
         
+        if metadata.apiType == .deepgram, let data = data {
+            if let response = try? JSONDecoder().decode(DeepgramResponse.self, from: data),
+               let utterances = response.results.utterances {
+                userInfo["utterances"] = utterances
+            }
+        }
+         
+         // 通知センターを使ってメインアプリに結果を通知
+         NotificationCenter.default.post(
+             name: .transcriptionDidFinish,
+             object: metadata.originalURL,
+             userInfo: userInfo
+         )
+ 
         // 個別のセグメント通知は送信しない
         // ContentViewの showCompletionNotification() で
         // 全体の完了通知のみを送信する
