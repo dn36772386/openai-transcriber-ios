@@ -121,9 +121,19 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
                     let response = try JSONDecoder().decode(WhisperResp.self, from: data)
                     resultText = response.text
                 case .deepgram:
+                    // 生のJSONレスポンスを確認
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("🔍 Raw Deepgram JSON Response:")
+                        // 最初の2000文字を出力
+                        let preview = String(jsonString.prefix(2000))
+                        print(preview)
+                        print("... (total \(jsonString.count) characters)")
+                    }
+                    
                     let response = try JSONDecoder().decode(DeepgramResponse.self, from: data)
                     
-                    // デバッグログ                print("📊 Deepgram Response Debug:")
+                    // デバッグログ
+                print("📊 Deepgram Response Debug:")
                 print("  - Utterances count: \(response.results.utterances?.count ?? 0)")
                 print("  - Channels count: \(response.results.channels.count)")
                 if let firstChannel = response.results.channels.first,
@@ -132,27 +142,14 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
                     print("  - Confidence: \(firstAlt.confidence)")
                 }
                 
-                // 話者情報をwordsから取得
-                if let words = response.results.channels.first?.alternatives.first?.words {
-                    let speakers = Set(words.compactMap { $0.speaker })
-                    print("  - Speakers found in words: \(speakers)")
-                    
-                    // 話者ごとにテキストをグループ化（デバッグ用）
-                    var speakerTexts: [Int: [String]] = [:]
-                    for word in words {
-                        speakerTexts[word.speaker ?? 0, default: []].append(word.word)
-                    }
-                    print("  - Speaker texts: \(speakerTexts.mapValues { $0.prefix(5).joined(separator: " ") + "..." })")
-                }
-                
                 if let utterances = response.results.utterances {
                     print("  - Speakers: \(Set(utterances.compactMap { $0.speaker }).map { $0 + 1 })")
                 }
                     
                     // 話者分離された発話を統合
                     if let utterances = response.results.utterances, !utterances.isEmpty {
-                        // processDeepgramUtterancesを使わず、最初の発話のみを使用
-                        resultText = utterances.first?.transcript ?? ""
+                        // すべてのutterancesを連結
+                        resultText = utterances.map { $0.transcript }.joined(separator: " ")
                         print("✅ [Deepgram] Using utterances: \(utterances.count) items")
                     } else {
                         // フォールバック: 通常の文字起こし結果
@@ -184,13 +181,6 @@ extension BackgroundSessionManager: URLSessionDelegate, URLSessionDataDelegate {
         ]
         
         if metadata.apiType == .deepgram, let data = data {
-            if let response = try? JSONDecoder().decode(DeepgramResponse.self, from: data),
-               let words = response.results.channels.first?.alternatives.first?.words {
-                // wordsをJSONに変換して渡す
-                userInfo["words"] = words.map { word in
-                    ["word": word.word, "start": word.start, "end": word.end, "speaker": word.speaker ?? 0] as [String: Any]
-                }
-            }
             if let response = try? JSONDecoder().decode(DeepgramResponse.self, from: data),
                let utterances = response.results.utterances {
                 userInfo["utterances"] = utterances

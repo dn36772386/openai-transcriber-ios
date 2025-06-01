@@ -9,6 +9,8 @@ protocol AudioEngineRecorderDelegate: AnyObject {
     func recorder(_ rec: AudioEngineRecorder,
                   didFinishSegment url: URL,
                   start: Date)
+    func recorder(_ rec: AudioEngineRecorder,
+                  didCaptureAudioBuffer buffer: Data)  // WebSocket用に追加
 }
 
 final class AudioEngineRecorder: ObservableObject {
@@ -39,12 +41,16 @@ final class AudioEngineRecorder: ObservableObject {
     // 設定値のログ出力フラグ（static）
     private static var hasLoggedSettings = false
 
+    private var isStreamingMode = false  // WebSocketストリーミングモード
+
     private var isSpeaking  = false
     private var silenceStart: Date?
     private var audioFile:  AVAudioFile?
     private var fileURL:    URL?
     private var startDate   = Date()
     private let engine = AVAudioEngine() // ◀︎◀︎ インスタンス化
+    private var pendingBuffers: [AVAudioPCMBuffer] = []  // セグメント切り替え中のバッファ保持
+    private var isFinalizingSegment = false              // セグメント処理中フラグ
 
     // ◀︎◀︎ 追加: フォーマット変換用プロパティ ▼▼
     private var inputFormat: AVAudioFormat?
@@ -74,9 +80,10 @@ final class AudioEngineRecorder: ObservableObject {
 
     // --- ▼▼▼ 変更 ▼▼▼ ---
     // start メソッドの修正版（バックグラウンド録音対応）
-    func start(isManual: Bool) throws {
+    func start(isManual: Bool, isStreaming: Bool = false) throws {
         guard !isRecording else { return }
         self.isManualMode = isManual
+        self.isStreamingMode = isStreaming
         isCancelled = false
 
         // バックグラウンド録音対応のAudioSession設定
@@ -108,6 +115,8 @@ final class AudioEngineRecorder: ObservableObject {
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             if self?.isManualMode == true {
                 self?.processManualAudio(buffer)
+            } else if self?.isStreamingMode == true {
+                self?.processStreamingAudio(buffer)
             } else {
                 self?.processAudio(buffer)
             }
@@ -176,12 +185,38 @@ final class AudioEngineRecorder: ObservableObject {
         try? audioFile?.write(from: bufferToWrite)
     }
     // --- ▲▲▲ 追加 ▲▲▲ ---
+    
+    // --- ▼▼▼ 追加: ストリーミングモード用 ▼▼▼ ---
+    private func processStreamingAudio(_ buffer: AVAudioPCMBuffer) {
+        guard !isCancelled else { return }
+        
+        // フォーマット変換
+        let bufferToSend: AVAudioPCMBuffer
+        if let converter = audioConverter, let outputFmt = outputFormat {
+            bufferToSend = convertBuffer(buffer, using: converter, to: outputFmt)
+        } else {
+            bufferToSend = buffer
+        }
+        
+        // データをDelegateに送信
+        if let audioData = bufferToSend.toData() {
+            delegate?.recorder(self, didCaptureAudioBuffer: audioData)
+        }
+    }
+    // --- ▲▲▲ 追加 ▲▲▲ ---
 
     /// RMS値で音声区間を判定しセグメントを切り出す
     private func processAudio(_ buffer: AVAudioPCMBuffer) {
         // --- ▼▼▼ 追加 ▼▼▼ ---
         guard !isCancelled else { return } // キャンセル中は処理しない
         // --- ▲▲▲ 追加 ▲▲▲ ---
+
+        // セグメント処理中は一時保存
+        if isFinalizingSegment {
+            Debug.log("🔄 Buffering audio during segment finalization")
+            pendingBuffers.append(buffer)
+            return
+        }
 
         let rms = buffer.rmsMagnitude() // RMS値を取得
         let now = Date()
@@ -241,6 +276,7 @@ final class AudioEngineRecorder: ObservableObject {
         guard !isCancelled else { return }
         guard let outputFmt = outputFormat else { return }
 
+        Debug.log("📝 Opening new segment (pending buffers: \(pendingBuffers.count))")
         let fileURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("wav")
@@ -260,6 +296,24 @@ final class AudioEngineRecorder: ObservableObject {
             print("📝 Created new audio file: \(fileURL.lastPathComponent)")
             print("📝 Format: \(outputFmt)")
             
+            // 保存していたバッファを書き込む
+            if !pendingBuffers.isEmpty {
+                Debug.log("✍️ Writing \(pendingBuffers.count) pending buffers")
+                for pendingBuffer in pendingBuffers {
+                    let bufferToWrite: AVAudioPCMBuffer
+                    if let converter = audioConverter, let outputFmt = outputFormat {
+                        bufferToWrite = convertBuffer(pendingBuffer, using: converter, to: outputFmt)
+                    } else {
+                        bufferToWrite = pendingBuffer
+                    }
+                    try? audioFile?.write(from: bufferToWrite)
+                }
+                pendingBuffers.removeAll()
+            }
+            
+            // フラグをリセット
+            isFinalizingSegment = false
+            
         } catch {
             print("❌ Failed to create audio file: \(error)")
         }
@@ -269,6 +323,9 @@ final class AudioEngineRecorder: ObservableObject {
     private func finalizeSegment() {
         guard let url = fileURL else { resetState(); return }
 
+        // セグメント処理開始
+        isFinalizingSegment = true
+        
         if isCancelled {
             try? FileManager.default.removeItem(at: url)
             Debug.log("🗑️ Finalize skipped/deleted due to cancel:", url.path)
@@ -314,6 +371,9 @@ final class AudioEngineRecorder: ObservableObject {
         fileURL = nil
         silenceStart = nil
         isSpeaking = false
+        
+        // 処理完了後、次のセグメントが即座に開始できるようにフラグをリセット
+        isFinalizingSegment = false
 
         // デリゲートに通知
         delegate?.recorder(self, didFinishSegment: segmentURL, start: segmentStartDate)
@@ -329,6 +389,8 @@ final class AudioEngineRecorder: ObservableObject {
         isCancelled  = false // 状態リセット時にフラグもリセット
         isSpeaking   = false
         isManualMode = false // モードもリセット
+        pendingBuffers.removeAll()  // 保存バッファもクリア
+        isFinalizingSegment = false // フラグもリセット
     }
 
     // ◀︎◀︎ 追加: フォーマット変換メソッド ▼▼
@@ -354,4 +416,26 @@ final class AudioEngineRecorder: ObservableObject {
     // ◀︎◀︎ 追加 ▲▲
 
     deinit { /* 何も不要 */ }
+}
+
+// MARK: - AVAudioPCMBuffer Extension
+extension AVAudioPCMBuffer {
+    func toData() -> Data? {
+        let audioFormat = self.format
+        let frameCount = self.frameLength
+        
+        guard let channelData = self.int16ChannelData else { return nil }
+        
+        let channelCount = Int(audioFormat.channelCount)
+        let audioData = NSMutableData()
+        
+        for frame in 0..<Int(frameCount) {
+            for channel in 0..<channelCount {
+                var sample = channelData[channel][frame]  // var に変更
+                audioData.append(&sample, length: MemoryLayout<Int16>.size)
+            }
+        }
+        
+        return audioData as Data
+    }
 }

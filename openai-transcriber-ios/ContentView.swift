@@ -97,6 +97,7 @@ struct ContentView: View {
     @State private var isGeneratingSummary = false
     @State private var showSummaryOptions = false
     @State private var selectedSummaryLevel: SummaryLevel = .standard
+    @StateObject private var deepgramWebSocket = DeepgramWebSocketClient()
     
     @State private var pendingSegmentsCount = 0
     @State private var completedSegmentsCount = 0
@@ -466,6 +467,38 @@ struct ContentView: View {
                 }
                 .store(in: &cancellables)
         }
+        .onChange(of: recorder.isRecording) { _, isRecording in
+            // Deepgramでストリーミングモードの場合、WebSocket接続を管理
+            if selectedAPIType == .deepgram && isRecording {
+                // WebSocket接続を開始
+                Task {
+                    do {
+                        try await deepgramWebSocket.connect()
+                        // トランスクリプトのコールバック設定
+                        deepgramWebSocket.onTranscript = { [weak self] line in
+                            self?.transcriptLines.append(line)
+                        }
+                        deepgramWebSocket.onError = { error in
+                            print("❌ Deepgram WebSocket error: \(error)")
+                        }
+                    } catch {
+                        print("❌ Failed to connect Deepgram WebSocket: \(error)")
+                        // フォールバック：通常モードに切り替え
+                        self.recorder.stop()
+                        self.showPermissionAlert = true  // エラーアラートを表示
+                    }
+                }
+            } else if !isRecording && deepgramWebSocket.isConnected {
+                // 録音停止時にWebSocket接続を閉じる
+                deepgramWebSocket.disconnect()
+            }
+        }
+        .onDisappear {
+            // ビュー破棄時にWebSocket接続をクリーンアップ
+            if deepgramWebSocket.isConnected {
+                deepgramWebSocket.disconnect()
+            }
+        }
         .alert("マイクへのアクセスが許可されていません", isPresented: $showPermissionAlert) {
             Button("設定を開く") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -551,7 +584,24 @@ struct ContentView: View {
                     historyManager.currentHistoryId = historyManager.startNewSession()
                     
                     print("Starting recorder")
-                    try recorder.start(isManual: false)  // 常に自動モードで開始
+                    
+                    // Deepgramの場合はストリーミングモードで開始
+                    if selectedAPIType == .deepgram {
+                        // RecorderProxyの設定を変更
+                        proxy.onSegment = nil  // セグメント処理を無効化
+                        proxy.onAudioBuffer = { [weak self] audioData in
+                            // WebSocketに音声データを送信
+                            self?.deepgramWebSocket.sendAudioData(audioData)
+                        }
+                        try recorder.start(isManual: false, isStreaming: true)
+                    } else {
+                        // OpenAIの場合は従来通り
+                        proxy.onAudioBuffer = nil
+                        proxy.onSegment = { url, start in
+                            self.handleSegmentInBackground(url: url, start: start)
+                        }
+                        try recorder.start(isManual: false, isStreaming: false)
+                    }
                 } catch {
                     print("[Recorder] start failed:", error.localizedDescription)
                 }
@@ -788,83 +838,47 @@ struct ContentView: View {
             failedSegmentsCount += 1
             segmentErrors.append("セグメント\(index + 1): \(error.localizedDescription)")
         } else if let text = notification.userInfo?["text"] as? String {
-            // Deepgramのutterancesを個別のTranscriptLineとして処理
+            // Deepgramの話者分離処理（utterancesベース）
             if selectedAPIType == .deepgram,
-               let words = notification.userInfo?["words"] as? [[String: Any]],
-               !words.isEmpty {
-                // wordsから話者ごとにテキストを分割
-                print("🎙️ Processing \(words.count) words from Deepgram")
+               //let utterances = notification.userInfo?["utterances"] as? [DeepgramUtterance],
+               let utterances = notification.userInfo?["utterances"] as? [DeepgramResponse.Utterance],
+               
+               !utterances.isEmpty {
+                
+                print("🎙️ Processing \(utterances.count) utterances from Deepgram")
+                
+                // 元の行の情報を保存
+                let originalLine = self.transcriptLines[index]
+                let baseTime = notification.userInfo?["startTime"] as? Date ?? originalLine.time
                 
                 // 元の行を削除
                 self.transcriptLines.remove(at: index)
                 
-                // 話者ごとにテキストをグループ化
-                var speakerSegments: [(speaker: Int, text: String, start: Double)] = []
-                var currentSpeaker: Int? = nil
-                var currentText: [String] = []
-                var segmentStart: Double = 0
+                // 削除した位置を記憶
+                var insertIndex = index
                 
-                for word in words {
-                    if let speaker = word["speaker"] as? Int,
-                       let text = word["word"] as? String,
-                       let start = word["start"] as? Double {
-                        
-                        if currentSpeaker != speaker && !currentText.isEmpty {
-                            // 話者が変わったら新しいセグメントを作成
-                            speakerSegments.append((speaker: currentSpeaker ?? 0, text: currentText.joined(separator: " "), start: segmentStart))
-                            currentText = []
-                            segmentStart = start
-                        }
-                        currentSpeaker = speaker
-                        currentText.append(text)
-                    }
-                }
-                
-                // 最後のセグメントを追加
-                if !currentText.isEmpty {
-                    speakerSegments.append((speaker: currentSpeaker ?? 0, text: currentText.joined(separator: " "), start: segmentStart))
-                }
-                
-                // 各セグメントをTranscriptLineとして追加
-                for segment in speakerSegments {
+                // 各utteranceをTranscriptLineとして追加
+                for (utteranceIndex, utterance) in utterances.enumerated() {
+                    // 話者名を生成（nilの場合は話者番号なし）
+                    let speakerName = utterance.speaker.map { "話者\($0 + 1)" }
+                    
                     let newLine = TranscriptLine(
                         id: UUID(),
-                        time: (notification.userInfo?["startTime"] as? Date ?? Date()).addingTimeInterval(segment.start),
-                        text: segment.text,
+                        time: baseTime.addingTimeInterval(utterance.start),
+                        text: utterance.transcript,
                         audioURL: originalURL,
-                        speaker: "話者\(segment.speaker + 1)"
+                        speaker: speakerName
                     )
-                    self.transcriptLines.append(newLine)
+                    
+                    if insertIndex + utteranceIndex <= self.transcriptLines.count {
+                        self.transcriptLines.insert(newLine, at: insertIndex + utteranceIndex)
+                    } else {
+                        self.transcriptLines.append(newLine)
+                    }
+                    
+                    print("  - [\(speakerName ?? "話者なし")] \(String(format: "%.2f", utterance.start))s: \(String(utterance.transcript.prefix(30)))...")
                 }
                 
-                completedSegmentsCount += 1
-            } else if selectedAPIType == .deepgram,
-               let utterances = notification.userInfo?["utterances"] as? [DeepgramResponse.Utterance],
-                !utterances.isEmpty {
-                 
-                 // 元の行の情報を保存
-                let originalLine = self.transcriptLines[index]
-                
-                // 元の行を削除
-                self.transcriptLines.remove(at: index)
-                     // 各utteranceを個別のTranscriptLineとして追加
-            for utterance in utterances {
-                let transcript = utterance.transcript
-                if !transcript.trimmingCharacters(in: .whitespaces).isEmpty {
-                    let speakerName = utterance.speaker != nil ? "話者\((utterance.speaker ?? 0) + 1)" : nil
-                         
-                        let newLine = TranscriptLine(
-                            id: UUID(),
-                            time: notification.userInfo?["startTime"] as? Date ?? Date(),
-                            text: transcript.trimmingCharacters(in: .whitespaces),
-                            audioURL: originalURL,
-                            speaker: speakerName
-                        )
-                         
-                        self.transcriptLines.append(newLine)
-                     }
-                 }
-                 
                 completedSegmentsCount += 1
             } else {
                 // OpenAIまたはDeepgramでutterancesがない場合の通常処理
